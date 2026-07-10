@@ -1,0 +1,18 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.env
+/debug
+/logs
+allure-results/
+tests-examples/
+example.*
+*.log
+.DS_Store
+
+# Playwright
+/playwright/.auth/
