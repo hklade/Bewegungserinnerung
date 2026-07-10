@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bewegungserinnerung Icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f5f1e8" />
+      <stop offset="100%" stop-color="#d8efe1" />
+    </linearGradient>
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5c7cfa" />
+      <stop offset="100%" stop-color="#2f7d5b" />
+    </linearGradient>
+    <linearGradient id="leg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ee8d4f" />
+      <stop offset="100%" stop-color="#d79a1a" />
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bg)" />
+
+  <circle cx="30" cy="17" r="5.2" fill="#1f3128" />
+
+  <path d="M20 28c4-5 8-7 12-7s8 2 12 7" fill="none" stroke="url(#arm)" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M21 31c-6 4-8 8-8 13" fill="none" stroke="url(#arm)" stroke-width="4" stroke-linecap="round" />
+  <path d="M41 31c6 4 8 8 8 13" fill="none" stroke="url(#arm)" stroke-width="4" stroke-linecap="round" />
+
+  <path d="M30 22v13" stroke="#1f3128" stroke-width="5" stroke-linecap="round" />
+  <path d="M30 35l-7 9" stroke="#1f3128" stroke-width="5" stroke-linecap="round" />
+  <path d="M30 35l8 8" stroke="#1f3128" stroke-width="5" stroke-linecap="round" />
+
+  <path d="M23 44c2-2 4-3 7-3s5 1 7 3" fill="none" stroke="url(#leg)" stroke-width="5" stroke-linecap="round" />
+  <path d="M19 52h26" stroke="#1f3128" stroke-width="4" stroke-linecap="round" />
+
+  <circle cx="48" cy="20" r="3" fill="#ee8d4f" opacity="0.95" />
+  <circle cx="16" cy="20" r="3" fill="#5c7cfa" opacity="0.95" />
+</svg>

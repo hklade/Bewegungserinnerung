@@ -1,0 +1,1158 @@
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+
+type TabKey = "dashboard" | "reminder" | "day" | "week";
+type AnalysisKey = "day" | "week";
+
+type AppConfig = {
+  hourlyReminderEnabled: boolean;
+  showReminderDialog: boolean;
+  reminderStartTime: string;
+  reminderEndTime: string;
+  weekdaysOnly: boolean;
+  exportPath: string;
+  reminderToneEnabled: boolean;
+};
+
+type ActivityItem = {
+  id: number;
+  date: string;
+  time: string;
+  plannedTime: string;
+  delayMinutes: number;
+  value: number | null;
+  description: string;
+  note: string;
+  entryType: string;
+  isAdditionalBreak: boolean;
+};
+
+type DaySummary = {
+  total: number;
+  answered: number;
+  unanswered: number;
+  planned: number;
+  additional: number;
+  averageValue: number | null;
+  averageDelayMinutes: number | null;
+};
+
+type HeatmapCell = {
+  date: string;
+  slot: string;
+  value: number | null;
+  count: number;
+};
+
+type HeatmapRow = {
+  slot: string;
+  cells: HeatmapCell[];
+};
+
+type HeatmapColumn = {
+  date: string;
+  label: string;
+  shortLabel: string;
+};
+
+type HeatmapData = {
+  title: string;
+  subtitle: string;
+  note: string;
+  columns: HeatmapColumn[];
+  rows: HeatmapRow[];
+};
+
+type DashboardApi = {
+  config: AppConfig;
+  total: number;
+  today: {
+    todayIso: string;
+    summary: {
+      total: number;
+      answered: number;
+      unanswered: number;
+      planned: number;
+      additional: number;
+      averageValue: number | null;
+      averageDelayMinutes: number | null;
+    };
+    distribution: Array<{
+      value: 0 | 1 | 2 | 3 | 4;
+      count: number;
+    }>;
+    reminderHeadline: string;
+    reminderTime: string;
+  };
+  latestBookings: ActivityItem[];
+  activities: ActivityItem[];
+  currentWeek: Array<{
+    day: string;
+    date: string;
+    avg: number | null;
+    note: string;
+    active: boolean;
+  }>;
+  recentWeeks: Array<{
+    label: string;
+    avg: number | null;
+    note: string;
+  }>;
+  heatmap: HeatmapData;
+};
+
+type TodayDistributionItem = {
+  value: 0 | 1 | 2 | 3 | 4;
+  count: number;
+  label: string;
+  tone: "red" | "ochre" | "orange" | "blue" | "green";
+  width: number;
+};
+
+const apiBase = "/api";
+const weekdayNames = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"] as const;
+const defaultConfig: AppConfig = {
+  hourlyReminderEnabled: true,
+  showReminderDialog: true,
+  reminderStartTime: "07:55",
+  reminderEndTime: "16:55",
+  weekdaysOnly: true,
+  exportPath: "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv",
+  reminderToneEnabled: true,
+};
+
+const scale = [
+  { value: 0, title: "Keine Pause", desc: "sitzen geblieben", tone: "red" },
+  { value: 1, title: "Mini-Pause", desc: "kurz innegehalten", tone: "ochre" },
+  { value: 2, title: "Leichte Aktivität", desc: "Bürotätigkeit", tone: "orange" },
+  { value: 3, title: "Bewegung", desc: "gehen / dehnen", tone: "blue" },
+  { value: 4, title: "Aktive Pause", desc: "Spaziergang / Übungen", tone: "green" },
+] as const;
+
+const toneByValue = {
+  0: "red",
+  1: "ochre",
+  2: "orange",
+  3: "blue",
+  4: "green",
+} as const;
+
+function formatDate(value: string) {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}.${month}.${year}`;
+}
+
+function formatCalendarDate(date: Date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+function getWeekdayIndex(date: Date) {
+  return (date.getDay() + 6) % 7;
+}
+
+function formatCurrentDay(date: Date) {
+  const weekday = weekdayNames[getWeekdayIndex(date)];
+  return `${weekday}, ${formatCalendarDate(date)}`;
+}
+
+function parseTimeToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+function formatMinutesToTime(totalMinutes: number) {
+  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+  const hours = String(Math.floor(normalized / 60)).padStart(2, "0");
+  const minutes = String(normalized % 60).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function buildReminderSlots(config: AppConfig) {
+  const start = parseTimeToMinutes(config.reminderStartTime);
+  const end = parseTimeToMinutes(config.reminderEndTime);
+
+  if (start === null || end === null || end < start) {
+    return ["07:55", "08:55", "09:55", "10:55", "11:55", "12:55", "13:55", "14:55", "15:55", "16:55"];
+  }
+
+  const slots: string[] = [];
+  for (let minutes = start; minutes <= end; minutes += 60) {
+    slots.push(formatMinutesToTime(minutes));
+  }
+
+  return slots;
+}
+
+function getNextReminderTime(now: Date, config: AppConfig) {
+  if (!config.hourlyReminderEnabled) {
+    return "aus";
+  }
+
+  if (config.weekdaysOnly && (now.getDay() === 0 || now.getDay() === 6)) {
+    return "aus";
+  }
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  for (const slot of buildReminderSlots(config)) {
+    const slotMinutes = parseTimeToMinutes(slot);
+    if (slotMinutes !== null && slotMinutes > currentMinutes) {
+      return slot;
+    }
+  }
+
+  const slots = buildReminderSlots(config);
+  return slots[0] ?? "--:--";
+}
+
+function getNextReminderCountdown(now: Date, config: AppConfig) {
+  if (!config.hourlyReminderEnabled) {
+    return null;
+  }
+
+  const slots = buildReminderSlots(config);
+  if (slots.length === 0) {
+    return null;
+  }
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentDay = now.getDay();
+  const dayOffsetStart = config.weekdaysOnly && currentDay >= 5 ? 7 - currentDay : 0;
+
+  for (let dayOffset = dayOffsetStart; dayOffset < dayOffsetStart + 8; dayOffset += 1) {
+    const targetDay = new Date(now);
+    targetDay.setDate(now.getDate() + dayOffset);
+
+    if (config.weekdaysOnly && (targetDay.getDay() === 0 || targetDay.getDay() === 6)) {
+      continue;
+    }
+
+    for (const slot of slots) {
+      const slotMinutes = parseTimeToMinutes(slot);
+      if (slotMinutes === null) {
+        continue;
+      }
+
+      if (dayOffset === 0 && slotMinutes <= currentMinutes) {
+        continue;
+      }
+
+      const totalMinutes = dayOffset * 1440 + (dayOffset === 0 ? slotMinutes - currentMinutes : 1440 - currentMinutes + slotMinutes);
+      return totalMinutes;
+    }
+  }
+
+  const firstSlot = parseTimeToMinutes(slots[0]);
+  if (firstSlot === null) {
+    return null;
+  }
+
+  return ((1440 - currentMinutes + firstSlot) % 1440) || 1440;
+}
+
+function playReminderTone() {
+  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextClass) {
+    return;
+  }
+
+  const context = new AudioContextClass();
+  const gain = context.createGain();
+  gain.connect(context.destination);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.07, context.currentTime + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.55);
+
+  const oscillator = context.createOscillator();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(740, context.currentTime);
+  oscillator.connect(gain);
+
+  const oscillator2 = context.createOscillator();
+  oscillator2.type = "triangle";
+  oscillator2.frequency.setValueAtTime(990, context.currentTime + 0.14);
+  oscillator2.connect(gain);
+
+  oscillator.start();
+  oscillator2.start(context.currentTime + 0.14);
+  oscillator.stop(context.currentTime + 0.45);
+  oscillator2.stop(context.currentTime + 0.58);
+  window.setTimeout(() => void context.close(), 700);
+}
+
+function formatValueLabel(value: number | null) {
+  if (value === null) {
+    return "—";
+  }
+
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function toneClassByValue(value: number | null) {
+  if (value === null) {
+    return "red";
+  }
+
+  if (value >= 4) return "green";
+  if (value >= 3) return "blue";
+  if (value >= 2) return "orange";
+  if (value >= 1) return "ochre";
+  return "red";
+}
+
+function buildDaySummary(entries: ActivityItem[]): DaySummary {
+  const answeredEntries = entries.filter((entry) => entry.value !== null);
+  const delayEntries = entries.filter((entry) => Number.isFinite(entry.delayMinutes));
+
+  return {
+    total: entries.length,
+    answered: answeredEntries.length,
+    unanswered: entries.filter((entry) => entry.value === null).length,
+    planned: entries.filter((entry) => entry.entryType === "planned_break_response").length,
+    additional: entries.filter((entry) => entry.isAdditionalBreak).length,
+    averageValue: answeredEntries.length > 0 ? answeredEntries.reduce((sum, entry) => sum + Number(entry.value), 0) / answeredEntries.length : null,
+    averageDelayMinutes: delayEntries.length > 0 ? delayEntries.reduce((sum, entry) => sum + Number(entry.delayMinutes || 0), 0) / delayEntries.length : null,
+  };
+}
+
+function getTypeLabel(entry: ActivityItem) {
+  if (entry.isAdditionalBreak) {
+    return "Zusatz";
+  }
+
+  if (entry.entryType === "planned_break_response") {
+    return "Geplant";
+  }
+
+  if (entry.value === null) {
+    return "Offen";
+  }
+
+  return "Eintrag";
+}
+
+export default function App() {
+  const [tab, setTab] = useState<TabKey>("dashboard");
+  const [analysisTab, setAnalysisTab] = useState<AnalysisKey>("day");
+  const [selectedScore, setSelectedScore] = useState<number>(3);
+  const [note, setNote] = useState("gedehnt");
+  const [now, setNow] = useState(() => new Date());
+  const [dashboard, setDashboard] = useState<DashboardApi | null>(null);
+  const [dashboardState, setDashboardState] = useState<"loading" | "ready" | "error">("loading");
+  const [configForm, setConfigForm] = useState<AppConfig | null>(null);
+  const [configState, setConfigState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [importState, setImportState] = useState<"idle" | "importing" | "error">("idle");
+  const [evaluationTab, setEvaluationTab] = useState<AnalysisKey>("day");
+  const [selectedDayIso, setSelectedDayIso] = useState("");
+  const [showAllActivities, setShowAllActivities] = useState(false);
+
+  async function refreshDashboard(activeRef = { active: true }) {
+    try {
+      const response = await fetch(`${apiBase}/dashboard?limit=30`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const payload = (await response.json()) as DashboardApi;
+      if (!activeRef.active) {
+        return;
+      }
+
+      setDashboard(payload);
+      setDashboardState("ready");
+      setConfigForm((current) => current ?? payload.config);
+      setSelectedDayIso((current) => {
+        const availableDays = payload.currentWeek.map((item) => item.date);
+        if (current && availableDays.includes(current)) {
+          return current;
+        }
+
+        return payload.today.todayIso;
+      });
+    } catch {
+      if (!activeRef.active) {
+        return;
+      }
+
+      setDashboardState("error");
+    }
+  }
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNow(new Date());
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const activeRef = { active: true };
+    void refreshDashboard(activeRef);
+    const interval = window.setInterval(() => {
+      void refreshDashboard(activeRef);
+    }, 15_000);
+
+    return () => {
+      activeRef.active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const currentConfig = configForm ?? dashboard?.config ?? defaultConfig;
+  const currentDayLabel = useMemo(() => formatCurrentDay(now), [now]);
+  const nextReminderTime = useMemo(() => getNextReminderTime(now, currentConfig), [currentConfig, now]);
+  const nextReminderCountdown = useMemo(() => getNextReminderCountdown(now, currentConfig), [currentConfig, now]);
+  const reminderHeadline = dashboard?.today.reminderHeadline ?? "--:--";
+  const reminderTime = dashboard?.today.reminderTime ?? reminderHeadline;
+  const bookingTotal = dashboard?.total ?? 0;
+  const activities = dashboard?.activities ?? [];
+  const latestActivities = showAllActivities ? activities : activities.slice(0, 5);
+  const hasMoreActivities = activities.length > latestActivities.length;
+  const activeDayIso = selectedDayIso || dashboard?.today.todayIso || "";
+  const selectedDayEntries = activities.filter((item) => item.date === activeDayIso);
+  const selectedDayEntriesChronological = [...selectedDayEntries].reverse();
+  const selectedDayWeekItem = dashboard?.currentWeek.find((item) => item.date === activeDayIso) ?? null;
+  const selectedDaySummary = useMemo(() => buildDaySummary(selectedDayEntries), [selectedDayEntries]);
+  const todaySummary = dashboard?.today.summary;
+  const summaryLine = `${selectedScore} - ${note || "Kurznotiz"}`;
+  const latestSummary = dashboard?.latestBookings[0]
+    ? `${dashboard.latestBookings[0].value === null ? "—" : dashboard.latestBookings[0].value} - ${dashboard.latestBookings[0].description}`
+    : summaryLine;
+  const reminderDialogVisible = currentConfig.showReminderDialog;
+  const reminderComposerSubtitle = reminderDialogVisible
+    ? `Zuletzt gespeichert: ${latestSummary}`
+    : `Zeitpunkt der letzten Erinnerung: ${reminderTime}`;
+  const reminderToneEnabled = currentConfig.reminderToneEnabled;
+  const countdownLabel = nextReminderCountdown === null ? "aus" : `${nextReminderCountdown} Min`;
+
+  const selectedDayDistribution = useMemo(() => {
+    const source = [0, 1, 2, 3, 4].map((value) => ({
+      value: value as 0 | 1 | 2 | 3 | 4,
+      count: selectedDayEntries.filter((entry) => entry.value === value).length,
+    }));
+    const byValue = new Map(source.map((item) => [item.value, item.count]));
+
+    return [0, 1, 2, 3, 4].map((value) => {
+      const count = byValue.get(value as 0 | 1 | 2 | 3 | 4) ?? 0;
+      return {
+        value: value as 0 | 1 | 2 | 3 | 4,
+        count,
+        label: `${value}`,
+        tone: toneByValue[value as 0 | 1 | 2 | 3 | 4],
+        width: count > 0 ? count : 0.25,
+      };
+    }) satisfies TodayDistributionItem[];
+  }, [selectedDayEntries]);
+
+  const maxTodayWidth = Math.max(1, ...selectedDayDistribution.map((item) => item.width));
+
+  async function handleQuickSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    try {
+      const trimmedNote = note.trim();
+      const fallbackDescription = scale.find((item) => item.value === selectedScore)?.title ?? "Eintrag";
+      const response = await fetch(`${apiBase}/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          value: selectedScore,
+          description: trimmedNote || fallbackDescription,
+          note: trimmedNote || fallbackDescription,
+          entryType: reminderHeadline.includes("Zusatzbewegung") ? "additional_break" : "planned_break_response",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      await refreshDashboard();
+      setNote("");
+    } catch {
+      setDashboardState("error");
+    }
+  }
+
+  async function handleConfigSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!configForm) {
+      return;
+    }
+
+    setConfigState("saving");
+    try {
+      const response = await fetch(`${apiBase}/config`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(configForm),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const payload = (await response.json()) as AppConfig;
+      setConfigForm(payload);
+      setConfigState("saved");
+      await refreshDashboard();
+      window.setTimeout(() => {
+        setConfigState("idle");
+      }, 1500);
+    } catch {
+      setConfigState("error");
+    }
+  }
+
+  async function handleImportConfigured() {
+    const confirmed = window.confirm(
+      `Achtung: Beim Import werden alle aktuellen Daten gelöscht und durch die CSV-Datei unter dem konfigurierten Pfad ersetzt.\n\nPfad: ${currentConfig.exportPath}\n\nFortfahren?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setImportState("importing");
+    try {
+      const response = await fetch(`${apiBase}/bookings/import-configured`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      await refreshDashboard();
+      setImportState("idle");
+    } catch {
+      setImportState("error");
+    }
+  }
+
+  async function handleExportCsv() {
+    try {
+      const response = await fetch(`${apiBase}/bookings/export`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const csv = await response.blob();
+      const url = URL.createObjectURL(csv);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "Bewegungsdaten.csv";
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch {
+      // keep quiet; export is optional
+    }
+  }
+
+  const tabs = [
+    { key: "dashboard" as const, label: "Dashboard" },
+    { key: "reminder" as const, label: "Reminder" },
+    { key: "day" as const, label: "Tagesansicht" },
+    { key: "week" as const, label: "Wochenansicht" },
+  ];
+
+  return (
+    <div className="app-shell">
+      <div className="bg-orb orb-a" />
+      <div className="bg-orb orb-b" />
+      <div className="bg-orb orb-c" />
+
+      <header className="app-header panel">
+        <div className="brand-block">
+          <div className="brand-icon" aria-hidden="true">
+            <img src="/public/icons8-hyperaktiver-hauttyp-2-48.png" alt="Bewegungserinnerung" />
+          </div>
+          <div>
+            <div className="brand-title">Bewegungserinnerung</div>
+            <div className="brand-subtitle">Stündlicher Bewegungstracker</div>
+          </div>
+        </div>
+
+        <div className="header-clock">
+          <div className="header-clock-label">{currentDayLabel}</div>
+          <div className="header-clock-time">{now.toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" })}</div>
+        </div>
+      </header>
+
+      <nav className="tabs panel">
+        {tabs.map((item) => (
+          <button
+            key={item.key}
+            className={item.key === tab ? "tab active" : "tab"}
+            onClick={() => setTab(item.key)}
+            type="button"
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="workspace">
+        <main className="workspace-main">
+          {tab === "dashboard" && (
+            <>
+              <section className="panel hero-panel">
+                <div className="panel-heading">
+                  <div>
+                    <div className="eyebrow">Schnelleingabe</div>
+                    <div className="hero-subtitle">Zeitpunkt der letzten Erinnerung: {reminderTime}</div>
+                  </div>
+                  <div className="status-pill">{dashboardState === "ready" ? "bereit" : dashboardState === "error" ? "Fehler" : "lädt"}</div>
+                </div>
+
+                <form className="quick-entry" onSubmit={handleQuickSubmit}>
+                  <div className="entry-section-title">Aktivitätslevel</div>
+                  <div className="scale-grid">
+                    {scale.map((item) => (
+                      <button
+                        key={item.value}
+                        type="button"
+                        className={item.value === selectedScore ? `score-card selected tone-${item.tone}` : `score-card tone-${item.tone}`}
+                        onClick={() => setSelectedScore(item.value)}
+                      >
+                        <div className="score-number">{item.value}</div>
+                        <strong>{item.title}</strong>
+                        <span>{item.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="entry-field">
+                    <span>Aktivität</span>
+                    <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Was hast du gemacht?" />
+                  </label>
+
+                  <button className="primary-btn primary-btn--compact" type="submit">
+                    Eintrag speichern
+                  </button>
+                </form>
+              </section>
+
+              <section className="panel evaluation-panel">
+                <div className="panel-heading">
+                  <div className="eyebrow">Aktivitätsauswertung</div>
+                  <div className="segmented">
+                    <button type="button" className={evaluationTab === "day" ? "segment active" : "segment"} onClick={() => setEvaluationTab("day")}>
+                      Tagesauswertung
+                    </button>
+                    <button type="button" className={evaluationTab === "week" ? "segment active" : "segment"} onClick={() => setEvaluationTab("week")}>
+                      Wochen-Heatmap
+                    </button>
+                  </div>
+                </div>
+
+                {evaluationTab === "day" ? (
+                  <div className="day-eval">
+                    <div className="day-meta">
+                      <div className="day-picker">
+                        <span>{selectedDayWeekItem?.day ?? "Tag wählen"}</span>
+                      </div>
+                      <div className="day-date">{selectedDayIso ? formatDate(selectedDayIso) : currentDayLabel}</div>
+                    </div>
+
+                    <div className="day-selector">
+                      {(dashboard?.currentWeek ?? []).map((item) => (
+                        <button
+                          key={item.date}
+                          type="button"
+                          className={item.date === activeDayIso ? "day-chip active" : "day-chip"}
+                          onClick={() => setSelectedDayIso(item.date)}
+                        >
+                          <span>{item.day.slice(0, 2)}</span>
+                          <strong>{formatDate(item.date)}</strong>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="stat-grid">
+                      <StatCard label="Bewegungen" value={String(selectedDaySummary.answered)} note={`${selectedDaySummary.planned} geplant · ${selectedDaySummary.additional} extra`} tone="green" />
+                      <StatCard label="Verpasste Erinnerungen" value={String(selectedDaySummary.unanswered)} note="Nicht wahrgenommen" tone="red" />
+                      <StatCard label="Verzögerung" value={`${Math.round(selectedDaySummary.averageDelayMinutes ?? 0)} Min.`} note="Reaktionszeit nach Alarm" tone="orange" />
+                    </div>
+
+                    <div className="chart-card">
+                      <div className="chart-head">
+                        <div>Aktivitäts-Skala chronologisch</div>
+                        <div className="legend">
+                          <span><i className="legend-dot green" /> Geplant</span>
+                          <span><i className="legend-dot blue" /> Zusatz-Pause</span>
+                        </div>
+                      </div>
+
+                      {selectedDayEntriesChronological.length > 0 ? (
+                        <div className="timeline-bars">
+                          {selectedDayEntriesChronological.map((item) => (
+                            <div key={item.id} className="timeline-bar-row">
+                              <div className={`timeline-bar tone-${toneClassByValue(item.value)}`} style={{ height: `${20 + (item.value ?? 0) * 18}px` }}>
+                                <span>{formatValueLabel(item.value)}</span>
+                              </div>
+                              <div className="timeline-time">{item.time}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="empty-state">Für den gewählten Tag sind noch keine Einträge vorhanden.</div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <HeatmapCard heatmap={dashboard?.heatmap} />
+                )}
+              </section>
+
+              <section className="panel activities-panel">
+                <div className="panel-heading">
+                  <div className="eyebrow">Letzte Aktivitäten</div>
+                  <div className="status-pill">{latestActivities.length} Zeilen</div>
+                </div>
+
+                <div className="activities-table">
+                  <div className="activities-head">
+                    <span>Datum</span>
+                    <span>Geplant</span>
+                    <span>Verzögerung</span>
+                    <span>Skala</span>
+                    <span>Aktivität</span>
+                    <span>Typ</span>
+                  </div>
+
+                  {latestActivities.map((item) => (
+                    <div className="activities-row" key={item.id}>
+                      <span>{formatDate(item.date)}</span>
+                      <span>{item.plannedTime}</span>
+                      <span>{item.delayMinutes ? `${item.delayMinutes} Min` : "—"}</span>
+                      <span><span className={`scale-pill tone-${toneClassByValue(item.value)}`}>{formatValueLabel(item.value)}/4</span></span>
+                      <span>
+                        <strong>{item.description}</strong>
+                        <small>{item.note}</small>
+                      </span>
+                      <span><span className={`type-pill ${item.isAdditionalBreak ? "accent" : "soft"}`}>{getTypeLabel(item)}</span></span>
+                    </div>
+                  ))}
+                </div>
+
+                {hasMoreActivities && (
+                  <div className="activity-more">
+                    <button className="secondary-btn" type="button" onClick={() => setShowAllActivities((current) => !current)}>
+                      {showAllActivities ? "Weniger anzeigen" : "Weitere anzeigen"}
+                    </button>
+                  </div>
+                )}
+
+                <div className="activity-footer">
+                  <button className="secondary-btn" type="button" onClick={handleExportCsv}>
+                    CSV-Daten exportieren
+                  </button>
+                  <button className="secondary-btn warning" type="button" onClick={handleImportConfigured} disabled={importState === "importing"}>
+                    {importState === "importing" ? "Import läuft..." : "CSV-Daten importieren"}
+                  </button>
+                </div>
+              </section>
+            </>
+          )}
+
+          {tab === "reminder" && (
+            <>
+              <section className="panel hero-panel">
+                <div className="panel-heading">
+                  <div>
+                    <div className="eyebrow">Reminder</div>
+                    <div className="hero-subtitle">
+                      {reminderDialogVisible
+                        ? "Immer dasselbe Format, nur die motivierende Nachricht ändert sich."
+                        : "Nur Ton aktiv, Dialog ausgeblendet."}
+                    </div>
+                  </div>
+                  <div className="status-pill">{dashboardState === "ready" ? "bereit" : dashboardState === "error" ? "Fehler" : "lädt"}</div>
+                </div>
+
+                <div className="reminder-layout">
+                  <article className="reminder-main">
+                    <div className="time-label">Letzter aktiver Reminder</div>
+                    <div className="time">{reminderHeadline}</div>
+                    {reminderDialogVisible ? (
+                      <>
+                        <h3>Zeit für einen kurzen Neustart.</h3>
+                        <p>
+                          Steh kurz auf, lockere Schultern und Rücken oder geh ein paar Schritte. Ein kleiner Wechsel reicht oft schon, um den Kopf wieder frei zu bekommen.{" "}
+                          <button className="inline-link" type="button" onClick={() => reminderToneEnabled && playReminderTone()} disabled={!reminderToneEnabled}>
+                            Ton abspielen
+                          </button>
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <h3>Nur Ton aktiv.</h3>
+                        <p>
+                          Der Erinnerungsdialog ist ausgeblendet. Es wird nur der Ton abgespielt und die Schnelleingabe arbeitet mit dem Zeitpunkt der letzten Erinnerung.{" "}
+                          <button className="inline-link" type="button" onClick={() => reminderToneEnabled && playReminderTone()} disabled={!reminderToneEnabled}>
+                            Ton abspielen
+                          </button>
+                        </p>
+                      </>
+                    )}
+                  </article>
+
+                  <aside className="reminder-side reminder-side--light">
+                    <ReminderComposer
+                      selectedScore={selectedScore}
+                      note={note}
+                      summaryLine={summaryLine}
+                      latestSummary={latestSummary}
+                      subtitleLine={reminderComposerSubtitle}
+                      toneEnabled={reminderToneEnabled}
+                      onScoreChange={setSelectedScore}
+                      onNoteChange={setNote}
+                      onSubmit={handleQuickSubmit}
+                      onPlayTone={() => reminderToneEnabled && playReminderTone()}
+                    />
+                  </aside>
+                </div>
+              </section>
+
+              <section className="panel activities-panel">
+                <div className="panel-heading">
+                  <div className="eyebrow">Heute im Überblick</div>
+                  <div className="status-pill">
+                    {dashboardState === "ready" ? `${todaySummary?.answered ?? 0} beantwortet` : "lädt"}
+                  </div>
+                </div>
+
+                <div className="stat-grid stat-grid--compact">
+                  <StatCard label="Pausen" value={String(todaySummary?.total ?? 0)} note="erfasst" tone="green" />
+                  <StatCard label="Verzögerung" value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)} Min.`} note="durchschnittlich" tone="orange" />
+                  <StatCard label="Ø Skala" value={formatValueLabel(todaySummary?.averageValue ?? null)} note="heutiger Schnitt" tone="blue" />
+                </div>
+              </section>
+            </>
+          )}
+
+          {tab === "day" && (
+            <section className="panel evaluation-panel evaluation-panel--standalone">
+              <div className="panel-heading">
+                <div className="eyebrow">Tagesansicht</div>
+                <div className="status-pill">{currentDayLabel}</div>
+              </div>
+
+              <div className="stat-grid">
+                <StatCard label="Erfasst" value={String(selectedDaySummary.total)} note="gewählter Tag" tone="green" />
+                <StatCard label="Beantwortet" value={String(selectedDaySummary.answered)} note="mit Wert" tone="blue" />
+                <StatCard label="Unbeantwortet" value={String(selectedDaySummary.unanswered)} note="ohne Rückmeldung" tone="red" />
+              </div>
+
+              <div className="distribution">
+                <div className="section-head">
+                  <h3>Werteverteilung</h3>
+                  <span>0 bis 4</span>
+                </div>
+                <div className="bar-list">
+                  {selectedDayDistribution.map((item) => (
+                    <div className="bar-row" key={item.label}>
+                      <div className="bar-label">{item.label}</div>
+                      <div className="bar-track">
+                        <div className={`bar-fill ${item.tone}`} style={{ width: `${Math.max(8, Math.round((item.width / maxTodayWidth) * 100))}%` }} />
+                      </div>
+                      <div className="bar-count">{item.count}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {tab === "week" && (
+            <section className="panel heatmap-panel">
+              <div className="panel-heading">
+                <div className="eyebrow">Wochen-Heatmap</div>
+                <div className="status-pill">{dashboard?.heatmap.subtitle ?? "—"}</div>
+              </div>
+
+              <HeatmapCard heatmap={dashboard?.heatmap} />
+            </section>
+          )}
+        </main>
+
+        <aside className="workspace-side">
+          <section className="panel side-card countdown-card">
+            <div className="side-card-title">Countdown zur Bewegung</div>
+            <div className="countdown-value">{countdownLabel}</div>
+            <div className="countdown-note">
+              {currentConfig.hourlyReminderEnabled ? "Minuten bis zur nächsten Erinnerung" : "Reminder deaktiviert"}
+            </div>
+          </section>
+
+          <section className="panel side-card overview-card">
+            <div className="side-card-title">Heute im Überblick</div>
+            <div className="mini-grid">
+              <MiniStat label="Pausen" value={String(todaySummary?.total ?? 0)} />
+              <MiniStat label="Verzögerung" value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)}`} />
+              <MiniStat label="Ø Skala" value={formatValueLabel(todaySummary?.averageValue ?? null)} />
+            </div>
+          </section>
+
+          <section className="panel side-card config-card">
+            <div className="side-card-title">Konfiguration & Intervalle</div>
+
+            {configForm && (
+              <form className="config-form" onSubmit={handleConfigSubmit}>
+                <label className="config-switch">
+                  <span>Stündlicher Reminder</span>
+                  <small>Erinnert jede Stunde im Intervall</small>
+                  <input
+                    type="checkbox"
+                    checked={configForm.hourlyReminderEnabled}
+                    onChange={(event) =>
+                      setConfigForm((current) =>
+                        current ? { ...current, hourlyReminderEnabled: event.target.checked } : current,
+                      )
+                    }
+                  />
+                </label>
+
+                <label className="config-field">
+                  <span>Exportdatei:</span>
+                  <input
+                    type="text"
+                    value={configForm.exportPath}
+                    onChange={(event) =>
+                      setConfigForm((current) => (current ? { ...current, exportPath: event.target.value } : current))
+                    }
+                  />
+                </label>
+
+                <div className="config-row">
+                  <label className="config-field">
+                    <span>Startzeit</span>
+                    <input
+                      type="text"
+                      value={configForm.reminderStartTime}
+                      onChange={(event) =>
+                        setConfigForm((current) => (current ? { ...current, reminderStartTime: event.target.value } : current))
+                      }
+                    />
+                  </label>
+
+                  <label className="config-field">
+                    <span>Endzeit</span>
+                    <input
+                      type="text"
+                      value={configForm.reminderEndTime}
+                      onChange={(event) =>
+                        setConfigForm((current) => (current ? { ...current, reminderEndTime: event.target.value } : current))
+                      }
+                    />
+                  </label>
+                </div>
+
+                <label className="config-switch">
+                  <span>Nur an Werktagen</span>
+                  <small>Montag bis Freitag</small>
+                  <input
+                    type="checkbox"
+                    checked={configForm.weekdaysOnly}
+                    onChange={(event) =>
+                      setConfigForm((current) => (current ? { ...current, weekdaysOnly: event.target.checked } : current))
+                    }
+                  />
+                </label>
+
+                <label className="config-switch config-switch--slider">
+                  <div>
+                    <span>Erinnerungsdialog anzeigen</span><br />
+                    <small>Wenn aus: nur Ton und Zeitstempel</small>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={configForm.showReminderDialog}
+                    onChange={(event) =>
+                      setConfigForm((current) =>
+                        current ? { ...current, showReminderDialog: event.target.checked } : current,
+                      )
+                    }
+                  />
+                  <span className="slider-track" aria-hidden="true">
+                    <span className="slider-thumb" />
+                  </span>
+                </label>
+
+                <label className="config-switch config-switch--link">
+                  <div>
+                    <span>Audio-Chime abspielen</span><br />
+                    <small>Spielt akustischen Gong bei Alarm</small>
+                  </div>
+                  <button type="button" className="text-link" onClick={() => currentConfig.reminderToneEnabled && playReminderTone()} disabled={!currentConfig.reminderToneEnabled}>
+                    Jetzt testen
+                  </button>
+                  <input
+                    type="checkbox"
+                    checked={configForm.reminderToneEnabled}
+                    onChange={(event) =>
+                      setConfigForm((current) => (current ? { ...current, reminderToneEnabled: event.target.checked } : current))
+                    }
+                  />
+                </label>
+
+                <button className="primary-btn primary-btn--wide" type="submit">
+                  {configState === "saving" ? "Speichert..." : "Einstellungen speichern"}
+                </button>
+              </form>
+            )}
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function StatCard(props: { label: string; value: string; note: string; tone: "green" | "orange" | "blue" | "red" }) {
+  return (
+    <article className={`stat-card tone-${props.tone}`}>
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+      <small>{props.note}</small>
+    </article>
+  );
+}
+
+function MiniStat(props: { label: string; value: string }) {
+  return (
+    <div className="mini-stat">
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+    </div>
+  );
+}
+
+function HeatmapCard(props: { heatmap: HeatmapData | undefined }) {
+  if (!props.heatmap) {
+    return <div className="empty-state">Heatmap wird geladen.</div>;
+  }
+
+  const gridStyle = {
+    gridTemplateColumns: `64px repeat(${props.heatmap.columns.length}, minmax(40px, 1fr))`,
+  } as const;
+
+  return (
+    <div className="heatmap-card">
+      <div className="heatmap-nav">
+        <button type="button" className="ghost-arrow" aria-label="Vorherige Daten">
+          ←
+        </button>
+        <div className="heatmap-title">
+          <strong>{props.heatmap.title}</strong>
+          <span>{props.heatmap.note}</span>
+        </div>
+        <button type="button" className="ghost-arrow" aria-label="Nächste Daten">
+          →
+        </button>
+      </div>
+
+      <div className="heatmap-note">{props.heatmap.note}</div>
+
+      <div className="heatmap-grid" style={gridStyle}>
+        <div className="heatmap-corner" />
+        {props.heatmap.columns.map((column) => (
+          <div className="heatmap-column-head" key={column.date}>
+            <strong>{column.label}</strong>
+            <span>{column.shortLabel}</span>
+          </div>
+        ))}
+
+        {props.heatmap.rows.map((row) => (
+          <div className="heatmap-row" key={row.slot}>
+            <div className="heatmap-row-label">{row.slot}</div>
+            {row.cells.map((cell) => (
+              <div
+                key={`${cell.date}-${cell.slot}`}
+                className={
+                  cell.value === null
+                    ? "heatmap-cell empty"
+                    : `heatmap-cell tone-${toneClassByValue(cell.value)} intensity-${Math.min(4, Math.max(1, Math.round(cell.value)))}`
+                }
+              >
+                <span>{cell.value === null ? "·" : formatValueLabel(cell.value)}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReminderComposer(props: {
+  selectedScore: number;
+  note: string;
+  summaryLine: string;
+  latestSummary: string;
+  subtitleLine: string;
+  toneEnabled: boolean;
+  onScoreChange: (score: number) => void;
+  onNoteChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onPlayTone: () => void;
+}) {
+  return (
+    <div className="reminder-composer">
+      <div className="composer-header">
+        <div className="side-label">Schnelleingabe</div>
+        <div className="composer-hint">{props.subtitleLine}</div>
+      </div>
+
+      <div className="composer-summary">{props.summaryLine}</div>
+
+      <div className="scale-grid composer-scale-grid">
+        {scale.map((item) => (
+          <button
+            type="button"
+            key={item.value}
+            className={item.value === props.selectedScore ? "score-card selected" : "score-card"}
+            onClick={() => props.onScoreChange(item.value)}
+          >
+            <div className={`score-badge ${item.tone}`}>{item.value}</div>
+            <strong>{item.title}</strong>
+            <span>{item.desc}</span>
+          </button>
+        ))}
+      </div>
+
+      <form className="quick-form composer-form" onSubmit={props.onSubmit}>
+        <label className="input-group composer-input-group">
+          <span>Beschreibung</span>
+          <input
+            value={props.note}
+            onChange={(event) => props.onNoteChange(event.target.value)}
+            placeholder={props.latestSummary}
+          />
+        </label>
+
+        <button className="primary-btn" type="submit">
+          Antwort speichern
+        </button>
+
+        <button className="inline-link inline-link--standalone" type="button" onClick={props.onPlayTone} disabled={!props.toneEnabled}>
+          {props.toneEnabled ? "Ton im Reminder testen" : "Ton deaktiviert"}
+        </button>
+      </form>
+    </div>
+  );
+}
