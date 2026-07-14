@@ -302,7 +302,7 @@ function getNextReminderCountdown(now: Date, config: AppConfig) {
   return (1440 - currentMinutes + firstSlot) % 1440 || 1440;
 }
 
-function playReminderTone() {
+async function playReminderTone() {
   const AudioContextClass =
     window.AudioContext ||
     (window as typeof window & { webkitAudioContext?: typeof AudioContext })
@@ -311,28 +311,48 @@ function playReminderTone() {
     return;
   }
 
-  const context = new AudioContextClass();
-  const gain = context.createGain();
-  gain.connect(context.destination);
-  gain.gain.setValueAtTime(0.0001, context.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.07, context.currentTime + 0.04);
-  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.55);
+    const context = new AudioContextClass();
+  if (context.state === "suspended") {
+    try {
+      await context.resume();
+    } catch {
+      // Some browsers still require a trusted user gesture; in that case we fall through.
+    }
+  }
 
-  const oscillator = context.createOscillator();
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(740, context.currentTime);
-  oscillator.connect(gain);
+  const master = context.createGain();
+  master.connect(context.destination);
+  master.gain.setValueAtTime(0.0001, context.currentTime);
+  master.gain.exponentialRampToValueAtTime(0.5, context.currentTime + 0.16);
 
-  const oscillator2 = context.createOscillator();
-  oscillator2.type = "triangle";
-  oscillator2.frequency.setValueAtTime(990, context.currentTime + 0.14);
-  oscillator2.connect(gain);
+  const notePlan = [
+    { offset: 0.0, frequency: 784, duration: 0.5, type: "sine" as const },
+    { offset: 0.6, frequency: 659, duration: 0.5, type: "sine" as const },
+    { offset: 1.1, frequency: 988, duration: 1, type: "triangle" as const },
+  ];
 
-  oscillator.start();
-  oscillator2.start(context.currentTime + 0.14);
-  oscillator.stop(context.currentTime + 0.45);
-  oscillator2.stop(context.currentTime + 0.58);
-  window.setTimeout(() => void context.close(), 700);
+    notePlan.forEach(({ offset, frequency, duration, type }, index) => {
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, context.currentTime + offset);
+				
+    oscillator.connect(noteGain);
+    noteGain.connect(master);
+    noteGain.gain.setValueAtTime(0.0001, context.currentTime + offset);
+    noteGain.gain.exponentialRampToValueAtTime(
+      index === 2 ? 0.18 : 0.12,
+      context.currentTime + offset + 0.045,
+    );
+    noteGain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      context.currentTime + offset + duration,
+    );
+    oscillator.start(context.currentTime + offset);
+    oscillator.stop(context.currentTime + offset + duration + 0.03);
+  });
+
+  window.setTimeout(() => void context.close(), 1600);
 }
 
 function formatValueLabel(value: number | null) {
@@ -420,7 +440,6 @@ export default function App() {
   const [evaluationTab, setEvaluationTab] = useState<AnalysisKey>("day");
   const [selectedDayIso, setSelectedDayIso] = useState("");
   const [showAllActivities, setShowAllActivities] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function refreshDashboard(activeRef = { active: true }) {
@@ -573,13 +592,6 @@ export default function App() {
       setNote("");
     } catch {
       setDashboardState("error");
-    }
-  }
-
-  function handlePreview() {
-    setPreviewOpen(true);
-    if (currentConfig.reminderToneEnabled) {
-      playReminderTone();
     }
   }
 
@@ -1225,7 +1237,7 @@ export default function App() {
           <section className="panel side-card config-card">
             <div className="side-card-title">Konfiguration & Intervalle</div>
 
-            <form className="config-form" onSubmit={handleConfigSubmit}>
+       <form className="config-form" onSubmit={handleConfigSubmit}>
               <div className="config-main-row">
                 <label className="config-switch config-switch--primary">
                   <div>
@@ -1338,13 +1350,6 @@ export default function App() {
               </label>
 
               <div className="preview-actions">
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={handlePreview}
-                >
-                  Vorschau
-                </button>
                 <button className="primary-btn primary-btn--wide" type="submit">
                   {configState === "saving"
                     ? "Speichert..."
@@ -1355,78 +1360,6 @@ export default function App() {
           </section>
         </aside>
       </div>
-
-      {previewOpen && (
-        <div
-          className="preview-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Vorschau"
-        >
-          <div className="preview-card">
-            <div className="preview-header">
-              <div>
-                <div className="eyebrow">Vorschau</div>
-                <h2>
-                  {currentConfig.showReminderDialog
-                    ? "Mit Dialog"
-                    : "Nur Ton aktiv."}
-                </h2>
-              </div>
-              <button
-                className="ghost-btn"
-                type="button"
-                onClick={() => setPreviewOpen(false)}
-              >
-                Schließen
-              </button>
-            </div>
-
-            <div className="preview-timestamp">
-              Zeitpunkt der letzten Erinnerung: {formatClockLabel(new Date())}
-            </div>
-
-            {currentConfig.showReminderDialog ? (
-              <div className="preview-dialog">
-                <strong>Zeit für einen kurzen Neustart.</strong>
-                <p>
-                  Steh kurz auf, lockere Schultern und Rücken oder geh ein paar
-                  Schritte. Ein kleiner Wechsel reicht oft schon, um den Kopf
-                  wieder frei zu bekommen.
-                </p>
-                <button
-                  className="inline-link"
-                  type="button"
-                  onClick={() =>
-                    currentConfig.reminderToneEnabled && playReminderTone()
-                  }
-                  disabled={!currentConfig.reminderToneEnabled}
-                >
-                  Ton abspielen
-                </button>
-              </div>
-            ) : (
-              <div className="preview-compact">
-                <strong>Nur Ton aktiv.</strong>
-                <p>
-                  Der Erinnerungsdialog ist ausgeblendet. Es wird nur der Ton
-                  abgespielt und der Zeitpunkt angezeigt.
-                </p>
-                <button
-                  className="inline-link"
-                  type="button"
-                  onClick={() =>
-                    currentConfig.reminderToneEnabled && playReminderTone()
-                  }
-                  disabled={!currentConfig.reminderToneEnabled}
-                >
-                  Ton abspielen
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
