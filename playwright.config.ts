@@ -3,9 +3,14 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: ".",
   testMatch: ["**/*.e2e.spec.ts"],
-  outputDir: "C:/Users/HeidiKlade/Documents/Codex/Bewegungserinnerung/test-results",
+  outputDir:
+    "C:/Users/HeidiKlade/Documents/Codex/Bewegungserinnerung/test-results",
   fullyParallel: false,
   retries: 0,
+  reporter: [
+    ["list"],
+    ["allure-playwright", { outputFolder: "allure-results" }],
+  ],
   use: {
     baseURL: "http://127.0.0.1:5173",
     channel: "chrome",
