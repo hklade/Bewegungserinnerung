@@ -3,7 +3,8 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 const apiBase = "http://127.0.0.1:3001/api";
-const defaultExportPath = "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv";
+const defaultExportPath =
+  "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv";
 
 const baseConfig = {
   hourlyReminderEnabled: true,
@@ -47,7 +48,10 @@ function buildCsv(rows: string[]) {
 }
 
 function readTestCsvFixture() {
-  return readFileSync("C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\Test-Bewegungsdaten.csv", "utf8");
+  return readFileSync(
+    "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\Test-Bewegungsdaten.csv",
+    "utf8",
+  );
 }
 
 async function seedConfig(request: any, exportPath: string, overrides = {}) {
@@ -68,7 +72,10 @@ test.afterEach(async ({ request }) => {
   await restoreDefaultConfig(request);
 });
 
-test("config card persists export path and dialog toggle", async ({ page, request }, testInfo) => {
+test("config card persists export path and dialog toggle", async ({
+  page,
+  request,
+}, testInfo) => {
   test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, exportPath, { showReminderDialog: false });
@@ -76,13 +83,17 @@ test("config card persists export path and dialog toggle", async ({ page, reques
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   await expect(page.locator(".config-card")).toBeVisible({ timeout: 15_000 });
-  await expect(
-    page.getByRole("textbox", { name: "Exportdatei:" }),
-  ).toHaveValue(exportPath);
-  await expect(page.locator(".hero-subtitle")).toContainText("Zeitpunkt der letzten Erinnerung:");
+  await expect(page.getByRole("textbox", { name: "Exportdatei:" })).toHaveValue(
+    exportPath,
+  );
+  await expect(page.locator(".hero-subtitle")).toContainText(
+    "Zeitpunkt der letzten Erinnerung:",
+  );
 
   await page.getByRole("button", { name: "Reminder" }).click();
-  await expect(page.getByRole("heading", { name: "Nur Ton aktiv." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Nur Ton aktiv." }),
+  ).toBeVisible();
 
   const enableResponse = await request.put(`${apiBase}/config`, {
     data: {
@@ -95,12 +106,18 @@ test("config card persists export path and dialog toggle", async ({ page, reques
 
   const configResponse = await request.get(`${apiBase}/config`);
   expect(configResponse.ok()).toBeTruthy();
-  const config = (await configResponse.json()) as { showReminderDialog: boolean; exportPath: string };
+  const config = (await configResponse.json()) as {
+    showReminderDialog: boolean;
+    exportPath: string;
+  };
   expect(config.showReminderDialog).toBeTruthy();
   expect(path.normalize(config.exportPath)).toBe(path.normalize(exportPath));
 });
 
-test("csv import replaces existing rows", async ({ page, request }, testInfo) => {
+test("csv import replaces existing rows", async ({
+  page,
+  request,
+}, testInfo) => {
   test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, exportPath, { showReminderDialog: true });
@@ -133,11 +150,18 @@ test("csv import replaces existing rows", async ({ page, request }, testInfo) =>
 
   await page.reload();
   await expect(page.locator(".activities-row")).toHaveCount(1);
-  await expect(page.locator(".activities-row strong")).toHaveText("Spaziergang");
-  await expect(page.locator(".activities-row strong").filter({ hasText: "Kniebeugen" })).toHaveCount(0);
+  await expect(page.locator(".activities-row strong")).toHaveText(
+    "Spaziergang",
+  );
+  await expect(
+    page.locator(".activities-row strong").filter({ hasText: "Kniebeugen" }),
+  ).toHaveCount(0);
 });
 
-test("quick entry saves a booking from the dashboard", async ({ page, request }, testInfo) => {
+test("quick entry saves a booking from the dashboard", async ({
+  page,
+  request,
+}, testInfo) => {
   test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   const now = new Date();
@@ -156,11 +180,41 @@ test("quick entry saves a booking from the dashboard", async ({ page, request },
   await heroPanel.getByRole("button", { name: "Eintrag speichern" }).click();
 
   await expect(
-    page.locator(".activities-row strong").filter({ hasText: "quick-entry-test" }),
+    page
+      .locator(".activities-row strong")
+      .filter({ hasText: "quick-entry-test" }),
   ).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator(".activities-row")).toHaveCount(2);
+  await expect(page.locator(".activities-row")).toHaveCount(3);
   await expect(
-    page.locator(".activities-row strong").filter({ hasText: "quick-entry-test" }),
+    page
+      .locator(".activities-row strong")
+      .filter({ hasText: "quick-entry-test" }),
   ).toHaveText("quick-entry-test");
   await expect(page.getByText("keine Aktivität eingetragen")).toBeVisible();
+});
+
+test("csv import via file dialog replaces existing rows", async ({
+  page,
+  request,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
+  await seedConfig(request, exportPath, { showReminderDialog: true });
+
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+
+  page.once("dialog", async (dialog) => {
+    expect(dialog.type()).toBe("confirm");
+    await dialog.accept();
+  });
+  await page.getByRole("button", { name: "CSV-Daten importieren" }).click();
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles(
+      "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\Test-Bewegungsdaten.csv",
+    );
+
+  await expect(page.locator(".activities-row")).toHaveCount(2);
+  await expect(page.getByText("Kniebeugen")).toBeVisible();
 });

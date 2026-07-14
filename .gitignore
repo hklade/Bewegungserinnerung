@@ -16,3 +16,5 @@ example.*
 
 # Playwright
 /playwright/.auth/
+node_modules/.vite/deps/_metadata.json
+export/*.csv

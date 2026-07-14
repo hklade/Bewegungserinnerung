@@ -403,8 +403,8 @@ function getTypeLabel(entry: ActivityItem) {
 export default function App() {
   const [tab, setTab] = useState<TabKey>("dashboard");
   const [analysisTab, setAnalysisTab] = useState<AnalysisKey>("day");
-  const [selectedScore, setSelectedScore] = useState<number>(3);
-  const [note, setNote] = useState("gedehnt");
+  const [selectedScore, setSelectedScore] = useState<number>(1);
+  const [note, setNote] = useState("Mustereintrag");
   const [now, setNow] = useState(() => new Date());
   const [dashboard, setDashboard] = useState<DashboardApi | null>(null);
   const [dashboardState, setDashboardState] = useState<
@@ -652,11 +652,17 @@ export default function App() {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      await refreshDashboard();
-      setImportState("idle");
+      try {
+        await refreshDashboard();
+      } catch {
+        // The import already succeeded; keep the UI usable even if the follow-up refresh fails.
+      }
     } catch {
       setImportState("error");
+      return;
     }
+
+    setImportState("idle");
   }
 
   async function handleExportCsv() {
@@ -1221,14 +1227,13 @@ export default function App() {
 
             <form className="config-form" onSubmit={handleConfigSubmit}>
               <div className="config-main-row">
-                  <label className="config-switch config-switch--primary">
-                    <div>
-                      <span>Stündlicher Reminder</span>
-                      <small>Erinnert jede Stunde im Intervall</small>
-                    </div>
-                    <span className="slider-track" aria-hidden="true">
-                      <span className="slider-thumb" />
-                    </span>
+                <label className="config-switch config-switch--primary">
+                  <div>
+                    <span>Stündlicher Reminder</span>
+                    <br />
+                    <small>Erinnert jede Stunde im Intervall</small>
+                  </div>
+                  <div>
                     <input
                       type="checkbox"
                       checked={editableConfig.hourlyReminderEnabled}
@@ -1239,131 +1244,113 @@ export default function App() {
                         }))
                       }
                     />
-                  </label>
-
-                  <label className="config-check-inline">
-                    <input
-                      type="checkbox"
-                      checked={editableConfig.weekdaysOnly}
-                      onChange={(event) =>
-                        setConfigForm((current) => ({
-                          ...(current ?? editableConfig),
-                          weekdaysOnly: event.target.checked,
-                        }))
-                      }
-                    />
-                    <span>Nur an Werktagen</span>
-                  </label>
-                </div>
-
-                <label className="config-switch config-switch--slider">
-                  <div>
-                    <span>Erinnerungsdialog anzeigen</span>
-                    <small>Zeigt zusätzlich zum Ton den Hinweistext an</small>
                   </div>
-                  <span className="slider-track" aria-hidden="true">
-                    <span className="slider-thumb" />
-                  </span>
+                </label>
+              </div>
+
+              <label className="config-switch config-switch--slider">
+                <input
+                  type="checkbox"
+                  checked={editableConfig.weekdaysOnly}
+                  onChange={(event) =>
+                    setConfigForm((current) => ({
+                      ...(current ?? editableConfig),
+                      weekdaysOnly: event.target.checked,
+                    }))
+                  }
+                />
+                <span>Nur an Werktagen</span>
+                <span className="slider-track" aria-hidden="true">
+                  <span className="slider-thumb" />
+                </span>
+              </label>
+
+              <label className="config-field">
+                <span>Exportdatei:</span>
+                <input
+                  type="text"
+                  value={editableConfig.exportPath}
+                  onChange={(event) =>
+                    setConfigForm((current) => ({
+                      ...(current ?? editableConfig),
+                      exportPath: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <div className="config-row">
+                <label className="config-field">
+                  <span>Startzeit</span>
                   <input
-                    type="checkbox"
-                    checked={editableConfig.showReminderDialog}
+                    type="text"
+                    value={editableConfig.reminderStartTime}
                     onChange={(event) =>
                       setConfigForm((current) => ({
                         ...(current ?? editableConfig),
-                        showReminderDialog: event.target.checked,
+                        reminderStartTime: event.target.value,
                       }))
                     }
                   />
                 </label>
 
                 <label className="config-field">
-                  <span>Exportdatei:</span>
+                  <span>Endzeit</span>
                   <input
                     type="text"
-                    value={editableConfig.exportPath}
+                    value={editableConfig.reminderEndTime}
                     onChange={(event) =>
                       setConfigForm((current) => ({
                         ...(current ?? editableConfig),
-                        exportPath: event.target.value,
+                        reminderEndTime: event.target.value,
                       }))
                     }
                   />
                 </label>
+              </div>
 
-                <div className="config-row">
-                  <label className="config-field">
-                    <span>Startzeit</span>
-                    <input
-                      type="text"
-                      value={editableConfig.reminderStartTime}
-                      onChange={(event) =>
-                        setConfigForm((current) => ({
-                          ...(current ?? editableConfig),
-                          reminderStartTime: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
-
-                  <label className="config-field">
-                    <span>Endzeit</span>
-                    <input
-                      type="text"
-                      value={editableConfig.reminderEndTime}
-                      onChange={(event) =>
-                        setConfigForm((current) => ({
-                          ...(current ?? editableConfig),
-                          reminderEndTime: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
+              <label className="config-switch config-switch--link">
+                <div>
+                  <span>Audio-Chime abspielen</span>
+                  <br />
+                  <small>Spielt akustischen Gong bei Alarm</small>
                 </div>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() =>
+                    currentConfig.reminderToneEnabled && playReminderTone()
+                  }
+                  disabled={!currentConfig.reminderToneEnabled}
+                >
+                  Jetzt testen
+                </button>
+                <input
+                  type="checkbox"
+                  checked={editableConfig.reminderToneEnabled}
+                  onChange={(event) =>
+                    setConfigForm((current) => ({
+                      ...(current ?? editableConfig),
+                      reminderToneEnabled: event.target.checked,
+                    }))
+                  }
+                />
+              </label>
 
-                <label className="config-switch config-switch--link">
-                  <div>
-                    <span>Audio-Chime abspielen</span>
-                    <small>Spielt akustischen Gong bei Alarm</small>
-                  </div>
-                  <button
-                    type="button"
-                    className="text-link"
-                    onClick={() =>
-                      currentConfig.reminderToneEnabled && playReminderTone()
-                    }
-                    disabled={!currentConfig.reminderToneEnabled}
-                  >
-                    Jetzt testen
-                  </button>
-                  <input
-                    type="checkbox"
-                    checked={editableConfig.reminderToneEnabled}
-                    onChange={(event) =>
-                      setConfigForm((current) => ({
-                        ...(current ?? editableConfig),
-                        reminderToneEnabled: event.target.checked,
-                      }))
-                    }
-                  />
-                </label>
-
-                <div className="preview-actions">
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    onClick={handlePreview}
-                  >
-                    Vorschau
-                  </button>
-                  <button
-                    className="primary-btn primary-btn--wide"
-                    type="submit"
-                  >
-                    {configState === "saving"
-                      ? "Speichert..."
-                      : "Einstellungen speichern"}
-                  </button>
-                </div>
+              <div className="preview-actions">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={handlePreview}
+                >
+                  Vorschau
+                </button>
+                <button className="primary-btn primary-btn--wide" type="submit">
+                  {configState === "saving"
+                    ? "Speichert..."
+                    : "Einstellungen speichern"}
+                </button>
+              </div>
             </form>
           </section>
         </aside>
