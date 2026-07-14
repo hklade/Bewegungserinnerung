@@ -179,6 +179,31 @@ function formatDate(value: string) {
   return `${day}.${month}.${year}`;
 }
 
+function normalizeDateKey(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  if (value.includes("-")) {
+    const [datePart] = value.split("T");
+    return datePart ?? value;
+  }
+
+  if (value.includes(".")) {
+    const [day = "", month = "", year = ""] = value.split(".");
+    if (day && month && year) {
+      return `${year.padStart(4, "20")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return formatLocalIsoDate(parsed);
+  }
+
+  return value;
+}
+
 function formatCalendarDate(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -193,6 +218,13 @@ function getWeekdayIndex(date: Date) {
 function formatCurrentDay(date: Date) {
   const weekday = weekdayNames[getWeekdayIndex(date)];
   return `${weekday}, ${formatCalendarDate(date)}`;
+}
+
+function formatLocalIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function parseTimeToMinutes(value: string) {
@@ -316,6 +348,24 @@ function getNextReminderCountdown(now: Date, config: AppConfig) {
   return (1440 - currentMinutes + firstSlot) % 1440 || 1440;
 }
 
+function getCurrentReminderSlot(now: Date, config: AppConfig) {
+  if (!config.hourlyReminderEnabled) {
+    return null;
+  }
+
+  if (config.weekdaysOnly && (now.getDay() === 0 || now.getDay() === 6)) {
+    return null;
+  }
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  return (
+    buildReminderSlots(config).find((slot) => {
+      const slotMinutes = parseTimeToMinutes(slot);
+      return slotMinutes !== null && slotMinutes === currentMinutes;
+    }) ?? null
+  );
+}
+
 async function playReminderTone() {
   const AudioContextClass =
     window.AudioContext ||
@@ -403,13 +453,18 @@ function isMissedReminderEntry(entry: ActivityItem) {
 }
 
 function getDayLabel(dateIso: string) {
-  const weekday =
-    weekdayNames[getWeekdayIndex(new Date(`${dateIso}T12:00:00`))];
+  const weekday = weekdayNames[getWeekdayIndex(new Date(`${dateIso}T12:00:00`))];
   return `${weekday}, ${formatDate(dateIso)}`;
 }
 
 function getEntryTime(entry: ActivityItem) {
-  return entry.time || entry.plannedTime || "--:--";
+  return (
+    entry.time ||
+    entry.plannedTime ||
+    (entry as ActivityItem & { responseTime?: string }).responseTime ||
+    (entry as ActivityItem & { reminderTime?: string }).reminderTime ||
+    "--:--"
+  );
 }
 
 function getEntryHour(entry: ActivityItem) {
@@ -427,9 +482,7 @@ function buildHourlyBars(entries: ActivityItem[]) {
 
   [...entries]
     .filter((entry) => entry.value !== null || entry.entryType === "unanswered")
-    .sort((left, right) =>
-      getEntryTime(left).localeCompare(getEntryTime(right)),
-    )
+    .sort((left, right) => getEntryTime(left).localeCompare(getEntryTime(right)))
     .forEach((entry) => {
       const hour = getEntryHour(entry);
       const current = groups.get(hour) ?? [];
@@ -525,7 +578,13 @@ export default function App() {
   const [evaluationTab, setEvaluationTab] = useState<AnalysisKey>("day");
   const [selectedDayIso, setSelectedDayIso] = useState("");
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [reminderPopup, setReminderPopup] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const reminderPopupTimerRef = useRef<number | null>(null);
+  const lastAutoReminderRef = useRef<string | null>(null);
 
   async function refreshDashboard(activeRef = { active: true }) {
     try {
@@ -589,6 +648,65 @@ export default function App() {
   }, []);
 
   const currentConfig = configForm ?? dashboard?.config ?? defaultConfig;
+
+  useEffect(() => {
+    if (!currentConfig.hourlyReminderEnabled || dashboardState !== "ready") {
+      setReminderPopup(null);
+      return;
+    }
+
+    const triggerReminderCheck = async () => {
+      const currentNow = new Date();
+      const reminderSlot = getCurrentReminderSlot(currentNow, currentConfig);
+      if (!reminderSlot) {
+        return;
+      }
+
+      const reminderKey = `${formatLocalIsoDate(currentNow)}-${reminderSlot}`;
+      if (lastAutoReminderRef.current === reminderKey) {
+        return;
+      }
+
+      lastAutoReminderRef.current = reminderKey;
+
+      const popup =
+        currentConfig.showReminderDialog
+          ? {
+              title: "Bewegungserinnerung",
+              message: `Erinnerung um ${reminderSlot}: Zeit für einen kurzen Neustart.`,
+            }
+          : {
+              title: "Ton abgespielt",
+              message: `Erinnerung um ${reminderSlot} ausgelöst.`,
+            };
+
+      setReminderPopup(popup);
+      if (reminderPopupTimerRef.current !== null) {
+        window.clearTimeout(reminderPopupTimerRef.current);
+      }
+      reminderPopupTimerRef.current = window.setTimeout(() => {
+        setReminderPopup(null);
+      }, 4500);
+
+      if (currentConfig.reminderToneEnabled) {
+        await playReminderTone();
+      }
+    };
+
+    void triggerReminderCheck();
+    const interval = window.setInterval(() => {
+      void triggerReminderCheck();
+    }, 15_000);
+
+    return () => {
+      window.clearInterval(interval);
+      if (reminderPopupTimerRef.current !== null) {
+        window.clearTimeout(reminderPopupTimerRef.current);
+        reminderPopupTimerRef.current = null;
+      }
+    };
+  }, [currentConfig, dashboardState]);
+
   const currentDayLabel = useMemo(() => formatCurrentDay(now), [now]);
   const nextReminderTime = useMemo(
     () => getNextReminderTime(now, currentConfig),
@@ -609,11 +727,11 @@ export default function App() {
   const availableDayOptions = useMemo<DayOption[]>(() => {
     const dates = new Set<string>();
     if (dashboard?.today.todayIso) {
-      dates.add(dashboard.today.todayIso);
+      dates.add(normalizeDateKey(dashboard.today.todayIso));
     }
 
     activities.forEach((item) => {
-      dates.add(item.date);
+      dates.add(normalizeDateKey(item.date));
     });
 
     return [...dates]
@@ -628,7 +746,7 @@ export default function App() {
   const visibleDayOptions = availableDayOptions.slice(2);
   const activeDayIso = selectedDayIso || dashboard?.today.todayIso || "";
   const selectedDayEntries = activities.filter(
-    (item) => item.date === activeDayIso,
+    (item) => normalizeDateKey(item.date) === normalizeDateKey(activeDayIso),
   );
   const selectedDayOption =
     availableDayOptions.find((item) => item.date === activeDayIso) ?? null;
@@ -985,6 +1103,24 @@ export default function App() {
                       </div>
                     </div>
 
+                    <div className="day-selector">
+                      {visibleDayOptions.map((item) => (
+                        <button
+                          key={item.date}
+                          type="button"
+                          className={
+                            item.date === activeDayIso
+                              ? "day-chip active"
+                              : "day-chip"
+                          }
+                          onClick={() => setSelectedDayIso(item.date)}
+                        >
+                          <span>{item.label.slice(0, 2)}</span>
+                          <strong>{item.shortLabel}</strong>
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="stat-grid">
                       <StatCard
                         label="Bewegungen"
@@ -1014,8 +1150,7 @@ export default function App() {
                             <i className="legend-dot green" /> Ø pro Stunde
                           </span>
                           <span>
-                            <i className="legend-dot blue" /> Farbe = höchste
-                            Bewertung
+                            <i className="legend-dot blue" /> Farbe = höchste Bewertung
                           </span>
                         </div>
                       </div>
@@ -1024,9 +1159,7 @@ export default function App() {
                         <div className="hourly-bars">
                           {selectedDayHourlyBars.map((item) => (
                             <div key={item.hour} className="hourly-bar-row">
-                              <div className="hourly-bar-label">
-                                {item.hour}
-                              </div>
+                              <div className="hourly-bar-label">{item.hour}</div>
                               <div className="hourly-bar-track">
                                 <div
                                   className={`hourly-bar-fill tone-${item.tone}`}
@@ -1034,16 +1167,12 @@ export default function App() {
                                     height: `${24 + Math.round((item.averageValue ?? 0) * 18)}px`,
                                   }}
                                 >
-                                  <span>
-                                    {formatValueLabel(item.averageValue)}
-                                  </span>
+                                  <span>{formatValueLabel(item.averageValue)}</span>
                                 </div>
                               </div>
                               <div className="hourly-bar-meta">
                                 <strong>{item.count}</strong>
-                                <span>
-                                  {item.count === 1 ? "Eintrag" : "Einträge"}
-                                </span>
+                                <span>{item.count === 1 ? "Eintrag" : "Einträge"}</span>
                               </div>
                             </div>
                           ))}
@@ -1493,6 +1622,12 @@ export default function App() {
           </section>
         </aside>
       </div>
+      {reminderPopup && (
+        <div className="reminder-toast" role="status" aria-live="polite">
+          <strong>{reminderPopup.title}</strong>
+          <span>{reminderPopup.message}</span>
+        </div>
+      )}
     </div>
   );
 }
