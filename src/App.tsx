@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 
 type TabKey = "dashboard" | "reminder" | "day" | "week";
 type AnalysisKey = "day" | "week";
@@ -355,6 +355,7 @@ export default function App() {
   const [evaluationTab, setEvaluationTab] = useState<AnalysisKey>("day");
   const [selectedDayIso, setSelectedDayIso] = useState("");
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function refreshDashboard(activeRef = { active: true }) {
     try {
@@ -519,9 +520,25 @@ export default function App() {
     }
   }
 
-  async function handleImportConfigured() {
+  function openImportDialog() {
+    importFileInputRef.current?.click();
+  }
+
+  async function handleImportFileSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      window.alert("Bitte eine CSV-Datei auswählen.");
+      return;
+    }
+
     const confirmed = window.confirm(
-      `Achtung: Beim Import werden alle aktuellen Daten gelöscht und durch die CSV-Datei unter dem konfigurierten Pfad ersetzt.\n\nPfad: ${currentConfig.exportPath}\n\nFortfahren?`,
+      `Achtung: Beim Import werden alle aktuellen Daten gelöscht und durch die ausgewählte CSV-Datei ersetzt.\n\nDatei: ${file.name}\n\nFortfahren?`,
     );
     if (!confirmed) {
       return;
@@ -529,8 +546,12 @@ export default function App() {
 
     setImportState("importing");
     try {
-      const response = await fetch(`${apiBase}/bookings/import-configured`, {
+      const response = await fetch(`${apiBase}/bookings/import`, {
         method: "POST",
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+        },
+        body: await file.text(),
       });
 
       if (!response.ok) {
@@ -762,9 +783,16 @@ export default function App() {
                   <button className="secondary-btn" type="button" onClick={handleExportCsv}>
                     CSV-Daten exportieren
                   </button>
-                  <button className="secondary-btn warning" type="button" onClick={handleImportConfigured} disabled={importState === "importing"}>
+                  <button className="secondary-btn warning" type="button" onClick={openImportDialog} disabled={importState === "importing"}>
                     {importState === "importing" ? "Import läuft..." : "CSV-Daten importieren"}
                   </button>
+                  <input
+                    ref={importFileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={handleImportFileSelected}
+                    style={{ display: "none" }}
+                  />
                 </div>
               </section>
             </>
