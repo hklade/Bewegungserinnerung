@@ -110,23 +110,42 @@ type TodayDistributionItem = {
 };
 
 const apiBase = "/api";
-const weekdayNames = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"] as const;
+const weekdayNames = [
+  "Montag",
+  "Dienstag",
+  "Mittwoch",
+  "Donnerstag",
+  "Freitag",
+  "Samstag",
+  "Sonntag",
+] as const;
 const defaultConfig: AppConfig = {
   hourlyReminderEnabled: true,
   showReminderDialog: true,
   reminderStartTime: "07:55",
   reminderEndTime: "16:55",
   weekdaysOnly: true,
-  exportPath: "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv",
+  exportPath:
+    "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv",
   reminderToneEnabled: true,
 };
 
 const scale = [
   { value: 0, title: "Keine Pause", desc: "sitzen geblieben", tone: "red" },
   { value: 1, title: "Mini-Pause", desc: "kurz innegehalten", tone: "ochre" },
-  { value: 2, title: "Leichte Aktivität", desc: "Bürotätigkeit", tone: "orange" },
+  {
+    value: 2,
+    title: "Leichte Aktivität",
+    desc: "Bürotätigkeit",
+    tone: "orange",
+  },
   { value: 3, title: "Bewegung", desc: "gehen / dehnen", tone: "blue" },
-  { value: 4, title: "Aktive Pause", desc: "Spaziergang / Übungen", tone: "green" },
+  {
+    value: 4,
+    title: "Aktive Pause",
+    desc: "Spaziergang / Übungen",
+    tone: "green",
+  },
 ] as const;
 
 const toneByValue = {
@@ -183,7 +202,18 @@ function buildReminderSlots(config: AppConfig) {
   const end = parseTimeToMinutes(config.reminderEndTime);
 
   if (start === null || end === null || end < start) {
-    return ["07:55", "08:55", "09:55", "10:55", "11:55", "12:55", "13:55", "14:55", "15:55", "16:55"];
+    return [
+      "07:55",
+      "08:55",
+      "09:55",
+      "10:55",
+      "11:55",
+      "12:55",
+      "13:55",
+      "14:55",
+      "15:55",
+      "16:55",
+    ];
   }
 
   const slots: string[] = [];
@@ -227,13 +257,21 @@ function getNextReminderCountdown(now: Date, config: AppConfig) {
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const currentDay = now.getDay();
-  const dayOffsetStart = config.weekdaysOnly && currentDay >= 5 ? 7 - currentDay : 0;
+  const dayOffsetStart =
+    config.weekdaysOnly && currentDay >= 5 ? 7 - currentDay : 0;
 
-  for (let dayOffset = dayOffsetStart; dayOffset < dayOffsetStart + 8; dayOffset += 1) {
+  for (
+    let dayOffset = dayOffsetStart;
+    dayOffset < dayOffsetStart + 8;
+    dayOffset += 1
+  ) {
     const targetDay = new Date(now);
     targetDay.setDate(now.getDate() + dayOffset);
 
-    if (config.weekdaysOnly && (targetDay.getDay() === 0 || targetDay.getDay() === 6)) {
+    if (
+      config.weekdaysOnly &&
+      (targetDay.getDay() === 0 || targetDay.getDay() === 6)
+    ) {
       continue;
     }
 
@@ -247,7 +285,11 @@ function getNextReminderCountdown(now: Date, config: AppConfig) {
         continue;
       }
 
-      const totalMinutes = dayOffset * 1440 + (dayOffset === 0 ? slotMinutes - currentMinutes : 1440 - currentMinutes + slotMinutes);
+      const totalMinutes =
+        dayOffset * 1440 +
+        (dayOffset === 0
+          ? slotMinutes - currentMinutes
+          : 1440 - currentMinutes + slotMinutes);
       return totalMinutes;
     }
   }
@@ -257,11 +299,14 @@ function getNextReminderCountdown(now: Date, config: AppConfig) {
     return null;
   }
 
-  return ((1440 - currentMinutes + firstSlot) % 1440) || 1440;
+  return (1440 - currentMinutes + firstSlot) % 1440 || 1440;
 }
 
 function playReminderTone() {
-  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
   if (!AudioContextClass) {
     return;
   }
@@ -312,16 +357,30 @@ function toneClassByValue(value: number | null) {
 
 function buildDaySummary(entries: ActivityItem[]): DaySummary {
   const answeredEntries = entries.filter((entry) => entry.value !== null);
-  const delayEntries = entries.filter((entry) => Number.isFinite(entry.delayMinutes));
+  const delayEntries = entries.filter((entry) =>
+    Number.isFinite(entry.delayMinutes),
+  );
 
   return {
     total: entries.length,
     answered: answeredEntries.length,
     unanswered: entries.filter((entry) => entry.value === null).length,
-    planned: entries.filter((entry) => entry.entryType === "planned_break_response").length,
+    planned: entries.filter(
+      (entry) => entry.entryType === "planned_break_response",
+    ).length,
     additional: entries.filter((entry) => entry.isAdditionalBreak).length,
-    averageValue: answeredEntries.length > 0 ? answeredEntries.reduce((sum, entry) => sum + Number(entry.value), 0) / answeredEntries.length : null,
-    averageDelayMinutes: delayEntries.length > 0 ? delayEntries.reduce((sum, entry) => sum + Number(entry.delayMinutes || 0), 0) / delayEntries.length : null,
+    averageValue:
+      answeredEntries.length > 0
+        ? answeredEntries.reduce((sum, entry) => sum + Number(entry.value), 0) /
+          answeredEntries.length
+        : null,
+    averageDelayMinutes:
+      delayEntries.length > 0
+        ? delayEntries.reduce(
+            (sum, entry) => sum + Number(entry.delayMinutes || 0),
+            0,
+          ) / delayEntries.length
+        : null,
   };
 }
 
@@ -348,13 +407,20 @@ export default function App() {
   const [note, setNote] = useState("gedehnt");
   const [now, setNow] = useState(() => new Date());
   const [dashboard, setDashboard] = useState<DashboardApi | null>(null);
-  const [dashboardState, setDashboardState] = useState<"loading" | "ready" | "error">("loading");
+  const [dashboardState, setDashboardState] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
   const [configForm, setConfigForm] = useState<AppConfig | null>(null);
-  const [configState, setConfigState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [importState, setImportState] = useState<"idle" | "importing" | "error">("idle");
+  const [configState, setConfigState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [importState, setImportState] = useState<
+    "idle" | "importing" | "error"
+  >("idle");
   const [evaluationTab, setEvaluationTab] = useState<AnalysisKey>("day");
   const [selectedDayIso, setSelectedDayIso] = useState("");
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function refreshDashboard(activeRef = { active: true }) {
@@ -412,19 +478,33 @@ export default function App() {
 
   const currentConfig = configForm ?? dashboard?.config ?? defaultConfig;
   const currentDayLabel = useMemo(() => formatCurrentDay(now), [now]);
-  const nextReminderTime = useMemo(() => getNextReminderTime(now, currentConfig), [currentConfig, now]);
-  const nextReminderCountdown = useMemo(() => getNextReminderCountdown(now, currentConfig), [currentConfig, now]);
+  const nextReminderTime = useMemo(
+    () => getNextReminderTime(now, currentConfig),
+    [currentConfig, now],
+  );
+  const nextReminderCountdown = useMemo(
+    () => getNextReminderCountdown(now, currentConfig),
+    [currentConfig, now],
+  );
   const reminderHeadline = dashboard?.today.reminderHeadline ?? "--:--";
   const reminderTime = dashboard?.today.reminderTime ?? reminderHeadline;
   const bookingTotal = dashboard?.total ?? 0;
   const activities = dashboard?.activities ?? [];
-  const latestActivities = showAllActivities ? activities : activities.slice(0, 5);
+  const latestActivities = showAllActivities
+    ? activities
+    : activities.slice(0, 5);
   const hasMoreActivities = activities.length > latestActivities.length;
   const activeDayIso = selectedDayIso || dashboard?.today.todayIso || "";
-  const selectedDayEntries = activities.filter((item) => item.date === activeDayIso);
+  const selectedDayEntries = activities.filter(
+    (item) => item.date === activeDayIso,
+  );
   const selectedDayEntriesChronological = [...selectedDayEntries].reverse();
-  const selectedDayWeekItem = dashboard?.currentWeek.find((item) => item.date === activeDayIso) ?? null;
-  const selectedDaySummary = useMemo(() => buildDaySummary(selectedDayEntries), [selectedDayEntries]);
+  const selectedDayWeekItem =
+    dashboard?.currentWeek.find((item) => item.date === activeDayIso) ?? null;
+  const selectedDaySummary = useMemo(
+    () => buildDaySummary(selectedDayEntries),
+    [selectedDayEntries],
+  );
   const todaySummary = dashboard?.today.summary;
   const summaryLine = `${selectedScore} - ${note || "Kurznotiz"}`;
   const latestSummary = dashboard?.latestBookings[0]
@@ -435,7 +515,9 @@ export default function App() {
     ? `Zuletzt gespeichert: ${latestSummary}`
     : `Zeitpunkt der letzten Erinnerung: ${reminderTime}`;
   const reminderToneEnabled = currentConfig.reminderToneEnabled;
-  const countdownLabel = nextReminderCountdown === null ? "aus" : `${nextReminderCountdown} Min`;
+  const countdownLabel =
+    nextReminderCountdown === null ? "aus" : `${nextReminderCountdown} Min`;
+  const editableConfig = configForm ?? dashboard?.config ?? defaultConfig;
 
   const selectedDayDistribution = useMemo(() => {
     const source = [0, 1, 2, 3, 4].map((value) => ({
@@ -456,14 +538,18 @@ export default function App() {
     }) satisfies TodayDistributionItem[];
   }, [selectedDayEntries]);
 
-  const maxTodayWidth = Math.max(1, ...selectedDayDistribution.map((item) => item.width));
+  const maxTodayWidth = Math.max(
+    1,
+    ...selectedDayDistribution.map((item) => item.width),
+  );
 
   async function handleQuickSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     try {
       const trimmedNote = note.trim();
-      const fallbackDescription = scale.find((item) => item.value === selectedScore)?.title ?? "Eintrag";
+      const fallbackDescription =
+        scale.find((item) => item.value === selectedScore)?.title ?? "Eintrag";
       const response = await fetch(`${apiBase}/bookings`, {
         method: "POST",
         headers: {
@@ -473,7 +559,9 @@ export default function App() {
           value: selectedScore,
           description: trimmedNote || fallbackDescription,
           note: trimmedNote || fallbackDescription,
-          entryType: reminderHeadline.includes("Zusatzbewegung") ? "additional_break" : "planned_break_response",
+          entryType: reminderHeadline.includes("Zusatzbewegung")
+            ? "additional_break"
+            : "planned_break_response",
         }),
       });
 
@@ -488,11 +576,15 @@ export default function App() {
     }
   }
 
+  function handlePreview() {
+    setPreviewOpen(true);
+    if (currentConfig.reminderToneEnabled) {
+      playReminderTone();
+    }
+  }
+
   async function handleConfigSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!configForm) {
-      return;
-    }
 
     setConfigState("saving");
     try {
@@ -501,7 +593,7 @@ export default function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(configForm),
+        body: JSON.stringify(editableConfig),
       });
 
       if (!response.ok) {
@@ -524,7 +616,9 @@ export default function App() {
     importFileInputRef.current?.click();
   }
 
-  async function handleImportFileSelected(event: ChangeEvent<HTMLInputElement>) {
+  async function handleImportFileSelected(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
     const file = event.target.files?.[0] ?? null;
     event.target.value = "";
 
@@ -600,7 +694,10 @@ export default function App() {
       <header className="app-header panel">
         <div className="brand-block">
           <div className="brand-icon" aria-hidden="true">
-            <img src="/public/icons8-hyperaktiver-hauttyp-2-48.png" alt="Bewegungserinnerung" />
+            <img
+              src="/public/icons8-hyperaktiver-hauttyp-2-48.png"
+              alt="Bewegungserinnerung"
+            />
           </div>
           <div>
             <div className="brand-title">Bewegungserinnerung</div>
@@ -610,7 +707,12 @@ export default function App() {
 
         <div className="header-clock">
           <div className="header-clock-label">{currentDayLabel}</div>
-          <div className="header-clock-time">{now.toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" })}</div>
+          <div className="header-clock-time">
+            {now.toLocaleTimeString("de-AT", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
         </div>
       </header>
 
@@ -635,9 +737,17 @@ export default function App() {
                 <div className="panel-heading">
                   <div>
                     <div className="eyebrow">Schnelleingabe</div>
-                    <div className="hero-subtitle">Zeitpunkt der letzten Erinnerung: {reminderTime}</div>
+                    <div className="hero-subtitle">
+                      Zeitpunkt der letzten Erinnerung: {reminderTime}
+                    </div>
                   </div>
-                  <div className="status-pill">{dashboardState === "ready" ? "bereit" : dashboardState === "error" ? "Fehler" : "lädt"}</div>
+                  <div className="status-pill">
+                    {dashboardState === "ready"
+                      ? "bereit"
+                      : dashboardState === "error"
+                        ? "Fehler"
+                        : "lädt"}
+                  </div>
                 </div>
 
                 <form className="quick-entry" onSubmit={handleQuickSubmit}>
@@ -647,7 +757,11 @@ export default function App() {
                       <button
                         key={item.value}
                         type="button"
-                        className={item.value === selectedScore ? `score-card selected tone-${item.tone}` : `score-card tone-${item.tone}`}
+                        className={
+                          item.value === selectedScore
+                            ? `score-card selected tone-${item.tone}`
+                            : `score-card tone-${item.tone}`
+                        }
                         onClick={() => setSelectedScore(item.value)}
                       >
                         <div className="score-number">{item.value}</div>
@@ -659,10 +773,17 @@ export default function App() {
 
                   <label className="entry-field">
                     <span>Aktivität</span>
-                    <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Was hast du gemacht?" />
+                    <input
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder="Was hast du gemacht?"
+                    />
                   </label>
 
-                  <button className="primary-btn primary-btn--compact" type="submit">
+                  <button
+                    className="primary-btn primary-btn--compact"
+                    type="submit"
+                  >
                     Eintrag speichern
                   </button>
                 </form>
@@ -672,10 +793,22 @@ export default function App() {
                 <div className="panel-heading">
                   <div className="eyebrow">Aktivitätsauswertung</div>
                   <div className="segmented">
-                    <button type="button" className={evaluationTab === "day" ? "segment active" : "segment"} onClick={() => setEvaluationTab("day")}>
+                    <button
+                      type="button"
+                      className={
+                        evaluationTab === "day" ? "segment active" : "segment"
+                      }
+                      onClick={() => setEvaluationTab("day")}
+                    >
                       Tagesauswertung
                     </button>
-                    <button type="button" className={evaluationTab === "week" ? "segment active" : "segment"} onClick={() => setEvaluationTab("week")}>
+                    <button
+                      type="button"
+                      className={
+                        evaluationTab === "week" ? "segment active" : "segment"
+                      }
+                      onClick={() => setEvaluationTab("week")}
+                    >
                       Wochen-Heatmap
                     </button>
                   </div>
@@ -687,7 +820,11 @@ export default function App() {
                       <div className="day-picker">
                         <span>{selectedDayWeekItem?.day ?? "Tag wählen"}</span>
                       </div>
-                      <div className="day-date">{selectedDayIso ? formatDate(selectedDayIso) : currentDayLabel}</div>
+                      <div className="day-date">
+                        {selectedDayIso
+                          ? formatDate(selectedDayIso)
+                          : currentDayLabel}
+                      </div>
                     </div>
 
                     <div className="day-selector">
@@ -695,7 +832,11 @@ export default function App() {
                         <button
                           key={item.date}
                           type="button"
-                          className={item.date === activeDayIso ? "day-chip active" : "day-chip"}
+                          className={
+                            item.date === activeDayIso
+                              ? "day-chip active"
+                              : "day-chip"
+                          }
                           onClick={() => setSelectedDayIso(item.date)}
                         >
                           <span>{item.day.slice(0, 2)}</span>
@@ -705,17 +846,36 @@ export default function App() {
                     </div>
 
                     <div className="stat-grid">
-                      <StatCard label="Bewegungen" value={String(selectedDaySummary.answered)} note={`${selectedDaySummary.planned} geplant · ${selectedDaySummary.additional} extra`} tone="green" />
-                      <StatCard label="Verpasste Erinnerungen" value={String(selectedDaySummary.unanswered)} note="Nicht wahrgenommen" tone="red" />
-                      <StatCard label="Verzögerung" value={`${Math.round(selectedDaySummary.averageDelayMinutes ?? 0)} Min.`} note="Reaktionszeit nach Alarm" tone="orange" />
+                      <StatCard
+                        label="Bewegungen"
+                        value={String(selectedDaySummary.answered)}
+                        note={`${selectedDaySummary.planned} geplant · ${selectedDaySummary.additional} extra`}
+                        tone="green"
+                      />
+                      <StatCard
+                        label="Verpasste Erinnerungen"
+                        value={String(selectedDaySummary.unanswered)}
+                        note="Nicht wahrgenommen"
+                        tone="red"
+                      />
+                      <StatCard
+                        label="Verzögerung"
+                        value={`${Math.round(selectedDaySummary.averageDelayMinutes ?? 0)} Min.`}
+                        note="Reaktionszeit nach Alarm"
+                        tone="orange"
+                      />
                     </div>
 
                     <div className="chart-card">
                       <div className="chart-head">
                         <div>Aktivitäts-Skala chronologisch</div>
                         <div className="legend">
-                          <span><i className="legend-dot green" /> Geplant</span>
-                          <span><i className="legend-dot blue" /> Zusatz-Pause</span>
+                          <span>
+                            <i className="legend-dot green" /> Geplant
+                          </span>
+                          <span>
+                            <i className="legend-dot blue" /> Zusatz-Pause
+                          </span>
                         </div>
                       </div>
 
@@ -723,7 +883,12 @@ export default function App() {
                         <div className="timeline-bars">
                           {selectedDayEntriesChronological.map((item) => (
                             <div key={item.id} className="timeline-bar-row">
-                              <div className={`timeline-bar tone-${toneClassByValue(item.value)}`} style={{ height: `${20 + (item.value ?? 0) * 18}px` }}>
+                              <div
+                                className={`timeline-bar tone-${toneClassByValue(item.value)}`}
+                                style={{
+                                  height: `${20 + (item.value ?? 0) * 18}px`,
+                                }}
+                              >
                                 <span>{formatValueLabel(item.value)}</span>
                               </div>
                               <div className="timeline-time">{item.time}</div>
@@ -731,7 +896,10 @@ export default function App() {
                           ))}
                         </div>
                       ) : (
-                        <div className="empty-state">Für den gewählten Tag sind noch keine Einträge vorhanden.</div>
+                        <div className="empty-state">
+                          Für den gewählten Tag sind noch keine Einträge
+                          vorhanden.
+                        </div>
                       )}
                     </div>
                   </div>
@@ -743,7 +911,9 @@ export default function App() {
               <section className="panel activities-panel">
                 <div className="panel-heading">
                   <div className="eyebrow">Letzte Aktivitäten</div>
-                  <div className="status-pill">{latestActivities.length} Zeilen</div>
+                  <div className="status-pill">
+                    {latestActivities.length} Zeilen
+                  </div>
                 </div>
 
                 <div className="activities-table">
@@ -760,31 +930,64 @@ export default function App() {
                     <div className="activities-row" key={item.id}>
                       <span>{formatDate(item.date)}</span>
                       <span>{item.plannedTime}</span>
-                      <span>{item.delayMinutes ? `${item.delayMinutes} Min` : "—"}</span>
-                      <span><span className={`scale-pill tone-${toneClassByValue(item.value)}`}>{formatValueLabel(item.value)}/4</span></span>
+                      <span>
+                        {item.delayMinutes ? `${item.delayMinutes} Min` : "—"}
+                      </span>
+                      <span>
+                        <span
+                          className={`scale-pill tone-${toneClassByValue(item.value)}`}
+                        >
+                          {formatValueLabel(item.value)}/4
+                        </span>
+                      </span>
                       <span>
                         <strong>{item.description}</strong>
                         <small>{item.note}</small>
                       </span>
-                      <span><span className={`type-pill ${item.isAdditionalBreak ? "accent" : "soft"}`}>{getTypeLabel(item)}</span></span>
+                      <span>
+                        <span
+                          className={`type-pill ${item.isAdditionalBreak ? "accent" : "soft"}`}
+                        >
+                          {getTypeLabel(item)}
+                        </span>
+                      </span>
                     </div>
                   ))}
                 </div>
 
                 {hasMoreActivities && (
                   <div className="activity-more">
-                    <button className="secondary-btn" type="button" onClick={() => setShowAllActivities((current) => !current)}>
-                      {showAllActivities ? "Weniger anzeigen" : "Weitere anzeigen"}
+                    <button
+                      className="secondary-btn"
+                      type="button"
+                      onClick={() =>
+                        setShowAllActivities((current) => !current)
+                      }
+                    >
+                      {showAllActivities
+                        ? "Weniger anzeigen"
+                        : "Weitere anzeigen"}
                     </button>
                   </div>
                 )}
 
                 <div className="activity-footer">
-                  <button className="secondary-btn" type="button" onClick={handleExportCsv}>
+                  <button
+                    className="secondary-btn"
+                    type="button"
+                    onClick={handleExportCsv}
+                  >
                     CSV-Daten exportieren
                   </button>
-                  <button className="secondary-btn warning" type="button" onClick={openImportDialog} disabled={importState === "importing"}>
-                    {importState === "importing" ? "Import läuft..." : "CSV-Daten importieren"}
+                  <button
+                    className="secondary-btn warning"
+                    type="button"
+                    onClick={openImportDialog}
+                    disabled={importState === "importing"}
+                  >
+                    {importState === "importing"
+                      ? "Import läuft..."
+                      : "CSV-Daten importieren"}
                   </button>
                   <input
                     ref={importFileInputRef}
@@ -810,7 +1013,13 @@ export default function App() {
                         : "Nur Ton aktiv, Dialog ausgeblendet."}
                     </div>
                   </div>
-                  <div className="status-pill">{dashboardState === "ready" ? "bereit" : dashboardState === "error" ? "Fehler" : "lädt"}</div>
+                  <div className="status-pill">
+                    {dashboardState === "ready"
+                      ? "bereit"
+                      : dashboardState === "error"
+                        ? "Fehler"
+                        : "lädt"}
+                  </div>
                 </div>
 
                 <div className="reminder-layout">
@@ -821,8 +1030,17 @@ export default function App() {
                       <>
                         <h3>Zeit für einen kurzen Neustart.</h3>
                         <p>
-                          Steh kurz auf, lockere Schultern und Rücken oder geh ein paar Schritte. Ein kleiner Wechsel reicht oft schon, um den Kopf wieder frei zu bekommen.{" "}
-                          <button className="inline-link" type="button" onClick={() => reminderToneEnabled && playReminderTone()} disabled={!reminderToneEnabled}>
+                          Steh kurz auf, lockere Schultern und Rücken oder geh
+                          ein paar Schritte. Ein kleiner Wechsel reicht oft
+                          schon, um den Kopf wieder frei zu bekommen.{" "}
+                          <button
+                            className="inline-link"
+                            type="button"
+                            onClick={() =>
+                              reminderToneEnabled && playReminderTone()
+                            }
+                            disabled={!reminderToneEnabled}
+                          >
                             Ton abspielen
                           </button>
                         </p>
@@ -831,8 +1049,17 @@ export default function App() {
                       <>
                         <h3>Nur Ton aktiv.</h3>
                         <p>
-                          Der Erinnerungsdialog ist ausgeblendet. Es wird nur der Ton abgespielt und die Schnelleingabe arbeitet mit dem Zeitpunkt der letzten Erinnerung.{" "}
-                          <button className="inline-link" type="button" onClick={() => reminderToneEnabled && playReminderTone()} disabled={!reminderToneEnabled}>
+                          Der Erinnerungsdialog ist ausgeblendet. Es wird nur
+                          der Ton abgespielt und die Schnelleingabe arbeitet mit
+                          dem Zeitpunkt der letzten Erinnerung.{" "}
+                          <button
+                            className="inline-link"
+                            type="button"
+                            onClick={() =>
+                              reminderToneEnabled && playReminderTone()
+                            }
+                            disabled={!reminderToneEnabled}
+                          >
                             Ton abspielen
                           </button>
                         </p>
@@ -851,7 +1078,9 @@ export default function App() {
                       onScoreChange={setSelectedScore}
                       onNoteChange={setNote}
                       onSubmit={handleQuickSubmit}
-                      onPlayTone={() => reminderToneEnabled && playReminderTone()}
+                      onPlayTone={() =>
+                        reminderToneEnabled && playReminderTone()
+                      }
                     />
                   </aside>
                 </div>
@@ -861,14 +1090,31 @@ export default function App() {
                 <div className="panel-heading">
                   <div className="eyebrow">Heute im Überblick</div>
                   <div className="status-pill">
-                    {dashboardState === "ready" ? `${todaySummary?.answered ?? 0} beantwortet` : "lädt"}
+                    {dashboardState === "ready"
+                      ? `${todaySummary?.answered ?? 0} beantwortet`
+                      : "lädt"}
                   </div>
                 </div>
 
                 <div className="stat-grid stat-grid--compact">
-                  <StatCard label="Pausen" value={String(todaySummary?.total ?? 0)} note="erfasst" tone="green" />
-                  <StatCard label="Verzögerung" value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)} Min.`} note="durchschnittlich" tone="orange" />
-                  <StatCard label="Ø Skala" value={formatValueLabel(todaySummary?.averageValue ?? null)} note="heutiger Schnitt" tone="blue" />
+                  <StatCard
+                    label="Pausen"
+                    value={String(todaySummary?.total ?? 0)}
+                    note="erfasst"
+                    tone="green"
+                  />
+                  <StatCard
+                    label="Verzögerung"
+                    value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)} Min.`}
+                    note="durchschnittlich"
+                    tone="orange"
+                  />
+                  <StatCard
+                    label="Ø Skala"
+                    value={formatValueLabel(todaySummary?.averageValue ?? null)}
+                    note="heutiger Schnitt"
+                    tone="blue"
+                  />
                 </div>
               </section>
             </>
@@ -882,9 +1128,24 @@ export default function App() {
               </div>
 
               <div className="stat-grid">
-                <StatCard label="Erfasst" value={String(selectedDaySummary.total)} note="gewählter Tag" tone="green" />
-                <StatCard label="Beantwortet" value={String(selectedDaySummary.answered)} note="mit Wert" tone="blue" />
-                <StatCard label="Unbeantwortet" value={String(selectedDaySummary.unanswered)} note="ohne Rückmeldung" tone="red" />
+                <StatCard
+                  label="Erfasst"
+                  value={String(selectedDaySummary.total)}
+                  note="gewählter Tag"
+                  tone="green"
+                />
+                <StatCard
+                  label="Beantwortet"
+                  value={String(selectedDaySummary.answered)}
+                  note="mit Wert"
+                  tone="blue"
+                />
+                <StatCard
+                  label="Unbeantwortet"
+                  value={String(selectedDaySummary.unanswered)}
+                  note="ohne Rückmeldung"
+                  tone="red"
+                />
               </div>
 
               <div className="distribution">
@@ -897,7 +1158,12 @@ export default function App() {
                     <div className="bar-row" key={item.label}>
                       <div className="bar-label">{item.label}</div>
                       <div className="bar-track">
-                        <div className={`bar-fill ${item.tone}`} style={{ width: `${Math.max(8, Math.round((item.width / maxTodayWidth) * 100))}%` }} />
+                        <div
+                          className={`bar-fill ${item.tone}`}
+                          style={{
+                            width: `${Math.max(8, Math.round((item.width / maxTodayWidth) * 100))}%`,
+                          }}
+                        />
                       </div>
                       <div className="bar-count">{item.count}</div>
                     </div>
@@ -911,7 +1177,9 @@ export default function App() {
             <section className="panel heatmap-panel">
               <div className="panel-heading">
                 <div className="eyebrow">Wochen-Heatmap</div>
-                <div className="status-pill">{dashboard?.heatmap.subtitle ?? "—"}</div>
+                <div className="status-pill">
+                  {dashboard?.heatmap.subtitle ?? "—"}
+                </div>
               </div>
 
               <HeatmapCard heatmap={dashboard?.heatmap} />
@@ -924,34 +1192,86 @@ export default function App() {
             <div className="side-card-title">Countdown zur Bewegung</div>
             <div className="countdown-value">{countdownLabel}</div>
             <div className="countdown-note">
-              {currentConfig.hourlyReminderEnabled ? "Minuten bis zur nächsten Erinnerung" : "Reminder deaktiviert"}
+              {currentConfig.hourlyReminderEnabled
+                ? "Minuten bis zur nächsten Erinnerung"
+                : "Reminder deaktiviert"}
             </div>
           </section>
 
           <section className="panel side-card overview-card">
             <div className="side-card-title">Heute im Überblick</div>
             <div className="mini-grid">
-              <MiniStat label="Pausen" value={String(todaySummary?.total ?? 0)} />
-              <MiniStat label="Verzögerung" value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)}`} />
-              <MiniStat label="Ø Skala" value={formatValueLabel(todaySummary?.averageValue ?? null)} />
+              <MiniStat
+                label="Pausen"
+                value={String(todaySummary?.total ?? 0)}
+              />
+              <MiniStat
+                label="Verzögerung"
+                value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)}`}
+              />
+              <MiniStat
+                label="Ø Skala"
+                value={formatValueLabel(todaySummary?.averageValue ?? null)}
+              />
             </div>
           </section>
 
           <section className="panel side-card config-card">
             <div className="side-card-title">Konfiguration & Intervalle</div>
 
-            {configForm && (
-              <form className="config-form" onSubmit={handleConfigSubmit}>
-                <label className="config-switch">
-                  <span>Stündlicher Reminder</span>
-                  <small>Erinnert jede Stunde im Intervall</small>
+            <form className="config-form" onSubmit={handleConfigSubmit}>
+              <div className="config-main-row">
+                  <label className="config-switch config-switch--primary">
+                    <div>
+                      <span>Stündlicher Reminder</span>
+                      <small>Erinnert jede Stunde im Intervall</small>
+                    </div>
+                    <span className="slider-track" aria-hidden="true">
+                      <span className="slider-thumb" />
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={editableConfig.hourlyReminderEnabled}
+                      onChange={(event) =>
+                        setConfigForm((current) => ({
+                          ...(current ?? editableConfig),
+                          hourlyReminderEnabled: event.target.checked,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="config-check-inline">
+                    <input
+                      type="checkbox"
+                      checked={editableConfig.weekdaysOnly}
+                      onChange={(event) =>
+                        setConfigForm((current) => ({
+                          ...(current ?? editableConfig),
+                          weekdaysOnly: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>Nur an Werktagen</span>
+                  </label>
+                </div>
+
+                <label className="config-switch config-switch--slider">
+                  <div>
+                    <span>Erinnerungsdialog anzeigen</span>
+                    <small>Zeigt zusätzlich zum Ton den Hinweistext an</small>
+                  </div>
+                  <span className="slider-track" aria-hidden="true">
+                    <span className="slider-thumb" />
+                  </span>
                   <input
                     type="checkbox"
-                    checked={configForm.hourlyReminderEnabled}
+                    checked={editableConfig.showReminderDialog}
                     onChange={(event) =>
-                      setConfigForm((current) =>
-                        current ? { ...current, hourlyReminderEnabled: event.target.checked } : current,
-                      )
+                      setConfigForm((current) => ({
+                        ...(current ?? editableConfig),
+                        showReminderDialog: event.target.checked,
+                      }))
                     }
                   />
                 </label>
@@ -960,9 +1280,12 @@ export default function App() {
                   <span>Exportdatei:</span>
                   <input
                     type="text"
-                    value={configForm.exportPath}
+                    value={editableConfig.exportPath}
                     onChange={(event) =>
-                      setConfigForm((current) => (current ? { ...current, exportPath: event.target.value } : current))
+                      setConfigForm((current) => ({
+                        ...(current ?? editableConfig),
+                        exportPath: event.target.value,
+                      }))
                     }
                   />
                 </label>
@@ -972,9 +1295,12 @@ export default function App() {
                     <span>Startzeit</span>
                     <input
                       type="text"
-                      value={configForm.reminderStartTime}
+                      value={editableConfig.reminderStartTime}
                       onChange={(event) =>
-                        setConfigForm((current) => (current ? { ...current, reminderStartTime: event.target.value } : current))
+                        setConfigForm((current) => ({
+                          ...(current ?? editableConfig),
+                          reminderStartTime: event.target.value,
+                        }))
                       }
                     />
                   </label>
@@ -983,75 +1309,147 @@ export default function App() {
                     <span>Endzeit</span>
                     <input
                       type="text"
-                      value={configForm.reminderEndTime}
+                      value={editableConfig.reminderEndTime}
                       onChange={(event) =>
-                        setConfigForm((current) => (current ? { ...current, reminderEndTime: event.target.value } : current))
+                        setConfigForm((current) => ({
+                          ...(current ?? editableConfig),
+                          reminderEndTime: event.target.value,
+                        }))
                       }
                     />
                   </label>
                 </div>
 
-                <label className="config-switch">
-                  <span>Nur an Werktagen</span>
-                  <small>Montag bis Freitag</small>
-                  <input
-                    type="checkbox"
-                    checked={configForm.weekdaysOnly}
-                    onChange={(event) =>
-                      setConfigForm((current) => (current ? { ...current, weekdaysOnly: event.target.checked } : current))
-                    }
-                  />
-                </label>
-
-                <label className="config-switch config-switch--slider">
-                  <div>
-                    <span>Erinnerungsdialog anzeigen</span><br />
-                    <small>Wenn aus: nur Ton und Zeitstempel</small>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={configForm.showReminderDialog}
-                    onChange={(event) =>
-                      setConfigForm((current) =>
-                        current ? { ...current, showReminderDialog: event.target.checked } : current,
-                      )
-                    }
-                  />
-                  <span className="slider-track" aria-hidden="true">
-                    <span className="slider-thumb" />
-                  </span>
-                </label>
-
                 <label className="config-switch config-switch--link">
                   <div>
-                    <span>Audio-Chime abspielen</span><br />
+                    <span>Audio-Chime abspielen</span>
                     <small>Spielt akustischen Gong bei Alarm</small>
                   </div>
-                  <button type="button" className="text-link" onClick={() => currentConfig.reminderToneEnabled && playReminderTone()} disabled={!currentConfig.reminderToneEnabled}>
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() =>
+                      currentConfig.reminderToneEnabled && playReminderTone()
+                    }
+                    disabled={!currentConfig.reminderToneEnabled}
+                  >
                     Jetzt testen
                   </button>
                   <input
                     type="checkbox"
-                    checked={configForm.reminderToneEnabled}
+                    checked={editableConfig.reminderToneEnabled}
                     onChange={(event) =>
-                      setConfigForm((current) => (current ? { ...current, reminderToneEnabled: event.target.checked } : current))
+                      setConfigForm((current) => ({
+                        ...(current ?? editableConfig),
+                        reminderToneEnabled: event.target.checked,
+                      }))
                     }
                   />
                 </label>
 
-                <button className="primary-btn primary-btn--wide" type="submit">
-                  {configState === "saving" ? "Speichert..." : "Einstellungen speichern"}
-                </button>
-              </form>
-            )}
+                <div className="preview-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={handlePreview}
+                  >
+                    Vorschau
+                  </button>
+                  <button
+                    className="primary-btn primary-btn--wide"
+                    type="submit"
+                  >
+                    {configState === "saving"
+                      ? "Speichert..."
+                      : "Einstellungen speichern"}
+                  </button>
+                </div>
+            </form>
           </section>
         </aside>
       </div>
+
+      {previewOpen && (
+        <div
+          className="preview-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vorschau"
+        >
+          <div className="preview-card">
+            <div className="preview-header">
+              <div>
+                <div className="eyebrow">Vorschau</div>
+                <h2>
+                  {currentConfig.showReminderDialog
+                    ? "Mit Dialog"
+                    : "Nur Ton aktiv."}
+                </h2>
+              </div>
+              <button
+                className="ghost-btn"
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+              >
+                Schließen
+              </button>
+            </div>
+
+            <div className="preview-timestamp">
+              Zeitpunkt der letzten Erinnerung: {formatClockLabel(new Date())}
+            </div>
+
+            {currentConfig.showReminderDialog ? (
+              <div className="preview-dialog">
+                <strong>Zeit für einen kurzen Neustart.</strong>
+                <p>
+                  Steh kurz auf, lockere Schultern und Rücken oder geh ein paar
+                  Schritte. Ein kleiner Wechsel reicht oft schon, um den Kopf
+                  wieder frei zu bekommen.
+                </p>
+                <button
+                  className="inline-link"
+                  type="button"
+                  onClick={() =>
+                    currentConfig.reminderToneEnabled && playReminderTone()
+                  }
+                  disabled={!currentConfig.reminderToneEnabled}
+                >
+                  Ton abspielen
+                </button>
+              </div>
+            ) : (
+              <div className="preview-compact">
+                <strong>Nur Ton aktiv.</strong>
+                <p>
+                  Der Erinnerungsdialog ist ausgeblendet. Es wird nur der Ton
+                  abgespielt und der Zeitpunkt angezeigt.
+                </p>
+                <button
+                  className="inline-link"
+                  type="button"
+                  onClick={() =>
+                    currentConfig.reminderToneEnabled && playReminderTone()
+                  }
+                  disabled={!currentConfig.reminderToneEnabled}
+                >
+                  Ton abspielen
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function StatCard(props: { label: string; value: string; note: string; tone: "green" | "orange" | "blue" | "red" }) {
+function StatCard(props: {
+  label: string;
+  value: string;
+  note: string;
+  tone: "green" | "orange" | "blue" | "red";
+}) {
   return (
     <article className={`stat-card tone-${props.tone}`}>
       <span>{props.label}</span>
@@ -1082,14 +1480,22 @@ function HeatmapCard(props: { heatmap: HeatmapData | undefined }) {
   return (
     <div className="heatmap-card">
       <div className="heatmap-nav">
-        <button type="button" className="ghost-arrow" aria-label="Vorherige Daten">
+        <button
+          type="button"
+          className="ghost-arrow"
+          aria-label="Vorherige Daten"
+        >
           ←
         </button>
         <div className="heatmap-title">
           <strong>{props.heatmap.title}</strong>
           <span>{props.heatmap.note}</span>
         </div>
-        <button type="button" className="ghost-arrow" aria-label="Nächste Daten">
+        <button
+          type="button"
+          className="ghost-arrow"
+          aria-label="Nächste Daten"
+        >
           →
         </button>
       </div>
@@ -1117,7 +1523,9 @@ function HeatmapCard(props: { heatmap: HeatmapData | undefined }) {
                     : `heatmap-cell tone-${toneClassByValue(cell.value)} intensity-${Math.min(4, Math.max(1, Math.round(cell.value)))}`
                 }
               >
-                <span>{cell.value === null ? "·" : formatValueLabel(cell.value)}</span>
+                <span>
+                  {cell.value === null ? "·" : formatValueLabel(cell.value)}
+                </span>
               </div>
             ))}
           </div>
@@ -1153,7 +1561,11 @@ function ReminderComposer(props: {
           <button
             type="button"
             key={item.value}
-            className={item.value === props.selectedScore ? "score-card selected" : "score-card"}
+            className={
+              item.value === props.selectedScore
+                ? "score-card selected"
+                : "score-card"
+            }
             onClick={() => props.onScoreChange(item.value)}
           >
             <div className={`score-badge ${item.tone}`}>{item.value}</div>
@@ -1177,7 +1589,12 @@ function ReminderComposer(props: {
           Antwort speichern
         </button>
 
-        <button className="inline-link inline-link--standalone" type="button" onClick={props.onPlayTone} disabled={!props.toneEnabled}>
+        <button
+          className="inline-link inline-link--standalone"
+          type="button"
+          onClick={props.onPlayTone}
+          disabled={!props.toneEnabled}
+        >
           {props.toneEnabled ? "Ton im Reminder testen" : "Ton deaktiviert"}
         </button>
       </form>
