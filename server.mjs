@@ -559,13 +559,21 @@ function buildTodayStats(entries, config, now = new Date()) {
     const entryTime = normalizeTime(entry.response_time || entry.reminder_time);
     return entryTime === activeReminderTime && entry.value !== null;
   });
+  const missedReminderEntries = todayEntries.filter(
+    (entry) =>
+      entry.entry_type === "unanswered" ||
+      (entry.entry_type === "planned_break_response" &&
+        entry.value === 0 &&
+        entry.description === "keine Aktivität eingetragen" &&
+        entry.note === "automatisch ergänzt"),
+  );
 
   return {
     todayIso,
     summary: {
       total: todayEntries.length,
       answered: todayEntries.filter((entry) => entry.value !== null).length,
-      unanswered: todayEntries.filter((entry) => entry.value === null).length,
+      unanswered: missedReminderEntries.length,
       planned: todayEntries.filter((entry) => entry.entry_type === "planned_break_response").length,
       additional: todayEntries.filter((entry) => entry.entry_type === "additional_break").length,
       averageValue:
@@ -670,7 +678,7 @@ function buildRecentWeeks(entries, now = new Date()) {
   });
 }
 
-function buildActivityRows(entries, limit = 30) {
+function buildActivityRows(entries, limit = 200) {
   return entries
     .filter((entry) => entry.entry_type !== "unanswered")
     .slice(0, limit)
@@ -764,7 +772,7 @@ function buildDashboard(limit = 5) {
     total: entries.length,
     today: buildTodayStats(entries, config, now),
     latestBookings: buildLatestBookings(entries, limit),
-    activities: buildActivityRows(entries, 30),
+    activities: buildActivityRows(entries, 200),
     currentWeek: buildCurrentWeek(entries, now),
     recentWeeks: buildRecentWeeks(entries, now),
     heatmap: buildHeatmap(entries, config, now),
@@ -970,7 +978,7 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/dashboard" && req.method === "GET") {
     const limit = Number.parseInt(url.searchParams.get("limit") ?? "5", 10);
-    const payload = buildDashboard(Number.isNaN(limit) ? 5 : Math.min(20, Math.max(1, limit)));
+    const payload = buildDashboard(Number.isNaN(limit) ? 5 : Math.min(200, Math.max(1, limit)));
     logStep("dashboard.loaded", {
       total: payload.total,
       today: payload.today.summary.total,
@@ -988,7 +996,7 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/bookings/latest" && req.method === "GET") {
     const limit = Number.parseInt(url.searchParams.get("limit") ?? "5", 10);
-    const payload = buildDashboard(Number.isNaN(limit) ? 5 : Math.min(20, Math.max(1, limit)));
+    const payload = buildDashboard(Number.isNaN(limit) ? 5 : Math.min(200, Math.max(1, limit)));
     sendJson(res, 200, {
       items: payload.latestBookings,
       total: payload.total,

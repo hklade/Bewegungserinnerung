@@ -1186,6 +1186,23 @@ button {
 
 .day-picker {
   font-weight: 800;
+  min-width: 100%;
+}
+
+.day-picker select {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(23, 32, 26, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font: inherit;
+  padding: 0 12px;
+}
+
+.day-picker select:focus {
+  outline: 2px solid rgba(47, 125, 91, 0.18);
+  outline-offset: 2px;
 }
 
 .day-date {
@@ -1324,6 +1341,61 @@ button {
 .timeline-time {
   font-size: 12px;
   color: var(--muted);
+}
+
+.hourly-bars {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  min-height: 240px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.hourly-bar-row {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  flex: 0 0 86px;
+}
+
+.hourly-bar-label {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.hourly-bar-track {
+  width: 100%;
+  min-height: 180px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+
+.hourly-bar-fill {
+  width: 100%;
+  border-radius: 14px 14px 6px 6px;
+  display: grid;
+  place-items: start center;
+  padding-top: 8px;
+  color: white;
+  font-weight: 900;
+  min-height: 36px;
+  box-shadow: 0 12px 20px rgba(12, 18, 15, 0.08);
+}
+
+.hourly-bar-meta {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hourly-bar-meta strong {
+  color: var(--text);
+  font-size: 14px;
 }
 
 .activities-table {
@@ -1602,6 +1674,7 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
   gap: 8px;
+  margin-top: -2px;
 }
 
 .day-chip {

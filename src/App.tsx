@@ -109,6 +109,20 @@ type TodayDistributionItem = {
   width: number;
 };
 
+type DayOption = {
+  date: string;
+  label: string;
+  shortLabel: string;
+};
+
+type HourlyBar = {
+  hour: string;
+  label: string;
+  count: number;
+  averageValue: number | null;
+  tone: "red" | "ochre" | "orange" | "blue" | "green";
+};
+
 const apiBase = "/api";
 const weekdayNames = [
   "Montag",
@@ -378,16 +392,84 @@ function toneClassByValue(value: number | null) {
   return "red";
 }
 
+function isMissedReminderEntry(entry: ActivityItem) {
+  return (
+    entry.entryType === "unanswered" ||
+    (entry.entryType === "planned_break_response" &&
+      entry.value === 0 &&
+      entry.description === "keine Aktivität eingetragen" &&
+      entry.note === "automatisch ergänzt")
+  );
+}
+
+function getDayLabel(dateIso: string) {
+  const weekday =
+    weekdayNames[getWeekdayIndex(new Date(`${dateIso}T12:00:00`))];
+  return `${weekday}, ${formatDate(dateIso)}`;
+}
+
+function getEntryTime(entry: ActivityItem) {
+  return entry.time || entry.plannedTime || "--:--";
+}
+
+function getEntryHour(entry: ActivityItem) {
+  const [hour = "00"] = getEntryTime(entry).split(":");
+  const numericHour = Number.parseInt(hour, 10);
+  if (!Number.isFinite(numericHour)) {
+    return "00:00";
+  }
+
+  return `${String(Math.max(0, Math.min(23, numericHour))).padStart(2, "0")}:00`;
+}
+
+function buildHourlyBars(entries: ActivityItem[]) {
+  const groups = new Map<string, ActivityItem[]>();
+
+  [...entries]
+    .filter((entry) => entry.value !== null || entry.entryType === "unanswered")
+    .sort((left, right) =>
+      getEntryTime(left).localeCompare(getEntryTime(right)),
+    )
+    .forEach((entry) => {
+      const hour = getEntryHour(entry);
+      const current = groups.get(hour) ?? [];
+      current.push(entry);
+      groups.set(hour, current);
+    });
+
+  return [...groups.entries()]
+    .sort((left, right) => left[0].localeCompare(right[0]))
+    .map(([hour, items]) => {
+      const values = items.map((item) => Number(item.value ?? 0));
+      const averageValue =
+        values.length > 0
+          ? values.reduce((sum, value) => sum + value, 0) / values.length
+          : null;
+      const maxValue = values.length > 0 ? Math.max(...values) : 0;
+
+      return {
+        hour,
+        label: hour,
+        count: items.length,
+        averageValue,
+        tone: toneClassByValue(maxValue),
+      } satisfies HourlyBar;
+    });
+}
+
 function buildDaySummary(entries: ActivityItem[]): DaySummary {
   const answeredEntries = entries.filter((entry) => entry.value !== null);
   const delayEntries = entries.filter((entry) =>
     Number.isFinite(entry.delayMinutes),
   );
+  const missedReminderEntries = entries.filter((entry) =>
+    isMissedReminderEntry(entry),
+  );
 
   return {
     total: entries.length,
     answered: answeredEntries.length,
-    unanswered: entries.filter((entry) => entry.value === null).length,
+    unanswered: missedReminderEntries.length,
     planned: entries.filter(
       (entry) => entry.entryType === "planned_break_response",
     ).length,
@@ -447,7 +529,7 @@ export default function App() {
 
   async function refreshDashboard(activeRef = { active: true }) {
     try {
-      const response = await fetch(`${apiBase}/dashboard?limit=30`);
+      const response = await fetch(`${apiBase}/dashboard?limit=200`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -461,12 +543,20 @@ export default function App() {
       setDashboardState("ready");
       setConfigForm((current) => current ?? payload.config);
       setSelectedDayIso((current) => {
-        const availableDays = payload.currentWeek.map((item) => item.date);
+        const availableDays = [
+          ...new Set([
+            payload.today.todayIso,
+            ...payload.activities.map((item) => item.date),
+          ]),
+        ]
+          .sort((left, right) => right.localeCompare(left))
+          .slice(0, 14);
+
         if (current && availableDays.includes(current)) {
           return current;
         }
 
-        return payload.today.todayIso;
+        return availableDays[0] ?? payload.today.todayIso;
       });
     } catch {
       if (!activeRef.active) {
@@ -516,15 +606,38 @@ export default function App() {
     ? activities
     : activities.slice(0, 5);
   const hasMoreActivities = activities.length > latestActivities.length;
+  const availableDayOptions = useMemo<DayOption[]>(() => {
+    const dates = new Set<string>();
+    if (dashboard?.today.todayIso) {
+      dates.add(dashboard.today.todayIso);
+    }
+
+    activities.forEach((item) => {
+      dates.add(item.date);
+    });
+
+    return [...dates]
+      .sort((left, right) => right.localeCompare(left))
+      .slice(0, 14)
+      .map((date) => ({
+        date,
+        label: getDayLabel(date),
+        shortLabel: formatDate(date),
+      }));
+  }, [activities, dashboard?.today.todayIso]);
+  const visibleDayOptions = availableDayOptions.slice(2);
   const activeDayIso = selectedDayIso || dashboard?.today.todayIso || "";
   const selectedDayEntries = activities.filter(
     (item) => item.date === activeDayIso,
   );
-  const selectedDayEntriesChronological = [...selectedDayEntries].reverse();
-  const selectedDayWeekItem =
-    dashboard?.currentWeek.find((item) => item.date === activeDayIso) ?? null;
+  const selectedDayOption =
+    availableDayOptions.find((item) => item.date === activeDayIso) ?? null;
   const selectedDaySummary = useMemo(
     () => buildDaySummary(selectedDayEntries),
+    [selectedDayEntries],
+  );
+  const selectedDayHourlyBars = useMemo(
+    () => buildHourlyBars(selectedDayEntries),
     [selectedDayEntries],
   );
   const todaySummary = dashboard?.today.summary;
@@ -570,6 +683,18 @@ export default function App() {
     1,
     ...selectedDayDistribution.map((item) => item.width),
   );
+
+  useEffect(() => {
+    if (availableDayOptions.length === 0) {
+      return;
+    }
+
+    if (availableDayOptions.some((item) => item.date === selectedDayIso)) {
+      return;
+    }
+
+    setSelectedDayIso(availableDayOptions[0].date);
+  }, [availableDayOptions, selectedDayIso]);
 
   async function handleQuickSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -845,31 +970,19 @@ export default function App() {
                   <div className="day-eval">
                     <div className="day-meta">
                       <div className="day-picker">
-                        <span>{selectedDayWeekItem?.day ?? "Tag wählen"}</span>
-                      </div>
-                      <div className="day-date">
-                        {selectedDayIso
-                          ? formatDate(selectedDayIso)
-                          : currentDayLabel}
-                      </div>
-                    </div>
-
-                    <div className="day-selector">
-                      {(dashboard?.currentWeek ?? []).map((item) => (
-                        <button
-                          key={item.date}
-                          type="button"
-                          className={
-                            item.date === activeDayIso
-                              ? "day-chip active"
-                              : "day-chip"
+                        <select
+                          value={activeDayIso}
+                          onChange={(event) =>
+                            setSelectedDayIso(event.target.value)
                           }
-                          onClick={() => setSelectedDayIso(item.date)}
                         >
-                          <span>{item.day.slice(0, 2)}</span>
-                          <strong>{formatDate(item.date)}</strong>
-                        </button>
-                      ))}
+                          {availableDayOptions.map((option) => (
+                            <option key={option.date} value={option.date}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div className="stat-grid">
@@ -898,27 +1011,40 @@ export default function App() {
                         <div>Aktivitäts-Skala chronologisch</div>
                         <div className="legend">
                           <span>
-                            <i className="legend-dot green" /> Geplant
+                            <i className="legend-dot green" /> Ø pro Stunde
                           </span>
                           <span>
-                            <i className="legend-dot blue" /> Zusatz-Pause
+                            <i className="legend-dot blue" /> Farbe = höchste
+                            Bewertung
                           </span>
                         </div>
                       </div>
 
-                      {selectedDayEntriesChronological.length > 0 ? (
-                        <div className="timeline-bars">
-                          {selectedDayEntriesChronological.map((item) => (
-                            <div key={item.id} className="timeline-bar-row">
-                              <div
-                                className={`timeline-bar tone-${toneClassByValue(item.value)}`}
-                                style={{
-                                  height: `${20 + (item.value ?? 0) * 18}px`,
-                                }}
-                              >
-                                <span>{formatValueLabel(item.value)}</span>
+                      {selectedDayHourlyBars.length > 0 ? (
+                        <div className="hourly-bars">
+                          {selectedDayHourlyBars.map((item) => (
+                            <div key={item.hour} className="hourly-bar-row">
+                              <div className="hourly-bar-label">
+                                {item.hour}
                               </div>
-                              <div className="timeline-time">{item.time}</div>
+                              <div className="hourly-bar-track">
+                                <div
+                                  className={`hourly-bar-fill tone-${item.tone}`}
+                                  style={{
+                                    height: `${24 + Math.round((item.averageValue ?? 0) * 18)}px`,
+                                  }}
+                                >
+                                  <span>
+                                    {formatValueLabel(item.averageValue)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="hourly-bar-meta">
+                                <strong>{item.count}</strong>
+                                <span>
+                                  {item.count === 1 ? "Eintrag" : "Einträge"}
+                                </span>
+                              </div>
                             </div>
                           ))}
                         </div>
