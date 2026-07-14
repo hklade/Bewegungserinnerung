@@ -74,7 +74,11 @@ test("config card persists export path and dialog toggle", async ({ page, reques
   await seedConfig(request, exportPath, { showReminderDialog: false });
 
   await page.goto("/");
-  await expect(page.getByLabel("Exportdatei:")).toHaveValue(exportPath);
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator(".config-card")).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.getByRole("textbox", { name: "Exportdatei:" }),
+  ).toHaveValue(exportPath);
   await expect(page.locator(".hero-subtitle")).toContainText("Zeitpunkt der letzten Erinnerung:");
 
   await page.getByRole("button", { name: "Reminder" }).click();
@@ -151,8 +155,12 @@ test("quick entry saves a booking from the dashboard", async ({ page, request },
   await heroPanel.getByLabel("Aktivität").fill("quick-entry-test");
   await heroPanel.getByRole("button", { name: "Eintrag speichern" }).click();
 
-  const activityCount = await page.locator(".activities-row").count();
-  expect(activityCount).toBeGreaterThanOrEqual(2);
-  await expect(page.locator(".activities-row strong")).toHaveText("quick-entry-test");
+  await expect(
+    page.locator(".activities-row strong").filter({ hasText: "quick-entry-test" }),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".activities-row")).toHaveCount(2);
+  await expect(
+    page.locator(".activities-row strong").filter({ hasText: "quick-entry-test" }),
+  ).toHaveText("quick-entry-test");
   await expect(page.getByText("keine Aktivität eingetragen")).toBeVisible();
 });
