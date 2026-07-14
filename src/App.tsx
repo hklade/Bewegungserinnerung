@@ -311,7 +311,7 @@ async function playReminderTone() {
     return;
   }
 
-    const context = new AudioContextClass();
+  const context = new AudioContextClass();
   if (context.state === "suspended") {
     try {
       await context.resume();
@@ -331,12 +331,15 @@ async function playReminderTone() {
     { offset: 1.1, frequency: 988, duration: 1, type: "triangle" as const },
   ];
 
-    notePlan.forEach(({ offset, frequency, duration, type }, index) => {
+  notePlan.forEach(({ offset, frequency, duration, type }, index) => {
     const oscillator = context.createOscillator();
     const noteGain = context.createGain();
     oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, context.currentTime + offset);
-				
+    oscillator.frequency.setValueAtTime(
+      frequency,
+      context.currentTime + offset,
+    );
+
     oscillator.connect(noteGain);
     noteGain.connect(master);
     noteGain.gain.setValueAtTime(0.0001, context.currentTime + offset);
@@ -525,6 +528,12 @@ export default function App() {
     [selectedDayEntries],
   );
   const todaySummary = dashboard?.today.summary;
+  const apiStatusLabel =
+    dashboardState === "ready"
+      ? "API bereit"
+      : dashboardState === "error"
+        ? "API Fehler"
+        : "API lädt";
   const summaryLine = `${selectedScore} - ${note || "Kurznotiz"}`;
   const latestSummary = dashboard?.latestBookings[0]
     ? `${dashboard.latestBookings[0].value === null ? "—" : dashboard.latestBookings[0].value} - ${dashboard.latestBookings[0].description}`
@@ -1031,12 +1040,10 @@ export default function App() {
                         : "Nur Ton aktiv, Dialog ausgeblendet."}
                     </div>
                   </div>
-                  <div className="status-pill">
-                    {dashboardState === "ready"
-                      ? "bereit"
-                      : dashboardState === "error"
-                        ? "Fehler"
-                        : "lädt"}
+                  <div
+                    className={`status-pill status-pill--compact status-pill--${dashboardState}`}
+                  >
+                    {apiStatusLabel}
                   </div>
                 </div>
 
@@ -1237,7 +1244,7 @@ export default function App() {
           <section className="panel side-card config-card">
             <div className="side-card-title">Konfiguration & Intervalle</div>
 
-       <form className="config-form" onSubmit={handleConfigSubmit}>
+            <form className="config-form" onSubmit={handleConfigSubmit}>
               <div className="config-main-row">
                 <label className="config-switch config-switch--primary">
                   <div>
