@@ -184,34 +184,6 @@ button {
   line-height: 1.35;
 }
 
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  margin-bottom: 14px;
-}
-
-.tab {
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  padding: 10px 14px;
-  border-radius: 999px;
-  transition: all 0.2s ease;
-}
-
-.tab:hover {
-  background: rgba(255, 255, 255, 0.58);
-  color: var(--text);
-}
-
-.tab.active {
-  background: rgba(47, 125, 91, 0.12);
-  color: var(--accent);
-  border-color: rgba(47, 125, 91, 0.18);
-}
-
 .content-grid {
   display: grid;
   grid-template-columns: 1.02fr 0.98fr;
@@ -1606,38 +1578,6 @@ button {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.mini-grid {
-  display: grid;
-  grid-template-columns: 0.95fr 1.25fr 0.95fr;
-  gap: 10px;
-}
-
-.mini-stat {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(23, 32, 26, 0.08);
-  border-radius: 16px;
-  padding: 12px 12px;
-  display: grid;
-  gap: 4px;
-  text-align: center;
-  min-width: 0;
-}
-
-.mini-stat span {
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-}
-
-.mini-stat strong {
-  font-size: 20px;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
 .config-form {
   display: grid;
   gap: 10px;
@@ -1933,7 +1873,6 @@ button {
 @media (max-width: 760px) {
   .scale-grid,
   .stat-grid,
-  .mini-grid,
   .config-row {
     grid-template-columns: 1fr;
   }

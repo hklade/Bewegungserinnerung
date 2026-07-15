@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
-type TabKey = "dashboard" | "reminder" | "day" | "week";
 type AnalysisKey = "day" | "week";
 
 type AppConfig = {
@@ -99,14 +98,6 @@ type DashboardApi = {
     note: string;
   }>;
   heatmap: HeatmapData;
-};
-
-type TodayDistributionItem = {
-  value: 0 | 1 | 2 | 3 | 4;
-  count: number;
-  label: string;
-  tone: "red" | "ochre" | "orange" | "blue" | "green";
-  width: number;
 };
 
 type DayOption = {
@@ -569,8 +560,6 @@ function getTypeLabel(entry: ActivityItem) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<TabKey>("dashboard");
-  const [analysisTab, setAnalysisTab] = useState<AnalysisKey>("day");
   const [selectedScore, setSelectedScore] = useState<number>(1);
   const [note, setNote] = useState("Mustereintrag");
   const [now, setNow] = useState(() => new Date());
@@ -718,17 +707,12 @@ export default function App() {
   }, [currentConfig, dashboardState]);
 
   const currentDayLabel = useMemo(() => formatCurrentDay(now), [now]);
-  const nextReminderTime = useMemo(
-    () => getNextReminderTime(now, currentConfig),
-    [currentConfig, now],
-  );
   const nextReminderCountdown = useMemo(
     () => getNextReminderCountdown(now, currentConfig),
     [currentConfig, now],
   );
   const reminderHeadline = dashboard?.today.reminderHeadline ?? "--:--";
   const reminderTime = dashboard?.today.reminderTime ?? reminderHeadline;
-  const bookingTotal = dashboard?.total ?? 0;
   const activities = dashboard?.activities ?? [];
   const latestActivities = showAllActivities
     ? activities
@@ -757,8 +741,6 @@ export default function App() {
   const selectedDayEntries = activities.filter(
     (item) => normalizeDateKey(item.date) === normalizeDateKey(activeDayIso),
   );
-  const selectedDayOption =
-    availableDayOptions.find((item) => item.date === activeDayIso) ?? null;
   const selectedDaySummary = useMemo(
     () => buildDaySummary(selectedDayEntries),
     [selectedDayEntries],
@@ -767,49 +749,10 @@ export default function App() {
     () => buildHourlyBars(selectedDayEntries),
     [selectedDayEntries],
   );
-  const todaySummary = dashboard?.today.summary;
-  const apiStatusLabel =
-    dashboardState === "ready"
-      ? "API bereit"
-      : dashboardState === "error"
-        ? "API Fehler"
-        : "API lädt";
-  const summaryLine = `${selectedScore} - ${note || "Kurznotiz"}`;
-  const latestSummary = dashboard?.latestBookings[0]
-    ? `${dashboard.latestBookings[0].value === null ? "—" : dashboard.latestBookings[0].value} - ${dashboard.latestBookings[0].description}`
-    : summaryLine;
-  const reminderDialogVisible = currentConfig.showReminderDialog;
-  const reminderComposerSubtitle = reminderDialogVisible
-    ? `Zuletzt gespeichert: ${latestSummary}`
-    : `Zeitpunkt der letzten Erinnerung: ${reminderTime}`;
   const reminderToneEnabled = currentConfig.reminderToneEnabled;
   const countdownLabel =
     nextReminderCountdown === null ? "aus" : `${nextReminderCountdown} Min`;
   const editableConfig = configForm ?? dashboard?.config ?? defaultConfig;
-
-  const selectedDayDistribution = useMemo(() => {
-    const source = [0, 1, 2, 3, 4].map((value) => ({
-      value: value as 0 | 1 | 2 | 3 | 4,
-      count: selectedDayEntries.filter((entry) => entry.value === value).length,
-    }));
-    const byValue = new Map(source.map((item) => [item.value, item.count]));
-
-    return [0, 1, 2, 3, 4].map((value) => {
-      const count = byValue.get(value as 0 | 1 | 2 | 3 | 4) ?? 0;
-      return {
-        value: value as 0 | 1 | 2 | 3 | 4,
-        count,
-        label: `${value}`,
-        tone: toneByValue[value as 0 | 1 | 2 | 3 | 4],
-        width: count > 0 ? count : 0.25,
-      };
-    }) satisfies TodayDistributionItem[];
-  }, [selectedDayEntries]);
-
-  const maxTodayWidth = Math.max(
-    1,
-    ...selectedDayDistribution.map((item) => item.width),
-  );
 
   useEffect(() => {
     if (availableDayOptions.length === 0) {
@@ -957,13 +900,6 @@ export default function App() {
     }
   }
 
-  const tabs = [
-    { key: "dashboard" as const, label: "Dashboard" },
-    { key: "reminder" as const, label: "Reminder" },
-    { key: "day" as const, label: "Tagesansicht" },
-    { key: "week" as const, label: "Wochenansicht" },
-  ];
-
   return (
     <div className="app-shell">
       <div className="bg-orb orb-a" />
@@ -995,467 +931,247 @@ export default function App() {
         </div>
       </header>
 
-      <nav className="tabs panel">
-        {tabs.map((item) => (
-          <button
-            key={item.key}
-            className={item.key === tab ? "tab active" : "tab"}
-            onClick={() => setTab(item.key)}
-            type="button"
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
-
       <div className="workspace">
         <main className="workspace-main">
-          {tab === "dashboard" && (
-            <>
-              <section className="panel hero-panel">
-                <div className="panel-heading">
-                  <div>
-                    <div className="eyebrow">Schnelleingabe</div>
-                    <div className="hero-subtitle">
-                      Zeitpunkt der letzten Erinnerung: {reminderTime}
-                    </div>
-                  </div>
-                  <div className="status-pill">
-                    {dashboardState === "ready"
-                      ? "bereit"
-                      : dashboardState === "error"
-                        ? "Fehler"
-                        : "lädt"}
-                  </div>
+          <section className="panel hero-panel">
+            <div className="panel-heading">
+              <div>
+                <div className="eyebrow">Schnelleingabe</div>
+                <div className="hero-subtitle">
+                  Zeitpunkt der letzten Erinnerung: {reminderTime}
                 </div>
+              </div>
+              <div className="status-pill">
+                {dashboardState === "ready"
+                  ? "bereit"
+                  : dashboardState === "error"
+                    ? "Fehler"
+                    : "lädt"}
+              </div>
+            </div>
 
-                <form className="quick-entry" onSubmit={handleQuickSubmit}>
-                  <div className="entry-section-title">Aktivitätslevel</div>
-                  <div className="scale-grid">
-                    {scale.map((item) => (
-                      <button
-                        key={item.value}
-                        type="button"
-                        className={
-                          item.value === selectedScore
-                            ? `score-card selected tone-${item.tone}`
-                            : `score-card tone-${item.tone}`
-                        }
-                        onClick={() => setSelectedScore(item.value)}
-                      >
-                        <div className="score-number">{item.value}</div>
-                        <strong>{item.title}</strong>
-                        <span>{item.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <label className="entry-field">
-                    <span>Aktivität</span>
-                    <input
-                      value={note}
-                      onChange={(event) => setNote(event.target.value)}
-                      placeholder="Was hast du gemacht?"
-                    />
-                  </label>
-
+            <form className="quick-entry" onSubmit={handleQuickSubmit}>
+              <div className="entry-section-title">Aktivitätslevel</div>
+              <div className="scale-grid">
+                {scale.map((item) => (
                   <button
-                    className="primary-btn primary-btn--compact"
-                    type="submit"
-                  >
-                    Eintrag speichern
-                  </button>
-                </form>
-              </section>
-
-              <section className="panel evaluation-panel">
-                <div className="panel-heading">
-                  <div className="eyebrow">Aktivitätsauswertung</div>
-                  <div className="segmented">
-                    <button
-                      type="button"
-                      className={
-                        evaluationTab === "day" ? "segment active" : "segment"
-                      }
-                      onClick={() => setEvaluationTab("day")}
-                    >
-                      Tagesauswertung
-                    </button>
-                    <button
-                      type="button"
-                      className={
-                        evaluationTab === "week" ? "segment active" : "segment"
-                      }
-                      onClick={() => setEvaluationTab("week")}
-                    >
-                      Wochen-Heatmap
-                    </button>
-                  </div>
-                </div>
-
-                {evaluationTab === "day" ? (
-                  <div className="day-eval">
-                    <div className="day-meta">
-                      <div className="day-picker">
-                        <select
-                          value={activeDayIso}
-                          onChange={(event) =>
-                            setSelectedDayIso(event.target.value)
-                          }
-                        >
-                          {availableDayOptions.map((option) => (
-                            <option key={option.date} value={option.date}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="stat-grid">
-                      <StatCard
-                        label="Bewegungen"
-                        value={String(selectedDaySummary.answered)}
-                        note={`${selectedDaySummary.planned} geplant · ${selectedDaySummary.additional} extra`}
-                        tone="green"
-                      />
-                      <StatCard
-                        label="Verpasste Erinnerungen"
-                        value={String(selectedDaySummary.unanswered)}
-                        note="Nicht wahrgenommen"
-                        tone="red"
-                      />
-                      <StatCard
-                        label="Verzögerung"
-                        value={`${Math.round(selectedDaySummary.averageDelayMinutes ?? 0)} Min.`}
-                        note="Reaktionszeit nach Alarm"
-                        tone="orange"
-                      />
-                    </div>
-
-                    <div className="chart-card">
-                      <div className="chart-head">
-                        <div>Aktivitäts-Skala chronologisch</div>
-                        <div className="legend">
-                          <span>
-                            <i className="legend-dot green" /> Ø pro Stunde
-                          </span>
-                          <span>
-                            <i className="legend-dot blue" /> Farbe = Durchschnittsbewertung (aufgerundet)
-                          </span>
-                        </div>
-                      </div>
-
-                      {selectedDayHourlyBars.length > 0 ? (
-                        <div className="hourly-bars">
-                          {selectedDayHourlyBars.map((item) => (
-                            <div key={item.hour} className="hourly-bar-row">
-                              <div className="hourly-bar-label">{item.hour}</div>
-                              <div className="hourly-bar-track">
-                                <div
-                                  className={`hourly-bar-fill tone-${item.tone}`}
-                                  style={{
-                                    height: `${24 + Math.round((item.averageValue ?? 0) * 18)}px`,
-                                  }}
-                                >
-                                  <span>{formatValueLabel(item.averageValue)}</span>
-                                </div>
-                              </div>
-                              <div className="hourly-bar-meta" title={item.tooltip}>
-                                <strong>{item.count}</strong>
-                                <span>{item.count === 1 ? "Eintrag" : "Einträge"}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="empty-state">
-                          Für den gewählten Tag sind noch keine Einträge
-                          vorhanden.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <HeatmapCard heatmap={dashboard?.heatmap} />
-                )}
-              </section>
-
-              <section className="panel activities-panel">
-                <div className="panel-heading">
-                  <div className="eyebrow">Letzte Aktivitäten</div>
-                  <div className="status-pill">
-                    {latestActivities.length} Zeilen
-                  </div>
-                </div>
-
-                <div className="activities-table">
-                  <div className="activities-head">
-                    <span>Datum</span>
-                    <span>Geplant</span>
-                    <span>Verzögerung</span>
-                    <span>Skala</span>
-                    <span>Aktivität</span>
-                    <span>Typ</span>
-                  </div>
-
-                  {latestActivities.map((item) => (
-                    <div className="activities-row" key={item.id}>
-                      <span>{formatDate(item.date)}</span>
-                      <span>{item.plannedTime}</span>
-                      <span>
-                        {item.delayMinutes ? `${item.delayMinutes} Min` : "—"}
-                      </span>
-                      <span>
-                        <span
-                          className={`scale-pill tone-${toneClassByValue(item.value)}`}
-                        >
-                          {formatValueLabel(item.value)}/4
-                        </span>
-                      </span>
-                      <span>
-                        <strong>{item.description}</strong>
-                        <small>{item.note}</small>
-                      </span>
-                      <span>
-                        <span
-                          className={`type-pill ${item.isAdditionalBreak ? "accent" : "soft"}`}
-                        >
-                          {getTypeLabel(item)}
-                        </span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {hasMoreActivities && (
-                  <div className="activity-more">
-                    <button
-                      className="secondary-btn"
-                      type="button"
-                      onClick={() =>
-                        setShowAllActivities((current) => !current)
-                      }
-                    >
-                      {showAllActivities
-                        ? "Weniger anzeigen"
-                        : "Weitere anzeigen"}
-                    </button>
-                  </div>
-                )}
-
-                <div className="activity-footer">
-                  <button
-                    className="secondary-btn"
+                    key={item.value}
                     type="button"
-                    onClick={handleExportCsv}
+                    className={
+                      item.value === selectedScore
+                        ? `score-card selected tone-${item.tone}`
+                        : `score-card tone-${item.tone}`
+                    }
+                    onClick={() => setSelectedScore(item.value)}
                   >
-                    CSV-Daten exportieren
+                    <div className="score-number">{item.value}</div>
+                    <strong>{item.title}</strong>
+                    <span>{item.desc}</span>
                   </button>
-                  <button
-                    className="secondary-btn warning"
-                    type="button"
-                    onClick={openImportDialog}
-                    disabled={importState === "importing"}
-                  >
-                    {importState === "importing"
-                      ? "Import läuft..."
-                      : "CSV-Daten importieren"}
-                  </button>
-                  <input
-                    ref={importFileInputRef}
-                    type="file"
-                    accept=".csv,text/csv"
-                    onChange={handleImportFileSelected}
-                    style={{ display: "none" }}
-                  />
-                </div>
-              </section>
-            </>
-          )}
+                ))}
+              </div>
 
-          {tab === "reminder" && (
-            <>
-              <section className="panel hero-panel">
-                <div className="panel-heading">
-                  <div>
-                    <div className="eyebrow">Reminder</div>
-                    <div className="hero-subtitle">
-                      {reminderDialogVisible
-                        ? "Immer dasselbe Format, nur die motivierende Nachricht ändert sich."
-                        : "Nur Ton aktiv, Dialog ausgeblendet."}
-                    </div>
-                  </div>
-                  <div
-                    className={`status-pill status-pill--compact status-pill--${dashboardState}`}
-                  >
-                    {apiStatusLabel}
-                  </div>
-                </div>
+              <label className="entry-field">
+                <span>Aktivität</span>
+                <input
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Was hast du gemacht?"
+                />
+              </label>
 
-                <div className="reminder-layout">
-                  <article className="reminder-main">
-                    <div className="time-label">Letzter aktiver Reminder</div>
-                    <div className="time">{reminderHeadline}</div>
-                    {reminderDialogVisible ? (
-                      <>
-                        <h3>Zeit für einen kurzen Neustart.</h3>
-                        <p>
-                          Steh kurz auf, lockere Schultern und Rücken oder geh
-                          ein paar Schritte. Ein kleiner Wechsel reicht oft
-                          schon, um den Kopf wieder frei zu bekommen.{" "}
-                          <button
-                            className="inline-link"
-                            type="button"
-                            onClick={() =>
-                              reminderToneEnabled && playReminderTone()
-                            }
-                            disabled={!reminderToneEnabled}
-                          >
-                            Ton abspielen
-                          </button>
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <h3>Nur Ton aktiv.</h3>
-                        <p>
-                          Der Erinnerungsdialog ist ausgeblendet. Es wird nur
-                          der Ton abgespielt und die Schnelleingabe arbeitet mit
-                          dem Zeitpunkt der letzten Erinnerung.{" "}
-                          <button
-                            className="inline-link"
-                            type="button"
-                            onClick={() =>
-                              reminderToneEnabled && playReminderTone()
-                            }
-                            disabled={!reminderToneEnabled}
-                          >
-                            Ton abspielen
-                          </button>
-                        </p>
-                      </>
-                    )}
-                  </article>
+              <button className="primary-btn primary-btn--compact" type="submit">
+                Eintrag speichern
+              </button>
+            </form>
+          </section>
 
-                  <aside className="reminder-side reminder-side--light">
-                    <ReminderComposer
-                      selectedScore={selectedScore}
-                      note={note}
-                      summaryLine={summaryLine}
-                      latestSummary={latestSummary}
-                      subtitleLine={reminderComposerSubtitle}
-                      toneEnabled={reminderToneEnabled}
-                      onScoreChange={setSelectedScore}
-                      onNoteChange={setNote}
-                      onSubmit={handleQuickSubmit}
-                      onPlayTone={() =>
-                        reminderToneEnabled && playReminderTone()
-                      }
-                    />
-                  </aside>
-                </div>
-              </section>
+          <section className="panel evaluation-panel">
+            <div className="panel-heading">
+              <div className="eyebrow">Aktivitätsauswertung</div>
+              <div className="segmented">
+                <button
+                  type="button"
+                  className={
+                    evaluationTab === "day" ? "segment active" : "segment"
+                  }
+                  onClick={() => setEvaluationTab("day")}
+                >
+                  Tagesauswertung
+                </button>
+                <button
+                  type="button"
+                  className={
+                    evaluationTab === "week" ? "segment active" : "segment"
+                  }
+                  onClick={() => setEvaluationTab("week")}
+                >
+                  Wochen-Heatmap
+                </button>
+              </div>
+            </div>
 
-              <section className="panel activities-panel">
-                <div className="panel-heading">
-                  <div className="eyebrow">Heute im Überblick</div>
-                  <div className="status-pill">
-                    {dashboardState === "ready"
-                      ? `${todaySummary?.answered ?? 0} beantwortet`
-                      : "lädt"}
+            {evaluationTab === "day" ? (
+              <div className="day-eval">
+                <div className="day-meta">
+                  <div className="day-picker">
+                    <select
+                      value={activeDayIso}
+                      onChange={(event) => setSelectedDayIso(event.target.value)}
+                    >
+                      {availableDayOptions.map((option) => (
+                        <option key={option.date} value={option.date}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                <div className="stat-grid stat-grid--compact">
+                <div className="stat-grid">
                   <StatCard
-                    label="Pausen"
-                    value={String(todaySummary?.total ?? 0)}
-                    note="erfasst"
+                    label="Bewegungen"
+                    value={String(selectedDaySummary.answered)}
+                    note={`${selectedDaySummary.planned} geplant · ${selectedDaySummary.additional} extra`}
                     tone="green"
                   />
                   <StatCard
-                    label="Verzögerung"
-                    value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)} Min.`}
-                    note="durchschnittlich"
-                    tone="orange"
+                    label="Verpasste Erinnerungen"
+                    value={String(selectedDaySummary.unanswered)}
+                    note="Nicht wahrgenommen"
+                    tone="red"
                   />
                   <StatCard
-                    label="Ø Skala"
-                    value={formatValueLabel(todaySummary?.averageValue ?? null)}
-                    note="heutiger Schnitt"
-                    tone="blue"
+                    label="Verzögerung"
+                    value={`${Math.round(selectedDaySummary.averageDelayMinutes ?? 0)} Min.`}
+                    note="Reaktionszeit nach Alarm"
+                    tone="orange"
                   />
                 </div>
-              </section>
-            </>
-          )}
 
-          {tab === "day" && (
-            <section className="panel evaluation-panel evaluation-panel--standalone">
-              <div className="panel-heading">
-                <div className="eyebrow">Tagesansicht</div>
-                <div className="status-pill">{currentDayLabel}</div>
-              </div>
-
-              <div className="stat-grid">
-                <StatCard
-                  label="Erfasst"
-                  value={String(selectedDaySummary.total)}
-                  note="gewählter Tag"
-                  tone="green"
-                />
-                <StatCard
-                  label="Beantwortet"
-                  value={String(selectedDaySummary.answered)}
-                  note="mit Wert"
-                  tone="blue"
-                />
-                <StatCard
-                  label="Unbeantwortet"
-                  value={String(selectedDaySummary.unanswered)}
-                  note="ohne Rückmeldung"
-                  tone="red"
-                />
-              </div>
-
-              <div className="distribution">
-                <div className="section-head">
-                  <h3>Werteverteilung</h3>
-                  <span>0 bis 4</span>
-                </div>
-                <div className="bar-list">
-                  {selectedDayDistribution.map((item) => (
-                    <div className="bar-row" key={item.label}>
-                      <div className="bar-label">{item.label}</div>
-                      <div className="bar-track">
-                        <div
-                          className={`bar-fill ${item.tone}`}
-                          style={{
-                            width: `${Math.max(8, Math.round((item.width / maxTodayWidth) * 100))}%`,
-                          }}
-                        />
-                      </div>
-                      <div className="bar-count">{item.count}</div>
+                <div className="chart-card">
+                  <div className="chart-head">
+                    <div>Aktivitäts-Skala chronologisch</div>
+                    <div className="legend">
+                      <span>
+                        <i className="legend-dot green" /> Ø pro Stunde
+                      </span>
+                      <span>
+                            <i className="legend-dot blue" /> Farbe = Durchschnittsbewertung (aufgerundet)
+                      </span>
                     </div>
-                  ))}
+                  </div>
+
+                  {selectedDayHourlyBars.length > 0 ? (
+                    <div className="hourly-bars">
+                      {selectedDayHourlyBars.map((item) => (
+                        <div key={item.hour} className="hourly-bar-row">
+                          <div className="hourly-bar-label">{item.hour}</div>
+                          <div className="hourly-bar-track">
+                            <div
+                              className={`hourly-bar-fill tone-${item.tone}`}
+                              style={{
+                                height: `${24 + Math.round((item.averageValue ?? 0) * 18)}px`,
+                              }}
+                            >
+                              <span>{formatValueLabel(item.averageValue)}</span>
+                            </div>
+                          </div>
+                          <div className="hourly-bar-meta" title={item.tooltip}>
+                            <strong>{item.count}</strong>
+                            <span>{item.count === 1 ? "Eintrag" : "Einträge"}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      Für den gewählten Tag sind noch keine Einträge vorhanden.
+                    </div>
+                  )}
                 </div>
               </div>
-            </section>
-          )}
-
-          {tab === "week" && (
-            <section className="panel heatmap-panel">
-              <div className="panel-heading">
-                <div className="eyebrow">Wochen-Heatmap</div>
-                <div className="status-pill">
-                  {dashboard?.heatmap.subtitle ?? "—"}
-                </div>
-              </div>
-
+            ) : (
               <HeatmapCard heatmap={dashboard?.heatmap} />
-            </section>
-          )}
+            )}
+          </section>
+
+          <section className="panel activities-panel">
+            <div className="panel-heading">
+              <div className="eyebrow">Letzte Aktivitäten</div>
+              <div className="status-pill">{latestActivities.length} Zeilen</div>
+            </div>
+
+            <div className="activities-table">
+              <div className="activities-head">
+                <span>Datum</span>
+                <span>Geplant</span>
+                <span>Verzögerung</span>
+                <span>Skala</span>
+                <span>Aktivität</span>
+                <span>Typ</span>
+              </div>
+
+              {latestActivities.map((item) => (
+                <div className="activities-row" key={item.id}>
+                  <span>{formatDate(item.date)}</span>
+                  <span>{item.plannedTime}</span>
+                  <span>{item.delayMinutes ? `${item.delayMinutes} Min` : "—"}</span>
+                  <span>
+                    <span className={`scale-pill tone-${toneClassByValue(item.value)}`}>
+                      {formatValueLabel(item.value)}/4
+                    </span>
+                  </span>
+                  <span>
+                    <strong>{item.description}</strong>
+                    <small>{item.note}</small>
+                  </span>
+                  <span>
+                    <span
+                      className={`type-pill ${item.isAdditionalBreak ? "accent" : "soft"}`}
+                    >
+                      {getTypeLabel(item)}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {hasMoreActivities && (
+              <div className="activity-more">
+                <button
+                  className="secondary-btn"
+                  type="button"
+                  onClick={() => setShowAllActivities((current) => !current)}
+                >
+                  {showAllActivities ? "Weniger anzeigen" : "Weitere anzeigen"}
+                </button>
+              </div>
+            )}
+
+            <div className="activity-footer">
+              <button className="secondary-btn" type="button" onClick={handleExportCsv}>
+                CSV-Daten exportieren
+              </button>
+              <button
+                className="secondary-btn warning"
+                type="button"
+                onClick={openImportDialog}
+                disabled={importState === "importing"}
+              >
+                {importState === "importing"
+                  ? "Import läuft..."
+                  : "CSV-Daten importieren"}
+              </button>
+              <input
+                ref={importFileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleImportFileSelected}
+                style={{ display: "none" }}
+              />
+            </div>
+          </section>
         </main>
 
         <aside className="workspace-side">
@@ -1466,24 +1182,6 @@ export default function App() {
               {currentConfig.hourlyReminderEnabled
                 ? "Minuten bis zur nächsten Erinnerung"
                 : "Reminder deaktiviert"}
-            </div>
-          </section>
-
-          <section className="panel side-card overview-card">
-            <div className="side-card-title">Heute im Überblick</div>
-            <div className="mini-grid">
-              <MiniStat
-                label="Pausen"
-                value={String(todaySummary?.total ?? 0)}
-              />
-              <MiniStat
-                label="Verzögerung"
-                value={`${Math.round(todaySummary?.averageDelayMinutes ?? 0)}`}
-              />
-              <MiniStat
-                label="Ø Skala"
-                value={formatValueLabel(todaySummary?.averageValue ?? null)}
-              />
             </div>
           </section>
 
@@ -1638,15 +1336,6 @@ function StatCard(props: {
   );
 }
 
-function MiniStat(props: { label: string; value: string }) {
-  return (
-    <div className="mini-stat">
-      <span>{props.label}</span>
-      <strong>{props.value}</strong>
-    </div>
-  );
-}
-
 function HeatmapCard(props: { heatmap: HeatmapData | undefined }) {
   if (!props.heatmap) {
     return <div className="empty-state">Heatmap wird geladen.</div>;
@@ -1710,73 +1399,6 @@ function HeatmapCard(props: { heatmap: HeatmapData | undefined }) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function ReminderComposer(props: {
-  selectedScore: number;
-  note: string;
-  summaryLine: string;
-  latestSummary: string;
-  subtitleLine: string;
-  toneEnabled: boolean;
-  onScoreChange: (score: number) => void;
-  onNoteChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onPlayTone: () => void;
-}) {
-  return (
-    <div className="reminder-composer">
-      <div className="composer-header">
-        <div className="side-label">Schnelleingabe</div>
-        <div className="composer-hint">{props.subtitleLine}</div>
-      </div>
-
-      <div className="composer-summary">{props.summaryLine}</div>
-
-      <div className="scale-grid composer-scale-grid">
-        {scale.map((item) => (
-          <button
-            type="button"
-            key={item.value}
-            className={
-              item.value === props.selectedScore
-                ? "score-card selected"
-                : "score-card"
-            }
-            onClick={() => props.onScoreChange(item.value)}
-          >
-            <div className={`score-badge ${item.tone}`}>{item.value}</div>
-            <strong>{item.title}</strong>
-            <span>{item.desc}</span>
-          </button>
-        ))}
-      </div>
-
-      <form className="quick-form composer-form" onSubmit={props.onSubmit}>
-        <label className="input-group composer-input-group">
-          <span>Beschreibung</span>
-          <input
-            value={props.note}
-            onChange={(event) => props.onNoteChange(event.target.value)}
-            placeholder={props.latestSummary}
-          />
-        </label>
-
-        <button className="primary-btn" type="submit">
-          Antwort speichern
-        </button>
-
-        <button
-          className="inline-link inline-link--standalone"
-          type="button"
-          onClick={props.onPlayTone}
-          disabled={!props.toneEnabled}
-        >
-          {props.toneEnabled ? "Ton im Reminder testen" : "Ton deaktiviert"}
-        </button>
-      </form>
     </div>
   );
 }
