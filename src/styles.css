@@ -1385,6 +1385,26 @@ button {
   box-shadow: 0 12px 20px rgba(12, 18, 15, 0.08);
 }
 
+.hourly-bar-fill.tone-green {
+  background: linear-gradient(180deg, rgba(15, 134, 96, 0.98), rgba(13, 102, 73, 0.98));
+}
+
+.hourly-bar-fill.tone-blue {
+  background: linear-gradient(180deg, rgba(92, 124, 250, 0.98), rgba(67, 92, 206, 0.98));
+}
+
+.hourly-bar-fill.tone-orange {
+  background: linear-gradient(180deg, rgba(238, 141, 79, 0.98), rgba(221, 118, 49, 0.98));
+}
+
+.hourly-bar-fill.tone-ochre {
+  background: linear-gradient(180deg, rgba(215, 154, 26, 0.98), rgba(181, 126, 18, 0.98));
+}
+
+.hourly-bar-fill.tone-red {
+  background: linear-gradient(180deg, rgba(196, 91, 76, 0.98), rgba(168, 68, 56, 0.98));
+}
+
 .hourly-bar-meta {
   display: grid;
   justify-items: center;
@@ -1706,42 +1726,6 @@ button {
 .config-row .config-field input {
   min-height: 38px;
   padding: 9px 10px;
-}
-
-.day-selector {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
-  gap: 8px;
-  margin-top: -2px;
-}
-
-.day-chip {
-  border: 1px solid rgba(23, 32, 26, 0.08);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.78);
-  padding: 10px 8px;
-  display: grid;
-  gap: 4px;
-  justify-items: center;
-  text-align: center;
-  color: var(--muted);
-}
-
-.day-chip span {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.day-chip strong {
-  font-size: 12px;
-}
-
-.day-chip.active {
-  border-color: rgba(15, 134, 96, 0.2);
-  background: rgba(15, 134, 96, 0.1);
-  color: var(--accent);
-  box-shadow: 0 8px 18px rgba(15, 134, 96, 0.08);
 }
 
 .config-switch--link {

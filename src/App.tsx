@@ -121,6 +121,7 @@ type HourlyBar = {
   count: number;
   averageValue: number | null;
   tone: "red" | "ochre" | "orange" | "blue" | "green";
+  tooltip: string;
 };
 
 const apiBase = "/api";
@@ -499,6 +500,14 @@ function buildHourlyBars(entries: ActivityItem[]) {
           ? values.reduce((sum, value) => sum + value, 0) / values.length
           : null;
       const maxValue = values.length > 0 ? Math.max(...values) : 0;
+      const tooltip = items
+        .map((item) => {
+          const entryTime = getEntryTime(item);
+          const entryValue =
+            item.value === null ? "offen" : `${formatValueLabel(item.value)}/4`;
+          return `${entryTime} · ${entryValue} · ${item.description}`;
+        })
+        .join("\n");
 
       return {
         hour,
@@ -506,6 +515,7 @@ function buildHourlyBars(entries: ActivityItem[]) {
         count: items.length,
         averageValue,
         tone: toneClassByValue(maxValue),
+        tooltip,
       } satisfies HourlyBar;
     });
 }
@@ -708,12 +718,17 @@ export default function App() {
   }, [currentConfig, dashboardState]);
 
   const currentDayLabel = useMemo(() => formatCurrentDay(now), [now]);
+  const nextReminderTime = useMemo(
+    () => getNextReminderTime(now, currentConfig),
+    [currentConfig, now],
+  );
   const nextReminderCountdown = useMemo(
     () => getNextReminderCountdown(now, currentConfig),
     [currentConfig, now],
   );
   const reminderHeadline = dashboard?.today.reminderHeadline ?? "--:--";
   const reminderTime = dashboard?.today.reminderTime ?? reminderHeadline;
+  const bookingTotal = dashboard?.total ?? 0;
   const activities = dashboard?.activities ?? [];
   const latestActivities = showAllActivities
     ? activities
@@ -738,11 +753,12 @@ export default function App() {
         shortLabel: formatDate(date),
       }));
   }, [activities, dashboard?.today.todayIso]);
-  const visibleDayOptions = availableDayOptions.slice(2);
   const activeDayIso = selectedDayIso || dashboard?.today.todayIso || "";
   const selectedDayEntries = activities.filter(
     (item) => normalizeDateKey(item.date) === normalizeDateKey(activeDayIso),
   );
+  const selectedDayOption =
+    availableDayOptions.find((item) => item.date === activeDayIso) ?? null;
   const selectedDaySummary = useMemo(
     () => buildDaySummary(selectedDayEntries),
     [selectedDayEntries],
@@ -1096,24 +1112,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="day-selector">
-                      {visibleDayOptions.map((item) => (
-                        <button
-                          key={item.date}
-                          type="button"
-                          className={
-                            item.date === activeDayIso
-                              ? "day-chip active"
-                              : "day-chip"
-                          }
-                          onClick={() => setSelectedDayIso(item.date)}
-                        >
-                          <span>{item.label.slice(0, 2)}</span>
-                          <strong>{item.shortLabel}</strong>
-                        </button>
-                      ))}
-                    </div>
-
                     <div className="stat-grid">
                       <StatCard
                         label="Bewegungen"
@@ -1163,7 +1161,7 @@ export default function App() {
                                   <span>{formatValueLabel(item.averageValue)}</span>
                                 </div>
                               </div>
-                              <div className="hourly-bar-meta">
+                              <div className="hourly-bar-meta" title={item.tooltip}>
                                 <strong>{item.count}</strong>
                                 <span>{item.count === 1 ? "Eintrag" : "Einträge"}</span>
                               </div>
