@@ -708,17 +708,12 @@ export default function App() {
   }, [currentConfig, dashboardState]);
 
   const currentDayLabel = useMemo(() => formatCurrentDay(now), [now]);
-  const nextReminderTime = useMemo(
-    () => getNextReminderTime(now, currentConfig),
-    [currentConfig, now],
-  );
   const nextReminderCountdown = useMemo(
     () => getNextReminderCountdown(now, currentConfig),
     [currentConfig, now],
   );
   const reminderHeadline = dashboard?.today.reminderHeadline ?? "--:--";
   const reminderTime = dashboard?.today.reminderTime ?? reminderHeadline;
-  const bookingTotal = dashboard?.total ?? 0;
   const activities = dashboard?.activities ?? [];
   const latestActivities = showAllActivities
     ? activities
@@ -748,8 +743,6 @@ export default function App() {
   const selectedDayEntries = activities.filter(
     (item) => normalizeDateKey(item.date) === normalizeDateKey(activeDayIso),
   );
-  const selectedDayOption =
-    availableDayOptions.find((item) => item.date === activeDayIso) ?? null;
   const selectedDaySummary = useMemo(
     () => buildDaySummary(selectedDayEntries),
     [selectedDayEntries],
