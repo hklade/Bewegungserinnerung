@@ -1141,7 +1141,7 @@ export default function App() {
                             <i className="legend-dot green" /> Ø pro Stunde
                           </span>
                           <span>
-                            <i className="legend-dot blue" /> Farbe = höchste Bewertung
+                            <i className="legend-dot blue" /> Farbe = Durchschnittsbewertung (aufgerundet)
                           </span>
                         </div>
                       </div>
