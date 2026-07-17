@@ -184,6 +184,34 @@ button {
   line-height: 1.35;
 }
 
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 10px 14px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--text);
+}
+
+.tab.active {
+  background: rgba(47, 125, 91, 0.12);
+  color: var(--accent);
+  border-color: rgba(47, 125, 91, 0.18);
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: 1.02fr 0.98fr;
@@ -1578,6 +1606,117 @@ button {
   background: rgba(255, 255, 255, 0.14);
 }
 
+.hydration-card {
+  display: grid;
+  gap: 12px;
+}
+
+.hydration-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.hydration-meta strong {
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.hydration-meta span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hydration-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.hydration-bar {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  padding: 6px;
+  border-radius: 16px;
+  background: rgba(235, 238, 242, 0.95);
+  border: 1px solid rgba(23, 32, 26, 0.08);
+  min-height: 28px;
+}
+
+.hydration-segment {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(223, 228, 235, 0.98), rgba(210, 216, 225, 0.98));
+  min-height: 18px;
+}
+
+.hydration-segment.filled {
+  background: linear-gradient(180deg, rgba(43, 111, 255, 0.98), rgba(98, 177, 255, 0.98));
+}
+
+.hydration-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  min-width: 108px;
+}
+
+.hydration-button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hydration-button--add {
+  background: linear-gradient(180deg, rgba(43, 111, 255, 0.96), rgba(98, 177, 255, 0.96));
+  color: #fff;
+}
+
+.hydration-button--remove {
+  background: rgba(23, 32, 26, 0.08);
+  color: var(--text);
+}
+
+.hydration-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.25fr 0.95fr;
+  gap: 10px;
+}
+
+.mini-stat {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(23, 32, 26, 0.08);
+  border-radius: 16px;
+  padding: 12px 12px;
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  min-width: 0;
+}
+
+.mini-stat span {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.mini-stat strong {
+  font-size: 20px;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
 .config-form {
   display: grid;
   gap: 10px;
@@ -1666,6 +1805,42 @@ button {
 .config-row .config-field input {
   min-height: 38px;
   padding: 9px 10px;
+}
+
+.day-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 8px;
+  margin-top: -2px;
+}
+
+.day-chip {
+  border: 1px solid rgba(23, 32, 26, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 10px 8px;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  text-align: center;
+  color: var(--muted);
+}
+
+.day-chip span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.day-chip strong {
+  font-size: 12px;
+}
+
+.day-chip.active {
+  border-color: rgba(15, 134, 96, 0.2);
+  background: rgba(15, 134, 96, 0.1);
+  color: var(--accent);
+  box-shadow: 0 8px 18px rgba(15, 134, 96, 0.08);
 }
 
 .config-switch--link {
@@ -1873,6 +2048,7 @@ button {
 @media (max-width: 760px) {
   .scale-grid,
   .stat-grid,
+  .mini-grid,
   .config-row {
     grid-template-columns: 1fr;
   }

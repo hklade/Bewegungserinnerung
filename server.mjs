@@ -38,6 +38,7 @@ const DEFAULT_CONFIG = {
   weekdaysOnly: true,
   exportPath: DEFAULT_EXPORT_PATH,
   reminderToneEnabled: true,
+  dailyDrinkLiters: 2,
 };
 
 function logStep(step, details = {}) {
@@ -335,6 +336,9 @@ function loadConfig() {
       showReminderDialog: Boolean(parsed?.showReminderDialog ?? DEFAULT_CONFIG.showReminderDialog),
       weekdaysOnly: Boolean(parsed?.weekdaysOnly ?? DEFAULT_CONFIG.weekdaysOnly),
       reminderToneEnabled: Boolean(parsed?.reminderToneEnabled ?? DEFAULT_CONFIG.reminderToneEnabled),
+      dailyDrinkLiters: Number.isFinite(parseNumber(parsed?.dailyDrinkLiters))
+        ? parseNumber(parsed?.dailyDrinkLiters)
+        : DEFAULT_CONFIG.dailyDrinkLiters,
     };
   } catch (error) {
     logStep("config.read.failed", {
@@ -355,6 +359,9 @@ function saveConfig(config) {
     showReminderDialog: Boolean(config.showReminderDialog),
     weekdaysOnly: Boolean(config.weekdaysOnly),
     reminderToneEnabled: Boolean(config.reminderToneEnabled),
+    dailyDrinkLiters: Number.isFinite(parseNumber(config.dailyDrinkLiters))
+      ? parseNumber(config.dailyDrinkLiters)
+      : DEFAULT_CONFIG.dailyDrinkLiters,
   };
 
   ensureParentDir(CONFIG_PATH);
@@ -959,6 +966,9 @@ const server = http.createServer((req, res) => {
           weekdaysOnly: Boolean(payload?.weekdaysOnly),
           exportPath: normalizeConfigPath(payload),
           reminderToneEnabled: Boolean(payload?.reminderToneEnabled),
+          dailyDrinkLiters: Number.isFinite(parseNumber(payload?.dailyDrinkLiters))
+            ? parseNumber(payload?.dailyDrinkLiters)
+            : DEFAULT_CONFIG.dailyDrinkLiters,
         });
 
         ensureStorageFile(normalizeConfigPath(nextConfig));

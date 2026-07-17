@@ -11,6 +11,7 @@ type AppConfig = {
   weekdaysOnly: boolean;
   exportPath: string;
   reminderToneEnabled: boolean;
+  dailyDrinkLiters: number;
 };
 
 type ActivityItem = {
@@ -134,6 +135,7 @@ const defaultConfig: AppConfig = {
   exportPath:
     "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv",
   reminderToneEnabled: true,
+  dailyDrinkLiters: 2,
 };
 
 const scale = [
@@ -577,6 +579,7 @@ export default function App() {
   const [evaluationTab, setEvaluationTab] = useState<AnalysisKey>("day");
   const [selectedDayIso, setSelectedDayIso] = useState("");
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [drinkProgressMl, setDrinkProgressMl] = useState(0);
   const [reminderPopup, setReminderPopup] = useState<{
     title: string;
     message: string;
@@ -647,6 +650,12 @@ export default function App() {
   }, []);
 
   const currentConfig = configForm ?? dashboard?.config ?? defaultConfig;
+  const drinkGoalMl = Math.max(
+    250,
+    Math.round(
+      (currentConfig.dailyDrinkLiters ?? defaultConfig.dailyDrinkLiters) * 1000,
+    ),
+  );
 
   useEffect(() => {
     if (!currentConfig.hourlyReminderEnabled || dashboardState !== "ready") {
@@ -753,6 +762,15 @@ export default function App() {
   const countdownLabel =
     nextReminderCountdown === null ? "aus" : `${nextReminderCountdown} Min`;
   const editableConfig = configForm ?? dashboard?.config ?? defaultConfig;
+  const drinkStepCount = Math.max(1, Math.ceil(drinkGoalMl / 250));
+  const drinkProgressBlocks = Math.max(
+    0,
+    Math.min(drinkStepCount, Math.round(drinkProgressMl / 250)),
+  );
+
+  useEffect(() => {
+    setDrinkProgressMl((current) => Math.min(current, drinkGoalMl));
+  }, [drinkGoalMl]);
 
   useEffect(() => {
     if (availableDayOptions.length === 0) {
@@ -1185,6 +1203,60 @@ export default function App() {
             </div>
           </section>
 
+          <section className="panel side-card hydration-card">
+            <div className="side-card-title">Trinkmanager</div>
+            <div className="hydration-meta">
+              <strong>
+                {drinkProgressMl} ml / {drinkGoalMl} ml
+              </strong>
+              <span>
+                Tagesziel:{" "}
+                {String(currentConfig.dailyDrinkLiters).replace(".", ",")} l
+              </span>
+            </div>
+
+            <div className="hydration-row">
+              <div className="hydration-bar" aria-label="Trinkfortschritt">
+                {Array.from({ length: drinkStepCount }, (_, index) => (
+                  <div
+                    key={index}
+                    className={
+                      index < drinkProgressBlocks
+                        ? "hydration-segment filled"
+                        : "hydration-segment"
+                    }
+                  />
+                ))}
+              </div>
+
+              <div className="hydration-controls">
+                <button
+                  type="button"
+                  className="hydration-button hydration-button--add"
+                  onClick={() =>
+                    setDrinkProgressMl((current) =>
+                      Math.min(drinkGoalMl, current + 250),
+                    )
+                  }
+                >
+                  + 250 ml
+                </button>
+                <button
+                  type="button"
+                  className="hydration-button hydration-button--remove"
+                  onClick={() =>
+                    setDrinkProgressMl((current) =>
+                      Math.max(0, current - 250),
+                    )
+                  }
+                  disabled={drinkProgressMl <= 0}
+                >
+                  - 250 ml
+                </button>
+              </div>
+            </div>
+          </section>
+
           <section className="panel side-card config-card">
             <div className="side-card-title">Konfiguration & Intervalle</div>
 
@@ -1271,6 +1343,25 @@ export default function App() {
                   />
                 </label>
               </div>
+
+              <label className="config-field">
+                <span>Tägliche Trinkmenge (l)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={editableConfig.dailyDrinkLiters}
+                  onChange={(event) => {
+                    const nextValue = Number(event.target.value);
+                    setConfigForm((current) => ({
+                      ...(current ?? editableConfig),
+                      dailyDrinkLiters: Number.isFinite(nextValue)
+                        ? nextValue
+                        : defaultConfig.dailyDrinkLiters,
+                    }));
+                  }}
+                />
+              </label>
 
               <label className="config-switch config-switch--link">
                 <div>
