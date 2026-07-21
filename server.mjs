@@ -6,14 +6,18 @@ const PORT = 3001;
 const PROJECT_ROOT = process.cwd();
 const DATA_DIR = path.join(PROJECT_ROOT, "data");
 const EXPORT_DIR = path.join(PROJECT_ROOT, "export");
+const CONFIG_PATH = path.join(PROJECT_ROOT, "config");
+const CONFIG_FILE = path.join(CONFIG_PATH, "bewegungserinnerung.config.json");
+const DEFAULT_EXPORT_PATH = path.join(DATA_DIR, "Bewegungsdaten.csv");
+const HYDRATION_EXPORT_PATH = path.join(DATA_DIR, "Trinkdaten.csv");
+const VIENNA_TIME_ZONE = "Europe/Vienna";
+
+// entfernen
 const CODEX_ROOT = "C:\\Users\\HeidiKlade\\Documents\\Codex";
 const CODEX_APP_DIR = path.join(CODEX_ROOT, "Bewegungserinnerung");
-const CODEX_EXPORT_DIR = path.join(CODEX_APP_DIR, "export");
-const DEFAULT_EXPORT_PATH = path.join(CODEX_EXPORT_DIR, "Bewegungsdaten.csv");
 const LEGACY_EXPORT_PATH = path.join(EXPORT_DIR, "bewegungstracker_daten.csv");
-const CONFIG_PATH = path.join(CODEX_APP_DIR, "bewegungserinnerung.config.json");
 const LEGACY_CONFIG_PATH = path.join(DATA_DIR, "bewegungserinnerung.config.json");
-const VIENNA_TIME_ZONE = "Europe/Vienna";
+
 const CSV_HEADERS = [
   "id",
   "date",
@@ -29,6 +33,7 @@ const CSV_HEADERS = [
   "note",
   "created_at",
 ];
+const HYDRATION_HEADERS = ["date", "hydrationMl"];
 const DEFAULT_REMINDER_SLOTS = ["07:55", "08:55", "09:55", "10:55", "11:55", "12:55", "13:55", "14:55", "15:55", "16:55"];
 const DEFAULT_CONFIG = {
   hourlyReminderEnabled: true,
@@ -247,6 +252,17 @@ function serializeCsv(rows) {
   return `${lines.join("\n")}\n`;
 }
 
+function serializeHydrationCsv(rows) {
+  const lines = [HYDRATION_HEADERS.join(";")];
+  for (const row of rows) {
+    lines.push(
+      HYDRATION_HEADERS.map((header) => csvEscape(row[header] ?? "")).join(";"),
+    );
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
 function normalizeEntry(record, fallbackId = 0) {
   const date = String(record.date ?? record.Date ?? "").trim();
   const reminderTime = normalizeTime(record.reminder_time ?? record.reminderTime ?? record.reminder ?? record.time ?? "");
@@ -282,6 +298,19 @@ function normalizeEntry(record, fallbackId = 0) {
   };
 }
 
+function normalizeHydrationEntry(record, fallbackDate = "", fallbackHydrationMl = 0) {
+  const date = String(record.date ?? record.Date ?? fallbackDate ?? "").trim();
+  const hydrationMl = Math.max(
+    0,
+    parseInteger(record.hydrationMl ?? record.hydration_ml ?? record.value ?? fallbackHydrationMl) ?? 0,
+  );
+
+  return {
+    date,
+    hydrationMl,
+  };
+}
+
 function formatEntryForCsv(entry) {
   return {
     id: entry.id,
@@ -297,6 +326,13 @@ function formatEntryForCsv(entry) {
     entry_type: entry.entry_type ?? "",
     note: entry.note ?? "",
     created_at: entry.created_at ?? "",
+  };
+}
+
+function formatHydrationEntryForCsv(entry) {
+  return {
+    date: entry.date,
+    hydrationMl: entry.hydrationMl,
   };
 }
 
@@ -316,10 +352,41 @@ function sortEntries(entries) {
   });
 }
 
-function loadConfig() {
-  ensureParentDir(CONFIG_PATH);
+function isHydrationEntry(entry) {
+  return entry.entry_type === "hydration";
+}
 
-  const sourcePath = fs.existsSync(CONFIG_PATH) ? CONFIG_PATH : LEGACY_CONFIG_PATH;
+function buildHydrationSummary(now = new Date()) {
+  const hydrationEntries = readHydrationEntries();
+  const todayIso = getViennaIsoDate(now);
+  const perDay = new Map();
+
+  for (const entry of hydrationEntries) {
+    if (!entry.date) {
+      continue;
+    }
+
+    perDay.set(entry.date, Number(entry.hydrationMl) || 0);
+  }
+
+  const history = [...perDay.entries()]
+    .sort((left, right) => right[0].localeCompare(left[0]))
+    .slice(0, 14)
+    .map(([date, value]) => ({
+      date,
+      value,
+    }));
+
+  return {
+    todayMl: perDay.get(todayIso) ?? 0,
+    history,
+  };
+}
+
+function loadConfig() {
+  ensureParentDir(CONFIG_FILE);
+
+  const sourcePath = fs.existsSync(CONFIG_FILE) ? CONFIG_FILE : LEGACY_CONFIG_PATH;
   if (!fs.existsSync(sourcePath)) {
     return { ...DEFAULT_CONFIG };
   }
@@ -364,8 +431,8 @@ function saveConfig(config) {
       : DEFAULT_CONFIG.dailyDrinkLiters,
   };
 
-  ensureParentDir(CONFIG_PATH);
-  fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(nextConfig, null, 2)}\n`, "utf8");
+  ensureParentDir(CONFIG_FILE);
+  fs.writeFileSync(CONFIG_FILE, `${JSON.stringify(nextConfig, null, 2)}\n`, "utf8");
   return nextConfig;
 }
 
@@ -387,6 +454,16 @@ function ensureStorageFile(filePath) {
   fs.writeFileSync(filePath, `${CSV_HEADERS.join(";")}\n`, "utf8");
 }
 
+function ensureHydrationStorageFile(filePath = HYDRATION_EXPORT_PATH) {
+  ensureParentDir(filePath);
+
+  if (fs.existsSync(filePath)) {
+    return;
+  }
+
+  fs.writeFileSync(filePath, `${HYDRATION_HEADERS.join(";")}\n`, "utf8");
+}
+
 function readEntries(filePath) {
   ensureStorageFile(filePath);
   const text = fs.readFileSync(filePath, "utf8");
@@ -402,6 +479,23 @@ function writeEntries(filePath, entries) {
     id: Number.isFinite(entry.id) && entry.id > 0 ? entry.id : index + 1,
   }));
   fs.writeFileSync(filePath, serializeCsv(normalizedRows.map(formatEntryForCsv)), "utf8");
+  return normalizedRows;
+}
+
+function readHydrationEntries(filePath = HYDRATION_EXPORT_PATH) {
+  ensureHydrationStorageFile(filePath);
+  const text = fs.readFileSync(filePath, "utf8");
+  const { rows } = parseCsvText(text);
+  return rows.map((record, index) => normalizeHydrationEntry(record, "", index));
+}
+
+function writeHydrationEntries(filePath, entries) {
+  ensureParentDir(filePath);
+  const normalizedRows = entries.map((entry) => ({
+    date: String(entry.date ?? "").trim(),
+    hydrationMl: Math.max(0, parseInteger(entry.hydrationMl ?? entry.value) ?? 0),
+  }));
+  fs.writeFileSync(filePath, serializeHydrationCsv(normalizedRows.map(formatHydrationEntryForCsv)), "utf8");
   return normalizedRows;
 }
 
@@ -536,7 +630,7 @@ function ensureAutomaticReminderEntries(filePath, config, now = new Date()) {
 
 function buildLatestBookings(entries, limit = 5) {
   return entries
-    .filter((entry) => entry.entry_type !== "unanswered")
+    .filter((entry) => entry.entry_type !== "unanswered" && !isHydrationEntry(entry))
     .slice(0, limit)
     .map((entry) => ({
       id: entry.id,
@@ -555,7 +649,7 @@ function buildLatestBookings(entries, limit = 5) {
 
 function buildTodayStats(entries, config, now = new Date()) {
   const todayIso = getViennaIsoDate(now);
-  const todayEntries = entries.filter((entry) => entry.date === todayIso);
+  const todayEntries = entries.filter((entry) => entry.date === todayIso && !isHydrationEntry(entry));
   const reminderSlots = buildReminderSlots(config);
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const lastActiveSlot = [...reminderSlots]
@@ -620,7 +714,7 @@ function buildCurrentWeek(entries, now = new Date()) {
     const date = new Date(mondayDate);
     date.setDate(mondayDate.getDate() + index);
     const iso = getViennaIsoDate(date);
-    const dayEntries = entries.filter((entry) => entry.date === iso && entry.value !== null);
+    const dayEntries = entries.filter((entry) => entry.date === iso && entry.value !== null && !isHydrationEntry(entry));
     const avg = dayEntries.length > 0 ? dayEntries.reduce((sum, entry) => sum + Number(entry.value), 0) / dayEntries.length : null;
 
     return {
@@ -647,7 +741,7 @@ function buildRecentWeeks(entries, now = new Date()) {
   const groups = new Map();
 
   for (const entry of entries) {
-    if (entry.value === null) {
+    if (entry.value === null || isHydrationEntry(entry)) {
       continue;
     }
 
@@ -687,7 +781,7 @@ function buildRecentWeeks(entries, now = new Date()) {
 
 function buildActivityRows(entries, limit = 200) {
   return entries
-    .filter((entry) => entry.entry_type !== "unanswered")
+    .filter((entry) => entry.entry_type !== "unanswered" && !isHydrationEntry(entry))
     .slice(0, limit)
     .map((entry) => ({
       id: entry.id,
@@ -705,7 +799,7 @@ function buildActivityRows(entries, limit = 200) {
 
 function buildHeatmap(entries, config, now = new Date()) {
   const activeDatesDescending = [
-    ...new Set(entries.filter((entry) => entry.value !== null).map((entry) => entry.date)),
+    ...new Set(entries.filter((entry) => entry.value !== null && !isHydrationEntry(entry)).map((entry) => entry.date)),
   ].sort((left, right) => right.localeCompare(left));
 
   const columns = activeDatesDescending.slice(0, 7).sort((left, right) => left.localeCompare(right)).map((date) => ({
@@ -727,7 +821,7 @@ function buildHeatmap(entries, config, now = new Date()) {
       const matchingEntries = entries.filter((entry) => {
         const entryDate = entry.date;
         const entryTime = normalizeTime(entry.response_time || entry.reminder_time);
-        return entryDate === column.date && entryTime && entryTime.slice(0, 2) === slotKey.slice(0, 2) && entry.value !== null;
+        return entryDate === column.date && entryTime && entryTime.slice(0, 2) === slotKey.slice(0, 2) && entry.value !== null && !isHydrationEntry(entry);
       });
 
       if (matchingEntries.length === 0) {
@@ -769,6 +863,7 @@ function buildDashboard(limit = 5) {
   const exportPath = normalizeConfigPath(config);
   ensureStorageFile(exportPath);
   const entries = ensureAutomaticReminderEntries(exportPath, config);
+  const movementEntries = entries.filter((entry) => !isHydrationEntry(entry));
   const now = new Date();
 
   return {
@@ -776,13 +871,14 @@ function buildDashboard(limit = 5) {
       ...config,
       exportPath,
     },
-    total: entries.length,
-    today: buildTodayStats(entries, config, now),
-    latestBookings: buildLatestBookings(entries, limit),
-    activities: buildActivityRows(entries, 200),
-    currentWeek: buildCurrentWeek(entries, now),
-    recentWeeks: buildRecentWeeks(entries, now),
-    heatmap: buildHeatmap(entries, config, now),
+    total: movementEntries.length,
+    hydration: buildHydrationSummary(now),
+    today: buildTodayStats(movementEntries, config, now),
+    latestBookings: buildLatestBookings(movementEntries, limit),
+    activities: buildActivityRows(movementEntries, 200),
+    currentWeek: buildCurrentWeek(movementEntries, now),
+    recentWeeks: buildRecentWeeks(movementEntries, now),
+    heatmap: buildHeatmap(movementEntries, config, now),
   };
 }
 
@@ -829,6 +925,33 @@ function parseTextBody(req) {
 
 function createManualBooking(payload) {
   const config = loadConfig();
+  if (payload?.entryType === "hydration") {
+    const now = new Date();
+    const date = getViennaIsoDate(now);
+    const hydrationMl = Math.max(0, parseInteger(payload?.value) ?? 0);
+    const hydrationPath = HYDRATION_EXPORT_PATH;
+    ensureHydrationStorageFile(hydrationPath);
+    const existingEntries = readHydrationEntries(hydrationPath);
+    const updatedEntries = writeHydrationEntries(hydrationPath, [
+      ...existingEntries,
+      {
+        date,
+        hydrationMl,
+      },
+    ]);
+
+    logStep("hydration.saved", {
+      date,
+      hydrationMl,
+      total: updatedEntries.length,
+    });
+
+    return {
+      item: null,
+      total: updatedEntries.length,
+    };
+  }
+
   const exportPath = normalizeConfigPath(config);
   ensureStorageFile(exportPath);
   const now = new Date();

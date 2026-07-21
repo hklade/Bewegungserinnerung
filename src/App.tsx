@@ -66,6 +66,13 @@ type HeatmapData = {
 type DashboardApi = {
   config: AppConfig;
   total: number;
+  hydration?: {
+    todayMl: number;
+    history: Array<{
+      date: string;
+      value: number;
+    }>;
+  };
   today: {
     todayIso: string;
     summary: {
@@ -603,6 +610,7 @@ export default function App() {
       setDashboard(payload);
       setDashboardState("ready");
       setConfigForm((current) => current ?? payload.config);
+      setDrinkProgressMl(payload.hydration?.todayMl ?? 0);
       setSelectedDayIso((current) => {
         const availableDays = [
           ...new Set([
@@ -656,6 +664,7 @@ export default function App() {
       (currentConfig.dailyDrinkLiters ?? defaultConfig.dailyDrinkLiters) * 1000,
     ),
   );
+  const drinkOverflowMl = Math.max(0, drinkProgressMl - drinkGoalMl);
 
   useEffect(() => {
     if (!currentConfig.hourlyReminderEnabled || dashboardState !== "ready") {
@@ -763,14 +772,12 @@ export default function App() {
     nextReminderCountdown === null ? "aus" : `${nextReminderCountdown} Min`;
   const editableConfig = configForm ?? dashboard?.config ?? defaultConfig;
   const drinkStepCount = Math.max(1, Math.ceil(drinkGoalMl / 250));
+  const drinkOverflowStepCount = Math.max(1, Math.ceil(Math.max(250, drinkOverflowMl) / 250));
   const drinkProgressBlocks = Math.max(
     0,
     Math.min(drinkStepCount, Math.round(drinkProgressMl / 250)),
   );
-
-  useEffect(() => {
-    setDrinkProgressMl((current) => Math.min(current, drinkGoalMl));
-  }, [drinkGoalMl]);
+  const drinkOverflowBlocks = Math.max(0, Math.round(drinkOverflowMl / 250));
 
   useEffect(() => {
     if (availableDayOptions.length === 0) {
@@ -915,6 +922,35 @@ export default function App() {
       window.setTimeout(() => URL.revokeObjectURL(url), 1500);
     } catch {
       // keep quiet; export is optional
+    }
+  }
+
+  async function saveHydrationProgress(nextMl: number) {
+    const previousMl = drinkProgressMl;
+    setDrinkProgressMl(nextMl);
+
+    try {
+      const response = await fetch(`${apiBase}/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          entryType: "hydration",
+          value: nextMl,
+          description: "Trinkmenge",
+          note: `${nextMl} ml`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      await refreshDashboard();
+    } catch {
+      setDrinkProgressMl(previousMl);
+      setDashboardState("error");
     }
   }
 
@@ -1216,17 +1252,40 @@ export default function App() {
             </div>
 
             <div className="hydration-row">
-              <div className="hydration-bar" aria-label="Trinkfortschritt">
-                {Array.from({ length: drinkStepCount }, (_, index) => (
+              <div className="hydration-stack">
+                {drinkOverflowMl > 0 && (
                   <div
-                    key={index}
-                    className={
-                      index < drinkProgressBlocks
-                        ? "hydration-segment filled"
-                        : "hydration-segment"
-                    }
-                  />
-                ))}
+                    className="hydration-bar hydration-bar--overflow"
+                    aria-label="Trinküberschuss"
+                  >
+                    {Array.from(
+                      { length: drinkOverflowStepCount },
+                      (_, index) => (
+                        <div
+                          key={`overflow-${index}`}
+                          className={
+                            index < drinkOverflowBlocks
+                              ? "hydration-segment hydration-segment--overflow filled"
+                              : "hydration-segment hydration-segment--overflow"
+                          }
+                        />
+                      ),
+                    )}
+                  </div>
+                )}
+
+                <div className="hydration-bar" aria-label="Trinkfortschritt">
+                  {Array.from({ length: drinkStepCount }, (_, index) => (
+                    <div
+                      key={index}
+                      className={
+                        index < drinkProgressBlocks
+                          ? "hydration-segment filled"
+                          : "hydration-segment"
+                      }
+                    />
+                  ))}
+                </div>
               </div>
 
               <div className="hydration-controls">
@@ -1234,9 +1293,7 @@ export default function App() {
                   type="button"
                   className="hydration-button hydration-button--add"
                   onClick={() =>
-                    setDrinkProgressMl((current) =>
-                      Math.min(drinkGoalMl, current + 250),
-                    )
+                    void saveHydrationProgress(drinkProgressMl + 250)
                   }
                 >
                   + 250 ml
@@ -1245,8 +1302,8 @@ export default function App() {
                   type="button"
                   className="hydration-button hydration-button--remove"
                   onClick={() =>
-                    setDrinkProgressMl((current) =>
-                      Math.max(0, current - 250),
+                    void saveHydrationProgress(
+                      Math.max(0, drinkProgressMl - 250),
                     )
                   }
                   disabled={drinkProgressMl <= 0}
