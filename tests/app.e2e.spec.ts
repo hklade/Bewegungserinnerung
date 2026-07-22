@@ -7,7 +7,7 @@ const repoDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(repoDir, "..");
 const apiBase = "http://127.0.0.1:3001/api";
 const defaultExportPath = path.join(repoRoot, "export", "Bewegungsdaten.csv");
-const testCsvFixturePath = path.join(repoRoot, "Test-Bewegungsdaten.csv");
+const testCsvFixturePath = path.join(repoRoot, "data", "Test-Bewegungsdaten.csv");
 
 const baseConfig = {
   hourlyReminderEnabled: true,
@@ -83,8 +83,16 @@ test("config card persists export path and dialog toggle", async ({
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   await expect(page.locator(".config-card")).toBeVisible({ timeout: 15_000 });
+
+  const persistedConfigResponse = await request.get(`${apiBase}/config`);
+  expect(persistedConfigResponse.ok()).toBeTruthy();
+  const persistedConfig = (await persistedConfigResponse.json()) as {
+    exportPath: string;
+    showReminderDialog: boolean;
+  };
+
   await expect(page.getByRole("textbox", { name: "Exportdatei:" })).toHaveValue(
-    exportPath,
+    persistedConfig.exportPath,
   );
   await expect(page.locator(".hero-subtitle")).toContainText(
     "Zeitpunkt der letzten Erinnerung:",

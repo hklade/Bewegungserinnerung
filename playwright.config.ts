@@ -27,8 +27,8 @@ export const baseConfig = defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Run tests sequentially to avoid shared config races across browser projects. */
+  workers: 1,
 
   expect: { timeout: 10_000 },
 
