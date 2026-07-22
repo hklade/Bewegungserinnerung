@@ -6,6 +6,11 @@ import { defineConfig, devices } from "@playwright/test";
  */
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 console.log(`---👋 Loading Playwright Config ---`);
@@ -27,8 +32,8 @@ export const baseConfig = defineConfig({
 
   expect: { timeout: 10_000 },
 
-  globalSetup: require.resolve("./tests/helpers/global-setup.ts"),
-  globalTeardown: require.resolve("./tests/helpers/global-teardown.ts"),
+  globalSetup: "./tests/helpers/global-setup.ts",
+  globalTeardown: "./tests/helpers/global-teardown.ts",
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [

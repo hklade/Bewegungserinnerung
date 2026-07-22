@@ -12,12 +12,6 @@ const DEFAULT_EXPORT_PATH = path.join(DATA_DIR, "Bewegungsdaten.csv");
 const HYDRATION_EXPORT_PATH = path.join(DATA_DIR, "Trinkdaten.csv");
 const VIENNA_TIME_ZONE = "Europe/Vienna";
 
-// entfernen
-const CODEX_ROOT = "C:\\Users\\HeidiKlade\\Documents\\Codex";
-const CODEX_APP_DIR = path.join(CODEX_ROOT, "Bewegungserinnerung");
-const LEGACY_EXPORT_PATH = path.join(EXPORT_DIR, "bewegungstracker_daten.csv");
-const LEGACY_CONFIG_PATH = path.join(DATA_DIR, "bewegungserinnerung.config.json");
-
 const CSV_HEADERS = [
   "id",
   "date",
@@ -440,14 +434,6 @@ function ensureStorageFile(filePath) {
   ensureParentDir(filePath);
 
   if (fs.existsSync(filePath)) {
-    return;
-  }
-
-  if (path.resolve(filePath) === path.resolve(DEFAULT_EXPORT_PATH) && fs.existsSync(LEGACY_EXPORT_PATH)) {
-    const legacyText = fs.readFileSync(LEGACY_EXPORT_PATH, "utf8");
-    const legacyRows = parseCsvText(legacyText).rows.map((record, index) => normalizeEntry(record, index + 1));
-    writeEntries(filePath, legacyRows);
-    logStep("storage.migrated", { from: path.basename(LEGACY_EXPORT_PATH), to: path.basename(filePath), rows: legacyRows.length });
     return;
   }
 
