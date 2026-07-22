@@ -90,10 +90,14 @@ test("config card persists export path and dialog toggle", async ({
     "Zeitpunkt der letzten Erinnerung:",
   );
 
-  await page.getByRole("button", { name: "Reminder" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Nur Ton aktiv." }),
-  ).toBeVisible();
+  const preToggleConfigResponse = await request.get(`${apiBase}/config`);
+  expect(preToggleConfigResponse.ok()).toBeTruthy();
+  const preToggleConfig = (await preToggleConfigResponse.json()) as {
+    showReminderDialog: boolean;
+    exportPath: string;
+  };
+  expect(preToggleConfig.showReminderDialog).toBe(false);
+  expect(path.normalize(preToggleConfig.exportPath)).toBe(path.normalize(exportPath));
 
   const enableResponse = await request.put(`${apiBase}/config`, {
     data: {

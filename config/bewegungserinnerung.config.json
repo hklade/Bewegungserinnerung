@@ -1,10 +1,10 @@
 {
   "hourlyReminderEnabled": true,
-  "showReminderDialog": false,
+  "showReminderDialog": true,
   "reminderStartTime": "07:55",
   "reminderEndTime": "16:55",
   "weekdaysOnly": true,
-  "exportPath": "C:\\Users\\HeidiKlade\\OneDrive - Gofore Oyj\\Projekte\\Bewegungserinnerung\\data\\Bewegungsdaten.csv",
+  "exportPath": "C:\\Users\\HeidiKlade\\OneDrive - Gofore Oyj\\Projekte\\Bewegungserinnerung\\export\\Bewegungsdaten.csv",
   "reminderToneEnabled": true,
   "dailyDrinkLiters": 2
 }

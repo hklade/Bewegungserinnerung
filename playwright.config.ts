@@ -62,7 +62,6 @@ export const baseConfig = defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL: "http://127.0.0.1:5173",
-    channel: "chrome",
     viewport: { width: 1440, height: 1200 },
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -91,6 +90,7 @@ export const baseConfig = defineConfig({
     {
       name: "chromium",
       use: {
+        channel: "chrome",
         //...devices["Desktop Chrome"],
         viewport: null,
         launchOptions: {
