@@ -81,14 +81,15 @@ export function normalizeEntry(record, fallbackId = 0) {
 }
 
 export function normalizeHydrationEntry(record, fallbackDate = '', fallbackHydrationMl = 0) {
-  const date = String(record.date ?? record.Date ?? fallbackDate ?? '').trim();
+  const rawDate = record.date ?? record.Date ?? fallbackDate ?? '';
+  const normalizedDate = String(rawDate ?? '').trim();
   const hydrationMl = Math.max(
     0,
     parseInteger(record.hydrationMl ?? record.hydration_ml ?? record.value ?? fallbackHydrationMl) ?? 0,
   );
 
   return {
-    date,
+    date: normalizedDate || new Date().toISOString(),
     hydrationMl,
   };
 }
@@ -184,7 +185,7 @@ export function readHydrationEntries(filePath = SERVER_PATHS.hydrationExportPath
 export function writeHydrationEntries(filePath, entries) {
   ensureParentDir(filePath);
   const normalizedRows = entries.map((entry) => ({
-    date: String(entry.date ?? '').trim(),
+    date: String(entry.date ?? '').trim() || new Date().toISOString(),
     hydrationMl: Math.max(0, parseInteger(entry.hydrationMl ?? entry.value) ?? 0),
   }));
   fs.writeFileSync(filePath, serializeHydrationCsv(normalizedRows.map(formatHydrationEntryForCsv)), 'utf8');

@@ -43,7 +43,11 @@ export function buildHydrationSummary(now = new Date()) {
       continue;
     }
 
-    perDay.set(entry.date, Number(entry.hydrationMl) || 0);
+    const entryDate = entry.date;
+    const entryDay = entryDate.includes('T') ? getViennaIsoDate(new Date(entryDate)) : entryDate;
+    const currentValue = Number(entry.hydrationMl) || 0;
+    const previousValue = perDay.get(entryDay) ?? 0;
+    perDay.set(entryDay, previousValue + currentValue);
   }
 
   const history = [...perDay.entries()]
@@ -419,7 +423,7 @@ export function createManualBooking(payload) {
   const config = loadConfig();
   if (payload?.entryType === 'hydration') {
     const now = new Date();
-    const date = getViennaIsoDate(now);
+    const date = now.toISOString();
     const hydrationMl = Math.max(0, parseInteger(payload?.value) ?? 0);
     const hydrationPath = SERVER_PATHS.hydrationExportPath;
     ensureHydrationStorageFile(hydrationPath);
