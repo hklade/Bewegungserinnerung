@@ -78,6 +78,9 @@ export const baseConfig = defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "node scripts/playwright-server.mjs",
+    env: {
+      NODE_ENV: "test",
+    },
     url: "http://127.0.0.1:5173",
     reuseExistingServer: true,
     timeout: 120_000,

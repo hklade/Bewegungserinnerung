@@ -1,10 +1,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
+const repoDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.join(repoDir, "..");
 const apiBase = "http://127.0.0.1:3001/api";
-const defaultExportPath =
-  "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\export\\Bewegungsdaten.csv";
+const defaultExportPath = path.join(repoRoot, "export", "Bewegungsdaten.csv");
+const testCsvFixturePath = path.join(repoRoot, "Test-Bewegungsdaten.csv");
 
 const baseConfig = {
   hourlyReminderEnabled: true,
@@ -48,10 +51,7 @@ function buildCsv(rows: string[]) {
 }
 
 function readTestCsvFixture() {
-  return readFileSync(
-    "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\Test-Bewegungsdaten.csv",
-    "utf8",
-  );
+  return readFileSync(testCsvFixturePath, "utf8");
 }
 
 async function seedConfig(request: any, exportPath: string, overrides = {}) {
@@ -211,9 +211,7 @@ test("csv import via file dialog replaces existing rows", async ({
   await page.getByRole("button", { name: "CSV-Daten importieren" }).click();
   await page
     .locator('input[type="file"]')
-    .setInputFiles(
-      "C:\\Users\\HeidiKlade\\Documents\\Codex\\Bewegungserinnerung\\Test-Bewegungsdaten.csv",
-    );
+    .setInputFiles(testCsvFixturePath);
 
   await expect(page.locator(".activities-row")).toHaveCount(2);
   await expect(page.getByText("Kniebeugen")).toBeVisible();
