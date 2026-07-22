@@ -7,7 +7,7 @@ import fs from 'node:fs';
  */
 import { loadConfig, saveConfig, normalizeConfigPath, DEFAULT_CONFIG } from './config.mjs';
 import { ensureStorageFile } from './storage.mjs';
-import { buildDashboard, createManualBooking, replaceAllBookings } from './service.mjs';
+import { buildDashboard, createHydrationBooking, replaceAllBookings } from './service.mjs';
 import { normalizeTime } from './utils/time.mjs';
 import { parseNumber } from './utils/parsing.mjs';
 
@@ -179,7 +179,7 @@ export function createServer() {
             entryType: payload?.entryType ?? null,
             descriptionLength: String(payload?.description ?? '').trim().length,
           });
-          const inserted = createManualBooking(payload);
+          const inserted = createHydrationBooking(payload);
           sendJson(res, 201, inserted);
         })
         .catch((error) => {

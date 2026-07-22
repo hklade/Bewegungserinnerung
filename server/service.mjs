@@ -419,7 +419,7 @@ export function buildDashboard(limit = 5) {
   };
 }
 
-export function createManualBooking(payload) {
+export function createHydrationBooking(payload) {
   const config = loadConfig();
   if (payload?.entryType === 'hydration') {
     const now = new Date();
