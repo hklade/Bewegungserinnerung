@@ -91,6 +91,8 @@ test("config card persists export path and dialog toggle", async ({
     showReminderDialog: boolean;
   };
 
+  await page.reload();
+  await page.waitForLoadState("networkidle");
   await expect(page.getByRole("textbox", { name: "Exportdatei:" })).toHaveValue(
     persistedConfig.exportPath,
   );
