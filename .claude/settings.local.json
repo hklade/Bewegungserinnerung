@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(git -C /workspaces/Bewegungserinnerung status --porcelain config/)"
-    ]
+    ],
+    "deny": ["*.env", "node_modules/**"]
   }
 }
