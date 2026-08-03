@@ -1,8 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C /workspaces/Bewegungserinnerung status --porcelain config/)"
+      "Bash(git -C /workspaces/Bewegungserinnerung status --porcelain config/)",
+      "Bash(npm run *)",
+      "Bash(node -e \"console.log\\(process.platform\\)\")",
+      "Bash(npx allure *)",
+      "Bash(node -e ' *)",
+      "Bash(npm -v)",
+      "Bash(npm ls *)",
+      "Bash(npm config *)",
+      "Bash(npm approve-scripts *)"
     ],
-    "deny": ["*.env", "node_modules/**"]
+    "deny": [
+      "*.env",
+      "node_modules/**"
+    ]
   }
 }
