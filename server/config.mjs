@@ -15,6 +15,12 @@ const TEST_CONFIG_FILE = path.join(CONFIG_DIR, 'test-bewegungserinnerung.config.
 const DEFAULT_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Bewegungsdaten.csv');
 const TEST_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Test-Bewegungsdaten.csv');
 const DEFAULT_HYDRATION_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Trinkdaten.csv');
+const TEST_HYDRATION_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Test-Trinkdaten.csv');
+
+function resolveHydrationExportPath() {
+  const environment = String(process.env.NODE_ENV ?? '').trim().toLowerCase();
+  return environment === 'test' ? TEST_HYDRATION_EXPORT_PATH : DEFAULT_HYDRATION_EXPORT_PATH;
+}
 
 export const DEFAULT_CONFIG = {
   hourlyReminderEnabled: true,
@@ -39,7 +45,11 @@ export const SERVER_PATHS = {
   testConfigFile: TEST_CONFIG_FILE,
   defaultExportPath: DEFAULT_EXPORT_PATH,
   testExportPath: TEST_EXPORT_PATH,
-  hydrationExportPath: DEFAULT_HYDRATION_EXPORT_PATH,
+  defaultHydrationExportPath: DEFAULT_HYDRATION_EXPORT_PATH,
+  testHydrationExportPath: TEST_HYDRATION_EXPORT_PATH,
+  get hydrationExportPath() {
+    return resolveHydrationExportPath();
+  },
 };
 
 export function ensureDir(targetDir) {

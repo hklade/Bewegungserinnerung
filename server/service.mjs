@@ -37,6 +37,7 @@ export function buildHydrationSummary(now = new Date()) {
   const hydrationEntries = readHydrationEntries();
   const todayIso = getViennaIsoDate(now);
   const perDay = new Map();
+  const latestTimestampPerDay = new Map();
 
   for (const entry of hydrationEntries) {
     if (!entry.date) {
@@ -46,8 +47,14 @@ export function buildHydrationSummary(now = new Date()) {
     const entryDate = entry.date;
     const entryDay = entryDate.includes('T') ? getViennaIsoDate(new Date(entryDate)) : entryDate;
     const currentValue = Number(entry.hydrationMl) || 0;
-    const previousValue = perDay.get(entryDay) ?? 0;
-    perDay.set(entryDay, previousValue + currentValue);
+    const previousTimestamp = latestTimestampPerDay.get(entryDay);
+
+    // Jeder Eintrag enthält bereits die aufsummierte Tagesmenge, daher zählt
+    // nur der zeitlich letzte Eintrag pro Tag, nicht die Summe aller Einträge.
+    if (previousTimestamp === undefined || entryDate >= previousTimestamp) {
+      perDay.set(entryDay, currentValue);
+      latestTimestampPerDay.set(entryDay, entryDate);
+    }
   }
 
   const history = [...perDay.entries()]
