@@ -13,7 +13,25 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
+const frontendPort = Number(process.env.PLAYWRIGHT_PORT || process.env.VITE_PORT || 5173);
+const frontendHost = process.env.PLAYWRIGHT_HOST || "127.0.0.1";
+const defaultBaseURL = process.env.PLAYWRIGHT_BASE_URL || `http://${frontendHost}:${frontendPort}`;
+
 console.log(`---👋 Loading Playwright Config ---`);
+
+const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER === "true"
+  ? undefined
+  : {
+      command: "node scripts/playwright-server.mjs",
+      env: {
+        NODE_ENV: "test",
+        PLAYWRIGHT_PORT: String(frontendPort),
+        PLAYWRIGHT_HOST: frontendHost,
+      },
+      url: defaultBaseURL,
+      reuseExistingServer: true,
+      timeout: 60_000,
+    };
 
 export const baseConfig = defineConfig({
   globalTimeout: 1 * 60 * 60 * 1000, // - 1 hour
@@ -32,8 +50,8 @@ export const baseConfig = defineConfig({
 
   expect: { timeout: 10_000 },
 
-  globalSetup: "./tests/helpers/global-setup.ts",
-  globalTeardown: "./tests/helpers/global-teardown.ts",
+  globalSetup: path.resolve(__dirname, "tests/helpers/global-setup.ts"),
+  globalTeardown: path.resolve(__dirname, "tests/helpers/global-teardown.ts"),
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
@@ -82,7 +100,7 @@ export const baseConfig = defineConfig({
     },
     url: "http://127.0.0.1:5173",
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: 60_000,
   },
 
   /* Configure projects for major browsers */

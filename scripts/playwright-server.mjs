@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 
 const projectRoot = process.cwd();
+const port = process.env.PLAYWRIGHT_PORT || "5173";
+const host = process.env.PLAYWRIGHT_HOST || "127.0.0.1";
 
 const api = spawn(process.execPath, ["server.mjs"], {
   cwd: projectRoot,
@@ -14,8 +16,8 @@ let viteExited = false;
 const vite = spawn(
   process.platform === "win32" ? "cmd.exe" : "npm",
   process.platform === "win32"
-    ? ["/d", "/s", "/c", "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort"]
-    : ["run", "dev", "--", "--host", "127.0.0.1", "--port", "5173", "--strictPort"],
+    ? ["/d", "/s", "/c", `npm run dev -- --host ${host} --port ${port} --strictPort`]
+    : ["run", "dev", "--", "--host", host, "--port", port, "--strictPort"],
   {
     cwd: projectRoot,
     stdio: "inherit",
