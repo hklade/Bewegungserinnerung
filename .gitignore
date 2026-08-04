@@ -19,3 +19,4 @@ example.*
 export/*.csv
 data/*.csv
 node_modules/.vite/deps/_metadata.json
+.agents/
