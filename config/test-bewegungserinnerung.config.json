@@ -4,7 +4,7 @@
   "reminderStartTime": "07:55",
   "reminderEndTime": "16:55",
   "weekdaysOnly": true,
-  "exportPath": "../data/Test-Bewegungsdaten.csv",
+  "exportPath": "/workspaces/Bewegungserinnerung/data/Bewegungsdaten.csv",
   "reminderToneEnabled": true,
   "dailyDrinkLiters": 2
 }
