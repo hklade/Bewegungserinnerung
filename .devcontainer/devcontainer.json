@@ -10,5 +10,10 @@
     }
   },
 
-  "postCreateCommand": "npm install && npx playwright install --with-deps && npm install -g allure-commandline @anthropic-ai/claude-code && npx skills@latest add mattpocock/skills --skill=wayfinder"
+    "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code", "esbenp.prettier-vscode"]
+    },
+
+  "postCreateCommand": "npm install && npx playwright install --with-deps && npm install -g allure-commandline && npx skills@latest add mattpocock/skills --skill=wayfinder"
 }
