@@ -7,7 +7,7 @@
     "dev": "vite --configLoader runner",
     "build": "vite build --configLoader runner",
     "preview": "vite preview",
-    "test:server": "node --test tests/server/*.test.mjs",
+    "test:server": "node scripts/test-server.mjs",
     "test:e2e": "node scripts/test-e2e-with-allure.mjs",
     "test:e2e:plain": "playwright test --config config/test.playwright.config.ts",
     "test:e2e:headed": "playwright test --config config/test.playwright.config.ts --headed",
