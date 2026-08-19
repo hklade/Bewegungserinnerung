@@ -3,11 +3,16 @@
 
   "forwardPorts": [5173],
 
+  "mounts": [
+    "source=bewegungserinnerung-gh-config,target=/home/node/.config/gh,type=volume"
+  ],
+
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "17",
       "jdkDistro": "ms"
-    }
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
     "customizations": {

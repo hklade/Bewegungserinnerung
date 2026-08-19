@@ -21,6 +21,9 @@ data/*.csv
 node_modules/.vite/deps/_metadata.json
 .agents/
 
+# Claude Agents
+.claude
+
 .vscode/
 config/test-results/
 allure-report/
