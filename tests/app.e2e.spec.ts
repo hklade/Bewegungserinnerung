@@ -129,11 +129,7 @@ test("config card persists export path and dialog toggle", async ({
   expect(path.normalize(config.exportPath)).toBe(path.normalize(exportPath));
 });
 
-// Bekannter Bug: die Fixture-Datei data/Test-Bewegungsdaten.csv dient zugleich als
-// beschreibbare TEST_EXPORT_PATH-Datenbank; automatische Backfill-Einträge aus anderen
-// Testläufen kontaminieren sie, wodurch die erwartete Zeilenzahl nicht stabil ist.
-// Siehe https://github.com/hklade/Bewegungserinnerung/issues/1
-test.fixme("csv import replaces existing rows", async ({
+test("csv import replaces existing rows", async ({
   page,
   request,
   appURL,
@@ -179,11 +175,7 @@ test.fixme("csv import replaces existing rows", async ({
   ).toHaveCount(0);
 });
 
-// Bekannter Bug: erwartet .activities-row count 3, weil implizit auf den
-// Datenzustand aufbaut, den der (als fixme markierte, s.o.) vorherige Test
-// "csv import replaces existing rows" in der seriellen Suite hinterlässt.
-// Siehe https://github.com/hklade/Bewegungserinnerung/issues/1
-test.fixme("quick entry saves a booking from the dashboard", async ({
+test("quick entry saves a booking from the dashboard", async ({
   page,
   request,
   appURL,
