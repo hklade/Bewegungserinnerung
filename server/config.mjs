@@ -72,8 +72,8 @@ function getConfigFilePath() {
 }
 
 function resolveConfigPath(config) {
-  const exportPath = String(config?.exportPath ?? DEFAULT_CONFIG.exportPath).trim();
-  return exportPath || DEFAULT_CONFIG.exportPath;
+  const exportPath = String(config?.exportPath ?? DEFAULT_CONFIG.exportPath).trim() || DEFAULT_CONFIG.exportPath;
+  return path.isAbsolute(exportPath) ? exportPath : path.resolve(CONFIG_DIR, exportPath);
 }
 
 function buildReminderSlotsFromStart(startTime) {
