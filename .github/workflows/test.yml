@@ -10,6 +10,9 @@ jobs:
     timeout-minutes: 90
     env:
       NODE_ENV: test
+      # Wirkt sich nicht auf die App-Logik aus (server/utils/time.mjs rechnet explizit
+      # mit Intl.../timeZone: "Europe/Vienna", unabhängig von dieser Prozess-Env-Var).
+      # Nur als Absicherung für Tooling/Logs, das sich auf die Prozesszeitzone verlässt.
       TZ: Europe/Vienna
 
     steps:
