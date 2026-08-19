@@ -179,7 +179,11 @@ test.fixme("csv import replaces existing rows", async ({
   ).toHaveCount(0);
 });
 
-test("quick entry saves a booking from the dashboard", async ({
+// Bekannter Bug: erwartet .activities-row count 3, weil implizit auf den
+// Datenzustand aufbaut, den der (als fixme markierte, s.o.) vorherige Test
+// "csv import replaces existing rows" in der seriellen Suite hinterlässt.
+// Siehe https://github.com/hklade/Bewegungserinnerung/issues/1
+test.fixme("quick entry saves a booking from the dashboard", async ({
   page,
   request,
   appURL,
