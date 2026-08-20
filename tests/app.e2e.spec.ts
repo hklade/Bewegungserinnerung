@@ -2,17 +2,27 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "./helpers/config-fixtures";
+import { log } from "./helpers/logger";
 
 const repoDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(repoDir, "..");
 const defaultExportPath = path.join(repoRoot, "export", "Bewegungsdaten.csv");
 const testCsvFixturePath = path.join(repoRoot, "data", "Test-Bewegungsdaten.csv");
 
+const now = new Date();
+const reminderStartTimeArtificial = `${now.getHours() - 1}:${now.getMinutes() - 5}`; // now -65 min
+const reminderStopTimeArtificial = `${now.getHours() + 8}:${now.getMinutes() - 5}`; // now + 7h55 min
+
+test.beforeAll(async () => {
+  await log("info", `ReminderStartTimeArtificial: ${reminderStartTimeArtificial}`);
+  await log("info", `ReminderStopTimeArtificial: ${reminderStopTimeArtificial}`);
+});
+
 const baseConfig = {
   hourlyReminderEnabled: true,
   showReminderDialog: true,
-  reminderStartTime: "07:55",
-  reminderEndTime: "16:55",
+  reminderStartTime: `${reminderStartTimeArtificial}`,
+  reminderEndTime: `${reminderStopTimeArtificial}`,
   weekdaysOnly: true,
   reminderToneEnabled: true,
 };
