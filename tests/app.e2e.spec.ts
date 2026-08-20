@@ -1,18 +1,37 @@
-import { readFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "./helpers/config-fixtures";
+import { log } from "./helpers/logger";
+import { getViennaNow } from "../server/utils/time.mjs";
+import { generateMovementCsv } from "./helpers/fixture-generator";
 
 const repoDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(repoDir, "..");
 const defaultExportPath = path.join(repoRoot, "export", "Bewegungsdaten.csv");
-const testCsvFixturePath = path.join(repoRoot, "data", "Test-Bewegungsdaten.csv");
+
+function formatTimeOffset(baseDate: Date, minuteOffset: number) {
+  const totalMinutes = ((baseDate.getHours() * 60 + baseDate.getMinutes() + minuteOffset) % 1440 + 1440) % 1440;
+  const hours = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+  const minutes = String(totalMinutes % 60).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+const viennaTimeNow = getViennaNow();
+const reminderStartTimeArtificial = formatTimeOffset(viennaTimeNow, -65); // now -65 min
+const reminderStopTimeArtificial = formatTimeOffset(viennaTimeNow, 475); // now + 7h55 min
+
+test.beforeAll(async () => {
+  await log("info", `ViennaTimeNow: ${viennaTimeNow}`);
+  await log("info", `ReminderStartTimeArtificial: ${reminderStartTimeArtificial}`);
+  await log("info", `ReminderStopTimeArtificial: ${reminderStopTimeArtificial}`);
+});
 
 const baseConfig = {
   hourlyReminderEnabled: true,
   showReminderDialog: true,
-  reminderStartTime: "07:55",
-  reminderEndTime: "16:55",
+  reminderStartTime: `${reminderStartTimeArtificial}`,
+  reminderEndTime: `${reminderStopTimeArtificial}`,
   weekdaysOnly: true,
   reminderToneEnabled: true,
 };
@@ -49,8 +68,14 @@ function buildCsv(rows: string[]) {
   return `${header}\n${rows.join("\n")}\n`;
 }
 
-function readTestCsvFixture() {
-  return readFileSync(testCsvFixturePath, "utf8");
+function writeGeneratedFixtureFile(testInfo: { outputPath: (name: string) => string }) {
+  const { csv, visibleRowCount } = generateMovementCsv({
+    reminderStartTime: reminderStartTimeArtificial,
+    referenceDate: viennaTimeNow,
+  });
+  const fixturePath = testInfo.outputPath("generated-fixture.csv");
+  writeFileSync(fixturePath, csv, "utf8");
+  return { fixturePath, csv, visibleRowCount };
 }
 
 async function seedConfig(request: any, apiBase: string, exportPath: string, overrides = {}) {
@@ -77,7 +102,6 @@ test("config card persists export path and dialog toggle", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, apiURL, exportPath, { showReminderDialog: false });
 
@@ -135,11 +159,13 @@ test("csv import replaces existing rows", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, apiURL, exportPath, { showReminderDialog: true });
 
-  const csvOne = readTestCsvFixture();
+  const { csv: csvOne, visibleRowCount } = generateMovementCsv({
+    reminderStartTime: reminderStartTimeArtificial,
+    referenceDate: viennaTimeNow,
+  });
 
   const importOne = await request.post(`${apiURL}/bookings/import`, {
     headers: {
@@ -150,8 +176,10 @@ test("csv import replaces existing rows", async ({
   expect(importOne.ok()).toBeTruthy();
 
   await page.goto(appURL);
-  await expect(page.locator(".activities-row")).toHaveCount(2);
-  await expect(page.getByText("Kniebeugen")).toBeVisible();
+  // Die Dashboard-Ansicht zeigt standardmäßig nur die neuesten 5 Einträge an
+  // ("Weitere anzeigen" blendet den Rest ein) — die generierte Fixture deckt
+  // mehrere Tage ab und liegt darüber, daher hier nur die sichtbare Kappung prüfen.
+  await expect(page.locator(".activities-row")).toHaveCount(Math.min(visibleRowCount, 5));
 
   const csvTwo = buildCsv([
     "1;2026-07-08;Mittwoch;09:55;09:57;2;2;Spaziergang;10;false;planned_break_response;neu;2026-07-08T09:57:00.000Z",
@@ -181,15 +209,17 @@ test("quick entry saves a booking from the dashboard", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
-  const now = new Date();
-  const reminderStartTime = `${String((now.getHours() + 22) % 24).padStart(2, "0")}:55`;
-  const reminderEndTime = `${String(now.getHours()).padStart(2, "0")}:55`;
+  // Slots relativ zur tatsächlichen aktuellen Minute wählen (nicht an feste :55-Marken
+  // gebunden) — buildMissedActivityEntries() verlangt >= 59 Minuten seit dem Slot, ein
+  // "jetzt - 2h"/"jetzt" auf :55 gerundetes Zeitfenster kann je nach aktueller Minute
+  // dazu führen, dass der letzte Slot noch nicht als verstrichen gilt.
+  const quickEntryReminderStartTime = formatTimeOffset(viennaTimeNow, -125); // sicher zwei verstrichene Slots
+  const quickEntryReminderEndTime = formatTimeOffset(viennaTimeNow, -65);
   await seedConfig(request, apiURL, exportPath, {
     showReminderDialog: true,
-    reminderStartTime,
-    reminderEndTime,
+    reminderStartTime: quickEntryReminderStartTime,
+    reminderEndTime: quickEntryReminderEndTime,
   });
 
   await page.goto(appURL);
@@ -209,7 +239,9 @@ test("quick entry saves a booking from the dashboard", async ({
       .locator(".activities-row strong")
       .filter({ hasText: "quick-entry-test" }),
   ).toHaveText("quick-entry-test");
-  await expect(page.getByText("keine Aktivität eingetragen")).toBeVisible();
+  // Zwei verstrichene Reminder-Slots vor dem quick-entry ergeben zwei automatisch
+  // ergänzte "keine Aktivität eingetragen"-Backfill-Zeilen.
+  await expect(page.getByText("keine Aktivität eingetragen")).toHaveCount(2);
 });
 
 test("csv import via file dialog replaces existing rows", async ({
@@ -218,9 +250,10 @@ test("csv import via file dialog replaces existing rows", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, apiURL, exportPath, { showReminderDialog: true });
+
+  const { fixturePath, visibleRowCount } = writeGeneratedFixtureFile(testInfo);
 
   await page.goto(appURL);
   await page.waitForLoadState("networkidle");
@@ -232,8 +265,8 @@ test("csv import via file dialog replaces existing rows", async ({
   await page.getByRole("button", { name: "CSV-Daten importieren" }).click();
   await page
     .locator('input[type="file"]')
-    .setInputFiles(testCsvFixturePath);
+    .setInputFiles(fixturePath);
 
-  await expect(page.locator(".activities-row")).toHaveCount(2);
-  await expect(page.getByText("Kniebeugen")).toBeVisible();
+  // Dashboard zeigt standardmäßig nur die neuesten 5 Einträge, siehe Kommentar oben.
+  await expect(page.locator(".activities-row")).toHaveCount(Math.min(visibleRowCount, 5));
 });

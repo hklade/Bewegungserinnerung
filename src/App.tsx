@@ -964,7 +964,7 @@ export default function App() {
         <div className="brand-block">
           <div className="brand-icon" aria-hidden="true">
             <img
-              src="/public/icons8-hyperaktiver-hauttyp-2-48.png"
+              src="/icons8-hyperaktiver-hauttyp-2-48.png"
               alt="Bewegungserinnerung"
             />
           </div>

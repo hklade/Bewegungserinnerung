@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      NODE_ENV: test
+      # Wirkt sich nicht auf die App-Logik aus (server/utils/time.mjs rechnet explizit
+      # mit Intl.../timeZone: "Europe/Vienna", unabhängig von dieser Prozess-Env-Var).
+      # Nur als Absicherung für Tooling/Logs, das sich auf die Prozesszeitzone verlässt.
+      TZ: Europe/Vienna
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Server-Tests ausführen
+        run: npm run test:server
+
+      - name: Playwright-Browser installieren
+        run: npx playwright install --with-deps
+
+      - name: E2E-Tests ausführen (mit Allure-Report)
+        run: npm run test:e2e
+        continue-on-error: true
+        id: e2e
+
+      - name: Allure-Report hochladen
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report
+          path: |
+            allure-report/
+            allure-results/
+          retention-days: 30
+
+      - name: E2E-Ergebnis auswerten
+        if: always()
+        run: |
+          if [ "${{ steps.e2e.outcome }}" != "success" ]; then
+            echo "E2E-Tests sind fehlgeschlagen."
+            exit 1
+          fi

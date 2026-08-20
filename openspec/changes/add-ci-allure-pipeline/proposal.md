@@ -21,6 +21,15 @@ Tests currently only run locally on demand (`npm run test:server`, `npm run test
 ## Impact
 
 - New file(s): a GitHub Actions workflow under `.github/workflows/` (e.g. `.github/workflows/test.yml`).
-- No changes to application code (`src/`, `server/`) are required; the workflow reuses existing npm scripts (`test:server`, `test:e2e`).
 - Affects developer/reviewer experience (PR checks, downloadable Allure report) and repo CI configuration only.
 - Depends on the test suite already being runnable headlessly in a CI container (Playwright browser install, Node version matching local dev).
+
+### Deviation found during implementation
+
+Contrary to the original assumption above ("No changes to application code are required"), implementing this change surfaced and required fixing two pre-existing bugs, without which the CI job could not run at all:
+
+- `config/test-bewegungserinnerung.config.json` had a corrupted `exportPath` (pointing at the production CSV, then at a devcontainer-only absolute path) — fixed to a relative path consistent with the production config.
+- `server/config.mjs`'s `resolveConfigPath()` took `exportPath` from the config file verbatim, with no resolution against a base directory. A relative path only worked by accident, depending on the process's current working directory at startup. It now resolves relative paths against `config/`; absolute paths (including the Windows production path) are left unchanged. **This also changes behavior for real users**, not just tests: a relative path typed into the config form in the UI is now resolved against `config/` instead of being stored/used verbatim.
+- `test:server` did not guarantee `NODE_ENV=test` at the script level (relied on ambient environment), overlapping with task 3.1 of [[enforce-test-prod-data-isolation]]; fixed here via a new `scripts/test-server.mjs` wrapper since the CI job depends on it.
+
+See `server/config.mjs`'s `resolveConfigPath()` comment for the resolution rule.

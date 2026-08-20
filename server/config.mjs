@@ -72,8 +72,11 @@ function getConfigFilePath() {
 }
 
 function resolveConfigPath(config) {
-  const exportPath = String(config?.exportPath ?? DEFAULT_CONFIG.exportPath).trim();
-  return exportPath || DEFAULT_CONFIG.exportPath;
+  // Absolute Pfade (auch der Windows-Produktionspfad) bleiben unverändert. Ein relativer
+  // Pfad wird gegen config/ aufgelöst statt roh übernommen zu werden — betrifft auch vom
+  // Nutzer im Konfigurationsformular eingegebene relative Pfade, nicht nur Testdaten.
+  const exportPath = String(config?.exportPath ?? DEFAULT_CONFIG.exportPath).trim() || DEFAULT_CONFIG.exportPath;
+  return path.isAbsolute(exportPath) ? exportPath : path.resolve(CONFIG_DIR, exportPath);
 }
 
 function buildReminderSlotsFromStart(startTime) {

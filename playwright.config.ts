@@ -22,7 +22,7 @@ console.log(`---👋 Loading Playwright Config ---`);
 const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER === "true"
   ? undefined
   : {
-      command: "node scripts/playwright-server.mjs",
+      command: `node ${path.resolve(__dirname, "scripts/playwright-server.mjs")}`,
       env: {
         NODE_ENV: "test",
         PLAYWRIGHT_PORT: String(frontendPort),
@@ -35,6 +35,7 @@ const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER === "true"
 
 export const baseConfig = defineConfig({
   globalTimeout: 1 * 60 * 60 * 1000, // - 1 hour
+  timeout: 30_000, // Default 30 seconds per test
   testDir: "./tests",
   testMatch: ["**/*.spec.ts"],
   outputDir: "test-results",
@@ -53,8 +54,11 @@ export const baseConfig = defineConfig({
   globalSetup: path.resolve(__dirname, "tests/helpers/global-setup.ts"),
   globalTeardown: path.resolve(__dirname, "tests/helpers/global-teardown.ts"),
 
+  webServer,
+
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
+    ["list"],
     [
       "html",
       {
@@ -92,16 +96,6 @@ export const baseConfig = defineConfig({
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   },
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "node scripts/playwright-server.mjs",
-    env: {
-      NODE_ENV: "test",
-    },
-    url: "http://127.0.0.1:5173",
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
 
   /* Configure projects for major browsers */
   projects: [
@@ -122,6 +116,9 @@ export const baseConfig = defineConfig({
       },
     },
 
+    /*
+    Zu einem späteren Zeitpunkt können wir die Tests auch auf Firefox und Safari ausführen, um die Kompatibilität zu überprüfen. 
+    Momentan sind diese Projekte auskommentiert, um die CI-Laufzeit zu minimieren.
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
@@ -130,7 +127,7 @@ export const baseConfig = defineConfig({
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"], ignoreHTTPSErrors: true },
-    },
+    },*/
 
     /* Test against mobile viewports. */
     // {
