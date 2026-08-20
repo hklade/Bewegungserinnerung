@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const projectRoot = process.cwd();
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = process.env.PLAYWRIGHT_PORT || "5173";
 const host = process.env.PLAYWRIGHT_HOST || "127.0.0.1";
 

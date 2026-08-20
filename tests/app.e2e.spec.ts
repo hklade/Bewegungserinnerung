@@ -77,7 +77,6 @@ test("config card persists export path and dialog toggle", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, apiURL, exportPath, { showReminderDialog: false });
 
@@ -135,7 +134,6 @@ test("csv import replaces existing rows", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, apiURL, exportPath, { showReminderDialog: true });
 
@@ -181,7 +179,6 @@ test("quick entry saves a booking from the dashboard", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   const now = new Date();
   const reminderStartTime = `${String((now.getHours() + 22) % 24).padStart(2, "0")}:55`;
@@ -218,7 +215,6 @@ test("csv import via file dialog replaces existing rows", async ({
   appURL,
   apiURL,
 }, testInfo) => {
-  test.setTimeout(60_000);
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
   await seedConfig(request, apiURL, exportPath, { showReminderDialog: true });
 
