@@ -116,6 +116,9 @@ export const baseConfig = defineConfig({
       },
     },
 
+    /*
+    Zu einem späteren Zeitpunkt können wir die Tests auch auf Firefox und Safari ausführen, um die Kompatibilität zu überprüfen. 
+    Momentan sind diese Projekte auskommentiert, um die CI-Laufzeit zu minimieren.
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
@@ -124,7 +127,7 @@ export const baseConfig = defineConfig({
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"], ignoreHTTPSErrors: true },
-    },
+    },*/
 
     /* Test against mobile viewports. */
     // {
