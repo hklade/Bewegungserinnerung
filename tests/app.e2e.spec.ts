@@ -3,17 +3,26 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "./helpers/config-fixtures";
 import { log } from "./helpers/logger";
+import { getViennaNow } from "../server/utils/time.mjs";
 
 const repoDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(repoDir, "..");
 const defaultExportPath = path.join(repoRoot, "export", "Bewegungsdaten.csv");
 const testCsvFixturePath = path.join(repoRoot, "data", "Test-Bewegungsdaten.csv");
 
-const now = new Date();
-const reminderStartTimeArtificial = `${now.getHours() - 1}:${now.getMinutes() - 5}`; // now -65 min
-const reminderStopTimeArtificial = `${now.getHours() + 8}:${now.getMinutes() - 5}`; // now + 7h55 min
+function formatTimeOffset(baseDate: Date, minuteOffset: number) {
+  const totalMinutes = ((baseDate.getHours() * 60 + baseDate.getMinutes() + minuteOffset) % 1440 + 1440) % 1440;
+  const hours = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+  const minutes = String(totalMinutes % 60).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+const viennaTimeNow = getViennaNow();
+const reminderStartTimeArtificial = formatTimeOffset(viennaTimeNow, -65); // now -65 min
+const reminderStopTimeArtificial = formatTimeOffset(viennaTimeNow, 475); // now + 7h55 min
 
 test.beforeAll(async () => {
+  await log("info", `ViennaTimeNow: ${viennaTimeNow}`);
   await log("info", `ReminderStartTimeArtificial: ${reminderStartTimeArtificial}`);
   await log("info", `ReminderStopTimeArtificial: ${reminderStopTimeArtificial}`);
 });
@@ -190,9 +199,9 @@ test("quick entry saves a booking from the dashboard", async ({
   apiURL,
 }, testInfo) => {
   const exportPath = testInfo.outputPath("Test-Bewegungsdaten.csv");
-  const now = new Date();
-  const reminderStartTime = `${String((now.getHours() + 22) % 24).padStart(2, "0")}:55`;
-  const reminderEndTime = `${String(now.getHours()).padStart(2, "0")}:55`;
+  const viennaTimeNow = getViennaNow();
+  const reminderStartTime = `${String((viennaTimeNow.getHours() + 22) % 24).padStart(2, "0")}:55`; // -2h
+  const reminderEndTime = `${String(viennaTimeNow.getHours()).padStart(2, "0")}:55`; // now
   await seedConfig(request, apiURL, exportPath, {
     showReminderDialog: true,
     reminderStartTime,

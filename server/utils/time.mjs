@@ -59,6 +59,33 @@ export function getViennaTime(date = new Date()) {
   }).format(date);
 }
 
+export function getViennaNow(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: VIENNA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+    .formatToParts(date)
+    .reduce((acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+  return new Date(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour) % 24,
+    Number(parts.minute),
+    Number(parts.second),
+  );
+}
+
 export function getViennaWeekday(date = new Date()) {
   return new Intl.DateTimeFormat('de-AT', {
     timeZone: VIENNA_TIME_ZONE,
