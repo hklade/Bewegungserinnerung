@@ -33,3 +33,12 @@ Contrary to the original assumption above ("No changes to application code are r
 - `test:server` did not guarantee `NODE_ENV=test` at the script level (relied on ambient environment), overlapping with task 3.1 of [[enforce-test-prod-data-isolation]]; fixed here via a new `scripts/test-server.mjs` wrapper since the CI job depends on it.
 
 See `server/config.mjs`'s `resolveConfigPath()` comment for the resolution rule.
+
+Also surfaced while stabilizing the e2e suite in CI (beyond the "no code changes" assumption, but necessary for the CI job to go green rather than just start):
+
+- `playwright.config.ts`'s `webServer.command` and `scripts/playwright-server.mjs` resolved paths relative to the process's current working directory rather than their own file location, which broke when Playwright's `--config` pointed at a file outside the repo root.
+- A `test.step()` call from module scope (before any test ran) crashed the whole suite; a template-literal typo silently produced a literal placeholder string instead of an interpolated time value; and the root cause of issue #1 (`data/Test-Bewegungsdaten.csv` serving as both a static e2e fixture and the writable test-runtime database) made `csv import replaces existing rows` non-deterministic. All fixed — see the commit history on this branch for details. The e2e suite currently runs Chromium-only (Firefox/Webkit commented out, not removed) to keep CI runtime down, which is a smaller scope than `design.md`'s original "chromium-only browser install" decision anticipated but arrives at the same result.
+
+## Final status
+
+All tasks in `tasks.md` are complete and verified against real CI runs on `feature/add-ci-allure-pipeline` (PR #2). The workflow is green, publishes the Allure report artifact on every run (pass or fail), and `README.md` documents how to retrieve it.
