@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { normalizeTime, parseTimeToMinutes } from './utils/time.mjs';
+import { normalizeTime } from './utils/time.mjs';
 import { parseNumber } from './utils/parsing.mjs';
+import { buildReminderSlots } from '../shared/reminder-schedule.mjs';
 
 /**
  * Konfigurationsverwaltung für die Server-App.
@@ -79,29 +80,6 @@ function resolveConfigPath(config) {
   return path.isAbsolute(exportPath) ? exportPath : path.resolve(CONFIG_DIR, exportPath);
 }
 
-function buildReminderSlotsFromStart(startTime) {
-  const normalizedStart = normalizeTime(startTime);
-  const startMinutes = parseTimeToMinutes(normalizedStart);
-
-  if (startMinutes === null) {
-    return ['07:55', '08:55', '09:55', '10:55', '11:55', '12:55', '13:55', '14:55', '15:55', '16:55'];
-  }
-
-  const slots = [];
-  for (let minutes = startMinutes; minutes <= 16 * 60; minutes += 60) {
-    slots.push(formatMinutesToTime(minutes));
-  }
-
-  return slots.length > 0 ? slots : ['07:55', '08:55', '09:55', '10:55', '11:55', '12:55', '13:55', '14:55', '15:55', '16:55'];
-}
-
-function formatMinutesToTime(totalMinutes) {
-  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
-  const hours = String(Math.floor(normalized / 60)).padStart(2, '0');
-  const minutes = String(normalized % 60).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
 export function loadConfig(logStep = () => {}) {
   const configFilePath = getConfigFilePath();
   ensureParentDir(configFilePath);
@@ -160,21 +138,7 @@ export function normalizeConfigPath(config) {
   return resolveConfigPath(config);
 }
 
-export function buildReminderSlots(config) {
-  const startMinutes = parseTimeToMinutes(config.reminderStartTime);
-  const endMinutes = parseTimeToMinutes(config.reminderEndTime);
-
-  if (startMinutes === null || endMinutes === null || endMinutes < startMinutes) {
-    return buildReminderSlotsFromStart(config.reminderStartTime);
-  }
-
-  const slots = [];
-  for (let minutes = startMinutes; minutes <= endMinutes; minutes += 60) {
-    slots.push(formatMinutesToTime(minutes));
-  }
-
-  return slots.length > 0 ? slots : buildReminderSlotsFromStart(config.reminderStartTime);
-}
+export { buildReminderSlots };
 
 export function ensureConfigDir() {
   ensureDir(CONFIG_DIR);

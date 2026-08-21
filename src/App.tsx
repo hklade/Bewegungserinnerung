@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import {
+  parseTimeToMinutes,
+  formatMinutesToTime,
+  buildReminderSlots as buildReminderSlotsFromSchedule,
+  isWeekdayEligible,
+} from "../shared/reminder-schedule.mjs";
 
 type AnalysisKey = "day" | "week";
 
@@ -228,47 +234,8 @@ function formatLocalIsoDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function parseTimeToMinutes(value: string) {
-  const [hours, minutes] = value.split(":").map(Number);
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return null;
-  }
-
-  return hours * 60 + minutes;
-}
-
-function formatMinutesToTime(totalMinutes: number) {
-  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
-  const hours = String(Math.floor(normalized / 60)).padStart(2, "0");
-  const minutes = String(normalized % 60).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-function buildReminderSlots(config: AppConfig) {
-  const start = parseTimeToMinutes(config.reminderStartTime);
-  const end = parseTimeToMinutes(config.reminderEndTime);
-
-  if (start === null || end === null || end < start) {
-    return [
-      "07:55",
-      "08:55",
-      "09:55",
-      "10:55",
-      "11:55",
-      "12:55",
-      "13:55",
-      "14:55",
-      "15:55",
-      "16:55",
-    ];
-  }
-
-  const slots: string[] = [];
-  for (let minutes = start; minutes <= end; minutes += 60) {
-    slots.push(formatMinutesToTime(minutes));
-  }
-
-  return slots;
+function buildReminderSlots(config: AppConfig): string[] {
+  return buildReminderSlotsFromSchedule(config);
 }
 
 function getNextReminderTime(now: Date, config: AppConfig) {
@@ -276,7 +243,7 @@ function getNextReminderTime(now: Date, config: AppConfig) {
     return "aus";
   }
 
-  if (config.weekdaysOnly && (now.getDay() === 0 || now.getDay() === 6)) {
+  if (!isWeekdayEligible(now, config.weekdaysOnly)) {
     return "aus";
   }
 
@@ -315,10 +282,7 @@ function getNextReminderCountdown(now: Date, config: AppConfig) {
     const targetDay = new Date(now);
     targetDay.setDate(now.getDate() + dayOffset);
 
-    if (
-      config.weekdaysOnly &&
-      (targetDay.getDay() === 0 || targetDay.getDay() === 6)
-    ) {
+    if (!isWeekdayEligible(targetDay, config.weekdaysOnly)) {
       continue;
     }
 
@@ -354,7 +318,7 @@ function getCurrentReminderSlot(now: Date, config: AppConfig) {
     return null;
   }
 
-  if (config.weekdaysOnly && (now.getDay() === 0 || now.getDay() === 6)) {
+  if (!isWeekdayEligible(now, config.weekdaysOnly)) {
     return null;
   }
 
