@@ -9,7 +9,10 @@
       "Bash(npm -v)",
       "Bash(npm ls *)",
       "Bash(npm config *)",
-      "Bash(npm approve-scripts *)"
+      "Bash(npm approve-scripts *)",
+      "Bash(node --test tests/server/reminder-schedule.test.mjs)",
+      "Bash(NODE_ENV=test node --test tests/server/*.test.mjs)",
+      "Bash(npx playwright *)"
     ],
     "deny": [
       "*.env",

@@ -40,7 +40,7 @@ The frontend server (Vite) and the API server (`server.mjs`, listening on `127.0
 
 **Data model:** All persisted data is CSV, not a database (see the removed-DB commit in git history). There are two parallel CSV files per environment: one for movement entries (`Bewegungsdaten.csv` / `Test-Bewegungsdaten.csv`) and one for hydration entries (`Trinkdaten.csv` / `Test-Trinkdaten.csv`), located under `data/`. The configured `exportPath` in `config/*.config.json` points at the movement CSV; hydration path is derived separately in `config.mjs`.
 
-**Reminder scheduling logic** is duplicated in two places and must be kept in sync: `server/config.mjs`/`service.mjs` (source of truth for generating backfilled "missed" entries server-side) and `src/App.tsx` (client-side countdown/popup display, using the same start/end/weekdaysOnly config). Both derive hourly slots from `reminderStartTime`/`reminderEndTime`.
+**Reminder scheduling logic** lives in one shared module, `shared/reminder-schedule.mjs` (plain ESM, no TypeScript-only syntax, so it can be imported unchanged by both a Vite/TypeScript client bundle and a plain Node ESM server): time parsing/formatting (`normalizeTime`, `parseTimeToMinutes`, `formatMinutesToTime`), hourly slot computation from start/end times (`buildReminderSlots`, `buildReminderSlotsFromStart`), and weekdays-only eligibility (`isWeekdayEligible`). `server/config.mjs`/`server/utils/time.mjs` and `src/App.tsx` (client-side countdown/popup display) both import from it rather than each keeping their own implementation.
 
 **Test layout:**
 - `tests/server/*.test.mjs` — Node's built-in test runner against server modules directly (config loading, hydration timestamp logic, server smoke test).
