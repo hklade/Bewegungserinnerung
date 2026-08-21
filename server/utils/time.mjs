@@ -1,45 +1,8 @@
+import { normalizeTime, parseTimeToMinutes, formatMinutesToTime, isWeekdayEligible } from '../../shared/reminder-schedule.mjs';
+
 const VIENNA_TIME_ZONE = 'Europe/Vienna';
 
-export function normalizeTime(value) {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const trimmed = String(value).trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-  if (!match) {
-    return trimmed.slice(0, 5);
-  }
-
-  const hours = String(Number(match[1])).padStart(2, '0');
-  const minutes = String(Number(match[2])).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-export function parseTimeToMinutes(value) {
-  const normalized = normalizeTime(value);
-  if (!normalized) {
-    return null;
-  }
-
-  const [hours, minutes] = normalized.split(':').map(Number);
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return null;
-  }
-
-  return hours * 60 + minutes;
-}
-
-export function formatMinutesToTime(totalMinutes) {
-  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
-  const hours = String(Math.floor(normalized / 60)).padStart(2, '0');
-  const minutes = String(normalized % 60).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
+export { normalizeTime, parseTimeToMinutes, formatMinutesToTime };
 
 export function getViennaIsoDate(date = new Date()) {
   return new Intl.DateTimeFormat('sv-SE', {
@@ -102,6 +65,5 @@ export function getWeekdayIndexFromIso(dateIso) {
 }
 
 export function isWeekend(dateIso) {
-  const weekdayIndex = getWeekdayIndexFromIso(dateIso);
-  return weekdayIndex === 5 || weekdayIndex === 6;
+  return !isWeekdayEligible(dateIso, true);
 }
