@@ -8,6 +8,7 @@
     "build": "vite build --configLoader runner",
     "preview": "vite preview",
     "test:server": "node scripts/test-server.mjs",
+    "test:unit": "vitest run",
     "test:e2e": "node scripts/test-e2e-with-allure.mjs",
     "test:e2e:plain": "playwright test --config config/test.playwright.config.ts",
     "test:e2e:headed": "playwright test --config config/test.playwright.config.ts --headed",
@@ -33,6 +34,7 @@
     "csv-parse": "^7.0.1",
     "dotenv": "^17.4.2",
     "typescript": "^5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "vitest": "^4.1.11"
   }
 }
