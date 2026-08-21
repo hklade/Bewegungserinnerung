@@ -28,7 +28,7 @@ The frontend server (Vite) and the API server (`server.mjs`, listening on `127.0
 ## Architecture
 
 **Two runtimes in one repo:**
-- `src/` — the React/TypeScript frontend (currently a single `App.tsx` containing all UI, state, and API-calling logic; no router or component library).
+- `src/` — the React/TypeScript frontend; no router or component library. `App.tsx` is a thin composition root over feature-scoped hooks (`src/hooks/`) and presentational components (`src/components/`), with types (`src/types.ts`), constants (`src/constants.ts`), pure helpers (`src/lib/`), and the API client (`src/api/dashboardApi.ts`) split out.
 - `server/` — a plain Node.js `http` server (no framework) that owns all persistence and business logic, imported by `server.mjs`.
 
 **Server module layering** (`server/`):
@@ -50,5 +50,6 @@ The frontend server (Vite) and the API server (`server.mjs`, listening on `127.0
 
 ## Notes
 
-- `vite.config.ts`'s `build.outDir` and the default `exportPath` in `config/bewegungserinnerung.config.json` point at Windows user-specific paths (`C:\Users\HeidiKlade\...`) — this repo is developed across both a Windows host and a Linux devcontainer, so don't be surprised by mixed path conventions; check which environment you're in before assuming a path is wrong.
-- `NODE_ENV=test` is the switch that redirects both config and data files to their `Test-`-prefixed counterparts, keeping e2e/unit test runs from touching real user data.
+- `vite.config.ts`'s `build.outDir` and the default `exportPath` in `config/bewegungserinnerung.config.json` point at Windows user-specific paths (`C:\Users\HeidiKlade\...`) — this repo is developed across both a Windows host and a Linux devcontainer, so don't be surprised by mixed path conventions; check which environment you're in before assuming a path is wrong. Running `npm run build` in the Linux devcontainer creates a literal `C:/` directory under the repo root as a side effect (Vite doesn't recognize the Windows path and treats it as relative); this is a build artifact, not tracked or required — safe to `rm -rf "C:/"` after a local build.
+- `NODE_ENV=test` is the switch that redirects both config and data files to their `Test-`-prefixed counterparts, keeping e2e/unit test runs from touching real user data. In practice this isolation has gaps: repeated local `npm run test:e2e`/`test:e2e:plain` runs have been observed to accumulate duplicate smoke-test entries (e.g. `pom-smoke-test`) across runs, and at least once this data leaked into the real `data/Bewegungsdaten.csv` — treat `data/*.csv` as untrusted after running e2e tests locally and check before relying on it for a manual smoke test.
+- `tsconfig.json` sets `moduleResolution`/`module: "nodenext"`, which requires explicit `.js` extensions on relative imports between TypeScript files (e.g. `import { x } from "./foo.js"` even though the source file is `foo.ts`) — this is TS's documented nodenext convention (the extension names the emitted JS, not the source). `npm run build` (Vite/esbuild) does not enforce this and will build fine without it, so a missing extension is invisible until something runs `tsc --noEmit` directly. When adding new `src/` modules with relative imports, include the extension up front rather than relying on the build to catch it.

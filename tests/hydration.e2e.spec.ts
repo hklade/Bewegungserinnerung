@@ -74,7 +74,7 @@ test.describe("Trinkmanager", () => {
     await expect.poll(async () => getTodayMl(request, apiURL)).toBe(750);
 
     await page.reload();
-    expect(await readDisplayedMl(page)).toBe(750);
+    await expect.poll(async () => readDisplayedMl(page)).toBe(750);
   });
 
   test("verringert die Menge korrekt über -250 ml", async ({ page, request, appURL, apiURL }) => {
@@ -119,7 +119,7 @@ test.describe("Trinkmanager", () => {
     await expect.poll(async () => readDisplayedMl(page)).toBe(0);
 
     await page.reload();
-    expect(await readDisplayedMl(page)).toBe(0);
+    await expect.poll(async () => readDisplayedMl(page)).toBe(0);
     await expect(removeButton(page)).toBeDisabled();
     expect(await getTodayMl(request, apiURL)).toBe(0);
   });
