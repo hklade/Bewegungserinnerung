@@ -1,88 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  parseTimeToMinutes,
-  buildReminderSlots as buildReminderSlotsFromSchedule,
-  isWeekdayEligible,
-} from "../../shared/reminder-schedule.mjs";
 import { formatLocalIsoDate } from "../lib/formatting.js";
 import { playReminderTone } from "../lib/reminderTone.js";
+import {
+  getCurrentReminderSlot,
+  getNextReminderCountdown,
+} from "../lib/reminderCountdown.js";
 import type { AppConfig } from "../types.js";
-
-function buildReminderSlots(config: AppConfig): string[] {
-  return buildReminderSlotsFromSchedule(config);
-}
-
-function getNextReminderCountdown(now: Date, config: AppConfig) {
-  if (!config.hourlyReminderEnabled) {
-    return null;
-  }
-
-  const slots = buildReminderSlots(config);
-  if (slots.length === 0) {
-    return null;
-  }
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const currentDay = now.getDay();
-  const dayOffsetStart =
-    config.weekdaysOnly && currentDay >= 5 ? 7 - currentDay : 0;
-
-  for (
-    let dayOffset = dayOffsetStart;
-    dayOffset < dayOffsetStart + 8;
-    dayOffset += 1
-  ) {
-    const targetDay = new Date(now);
-    targetDay.setDate(now.getDate() + dayOffset);
-
-    if (!isWeekdayEligible(targetDay, config.weekdaysOnly)) {
-      continue;
-    }
-
-    for (const slot of slots) {
-      const slotMinutes = parseTimeToMinutes(slot);
-      if (slotMinutes === null) {
-        continue;
-      }
-
-      if (dayOffset === 0 && slotMinutes <= currentMinutes) {
-        continue;
-      }
-
-      const totalMinutes =
-        dayOffset * 1440 +
-        (dayOffset === 0
-          ? slotMinutes - currentMinutes
-          : 1440 - currentMinutes + slotMinutes);
-      return totalMinutes;
-    }
-  }
-
-  const firstSlot = parseTimeToMinutes(slots[0]);
-  if (firstSlot === null) {
-    return null;
-  }
-
-  return (1440 - currentMinutes + firstSlot) % 1440 || 1440;
-}
-
-function getCurrentReminderSlot(now: Date, config: AppConfig) {
-  if (!config.hourlyReminderEnabled) {
-    return null;
-  }
-
-  if (!isWeekdayEligible(now, config.weekdaysOnly)) {
-    return null;
-  }
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  return (
-    buildReminderSlots(config).find((slot) => {
-      const slotMinutes = parseTimeToMinutes(slot);
-      return slotMinutes !== null && slotMinutes === currentMinutes;
-    }) ?? null
-  );
-}
 
 export function useReminderPopup(options: {
   now: Date;
