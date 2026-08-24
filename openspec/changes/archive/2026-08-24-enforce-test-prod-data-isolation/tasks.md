@@ -7,7 +7,7 @@
 ## 2. Explicit test-mode dev script
 
 - [x] 2.1 Add an `npm run dev:test` script that sets `NODE_ENV=test` for `vite --configLoader runner` (and starts/points at the test-mode API server), documented as the explicit way to run the full app against test data locally.
-- [ ] 2.2 Update `README.md` / `CLAUDE.md` if needed to mention `dev:test` as the supported way to explore against test data.
+- [x] 2.2 Update `README.md` / `CLAUDE.md` if needed to mention `dev:test` as the supported way to explore against test data.
 
 ## 3. Server unit test isolation
 
