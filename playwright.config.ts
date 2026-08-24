@@ -29,7 +29,7 @@ const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER === "true"
         PLAYWRIGHT_HOST: frontendHost,
       },
       url: defaultBaseURL,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 60_000,
     };
 

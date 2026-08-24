@@ -9,6 +9,14 @@ npm install
 npm run dev
 ```
 
+`npm run dev` startet ausschließlich den Vite-Frontend-Server; der API-Server (`server.mjs`) muss separat gestartet werden (`node server.mjs` oder `start.bat`) und läuft dabei immer gegen die Produktionsdaten (`config/bewegungserinnerung.config.json`, `data/Bewegungsdaten.csv`, `data/Trinkdaten.csv`), unabhängig von einem eventuell im Terminal gesetzten `NODE_ENV`.
+
+Um die komplette App lokal gegen Testdaten laufen zu lassen (z. B. zum manuellen Ausprobieren, ohne die echten Daten zu berühren):
+
+```bash
+npm run dev:test
+```
+
 ## Enthalten
 
 - Reminder-Popup

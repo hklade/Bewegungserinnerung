@@ -2,6 +2,14 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+const currentEnv = String(process.env.NODE_ENV ?? "").trim().toLowerCase();
+if (currentEnv !== "test") {
+  console.error(
+    `[playwright-server] refusing to start: NODE_ENV must be "test" for e2e runs, but was "${process.env.NODE_ENV ?? ""}"`,
+  );
+  process.exit(1);
+}
+
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = process.env.PLAYWRIGHT_PORT || "5173";
 const host = process.env.PLAYWRIGHT_HOST || "127.0.0.1";
