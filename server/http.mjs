@@ -5,7 +5,7 @@ import fs from 'node:fs';
  * HTTP-Entry-Point für die Server-API.
  * Definiert die Routen für Konfiguration, Dashboard und Buchungsoperationen.
  */
-import { loadConfig, saveConfig, normalizeConfigPath, DEFAULT_CONFIG } from './config.mjs';
+import { loadConfig, saveConfig, normalizeConfigPath, DEFAULT_CONFIG, SERVER_PATHS, isTestEnvironment } from './config.mjs';
 import { ensureStorageFile } from './storage.mjs';
 import { buildDashboard, createHydrationBooking, replaceAllBookings } from './service.mjs';
 import { normalizeTime } from './utils/time.mjs';
@@ -243,6 +243,17 @@ export function createServer() {
 }
 
 export function startServer(port = PORT) {
+  const environment = isTestEnvironment() ? 'test' : 'production';
+  const configFile = environment === 'test' ? SERVER_PATHS.testConfigFile : SERVER_PATHS.defaultConfigFile;
+  const exportPath = environment === 'test' ? SERVER_PATHS.testExportPath : SERVER_PATHS.defaultExportPath;
+  const hydrationExportPath = environment === 'test'
+    ? SERVER_PATHS.testHydrationExportPath
+    : SERVER_PATHS.defaultHydrationExportPath;
+
+  console.log(
+    `[server] environment=${environment} config=${configFile} exportPath=${exportPath} hydrationExportPath=${hydrationExportPath}`,
+  );
+
   const server = createServer();
   server.listen(port, '127.0.0.1', () => {
     console.log(`Bewegungserinnerung API listening on http://127.0.0.1:${port}`);

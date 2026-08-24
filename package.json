@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader runner",
+    "dev:test": "node scripts/dev-test-server.mjs",
     "build": "vite build --configLoader runner",
     "preview": "vite preview",
     "test:server": "node scripts/test-server.mjs",
@@ -36,5 +37,9 @@
     "typescript": "^5.8.3",
     "vite": "^7.0.4",
     "vitest": "^4.1.11"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.62.4",
+    "@rollup/rollup-win32-x64-gnu": "4.62.4"
   }
 }

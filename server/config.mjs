@@ -18,9 +18,12 @@ const TEST_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Test-Bewegungsdaten.cs
 const DEFAULT_HYDRATION_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Trinkdaten.csv');
 const TEST_HYDRATION_EXPORT_PATH = path.join(PROJECT_ROOT, 'data', 'Test-Trinkdaten.csv');
 
+export function isTestEnvironment() {
+  return String(process.env.NODE_ENV ?? '').trim().toLowerCase() === 'test';
+}
+
 function resolveHydrationExportPath() {
-  const environment = String(process.env.NODE_ENV ?? '').trim().toLowerCase();
-  return environment === 'test' ? TEST_HYDRATION_EXPORT_PATH : DEFAULT_HYDRATION_EXPORT_PATH;
+  return isTestEnvironment() ? TEST_HYDRATION_EXPORT_PATH : DEFAULT_HYDRATION_EXPORT_PATH;
 }
 
 export const DEFAULT_CONFIG = {
@@ -64,19 +67,22 @@ export function ensureParentDir(filePath) {
 }
 
 function getConfigFilePath() {
-  const environment = String(process.env.NODE_ENV ?? '').trim().toLowerCase();
-  if (environment === 'test') {
-    return CONFIG_FILES.test;
-  }
+  return isTestEnvironment() ? CONFIG_FILES.test : CONFIG_FILES.default;
+}
 
-  return CONFIG_FILES.default;
+function defaultExportPathForCurrentEnvironment() {
+  return isTestEnvironment() ? TEST_EXPORT_PATH : DEFAULT_EXPORT_PATH;
 }
 
 function resolveConfigPath(config) {
   // Absolute Pfade (auch der Windows-Produktionspfad) bleiben unverändert. Ein relativer
   // Pfad wird gegen config/ aufgelöst statt roh übernommen zu werden — betrifft auch vom
   // Nutzer im Konfigurationsformular eingegebene relative Pfade, nicht nur Testdaten.
-  const exportPath = String(config?.exportPath ?? DEFAULT_CONFIG.exportPath).trim() || DEFAULT_CONFIG.exportPath;
+  // Fehlt exportPath im übergebenen Config-Objekt (z. B. ein PUT /api/config ohne dieses Feld),
+  // fällt es auf den zum aktiven NODE_ENV passenden Default zurück, nie unbedingt auf den
+  // Produktionswert — sonst würde ein Testlauf über diesen Umweg die echte Produktions-CSV treffen.
+  const fallbackExportPath = defaultExportPathForCurrentEnvironment();
+  const exportPath = String(config?.exportPath ?? fallbackExportPath).trim() || fallbackExportPath;
   return path.isAbsolute(exportPath) ? exportPath : path.resolve(CONFIG_DIR, exportPath);
 }
 
@@ -85,7 +91,7 @@ export function loadConfig(logStep = () => {}) {
   ensureParentDir(configFilePath);
 
   if (!fs.existsSync(configFilePath)) {
-    return { ...DEFAULT_CONFIG, exportPath: resolveConfigPath(DEFAULT_CONFIG) };
+    return { ...DEFAULT_CONFIG, exportPath: resolveConfigPath({}) };
   }
 
   try {
@@ -108,7 +114,7 @@ export function loadConfig(logStep = () => {}) {
     logStep('config.read.failed', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    return { ...DEFAULT_CONFIG, exportPath: resolveConfigPath(DEFAULT_CONFIG) };
+    return { ...DEFAULT_CONFIG, exportPath: resolveConfigPath({}) };
   }
 }
 

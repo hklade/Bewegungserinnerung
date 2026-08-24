@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 
 const rootDir = process.cwd();
 
-const testRun = spawnSync("node", ["--test", "tests/server/*.test.mjs"], {
+const testRun = spawnSync("node", ["--test", "--test-concurrency=1", "tests/server/*.test.mjs"], {
   cwd: rootDir,
   stdio: "inherit",
   shell: process.platform === "win32",
