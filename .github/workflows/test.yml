@@ -70,23 +70,14 @@ jobs:
             exit 1
           fi
 
-      - name: Allure-Report für Pages vorbereiten
+      - name: Allure-Report als Artifact für Pages-Job vorbereiten
         if: always() && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
+          name: pages-allure-report
           path: allure-report/
+          retention-days: 30
 
-  deploy-report:
-    if: always() && github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Allure-Report auf GitHub Pages veröffentlichen
-        id: deployment
-        uses: actions/deploy-pages@v4
 
   coverage:
     if: github.ref == 'refs/heads/main'
@@ -126,3 +117,62 @@ jobs:
           name: coverage-reports
           path: coverage/
           retention-days: 30
+
+      - name: Coverage-HTML-Reports als Artifact für Pages-Job vorbereiten
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pages-coverage-report
+          path: |
+            coverage/server-unit-html/
+            coverage/server-html/
+            coverage/client-html/
+          retention-days: 30
+
+  deploy-report:
+    if: always() && github.ref == 'refs/heads/main'
+    needs: [test, coverage]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Allure-Report herunterladen
+        uses: actions/download-artifact@v7
+        with:
+          name: pages-allure-report
+          path: pages-root/allure
+
+      - name: Coverage-Reports herunterladen
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: pages-coverage-report
+          path: pages-root/coverage
+
+      - name: Landingpage erzeugen
+        run: |
+          cat > pages-root/index.html <<'EOF'
+          <!doctype html>
+          <html lang="de">
+          <head><meta charset="utf-8"><title>Bewegungserinnerung – Reports</title></head>
+          <body>
+            <h1>Bewegungserinnerung – Reports</h1>
+            <ul>
+              <li><a href="allure/">Allure E2E-Testreport</a></li>
+              <li><a href="coverage/server-unit-html/">Server-Unit-Test-Coverage</a></li>
+              <li><a href="coverage/server-html/">Server-E2E-Coverage</a></li>
+              <li><a href="coverage/client-html/">Client-E2E-Coverage</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
+      - name: Pages-Artifact vorbereiten
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages-root/
+
+      - name: Reports auf GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
