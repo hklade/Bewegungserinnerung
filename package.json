@@ -15,7 +15,7 @@
     "test:e2e:plain": "playwright test --config config/test.playwright.config.ts",
     "test:e2e:headed": "playwright test --config config/test.playwright.config.ts --headed",
     "test:e2e:dev": "playwright test --config dev.playwright.config.ts",
-    "test:e2e:coverage": "rimraf coverage .nyc_output && cross-env COVERAGE=true VITE_COVERAGE=true playwright test --config config/test.playwright.config.ts && node scripts/test-e2e-coverage-report.mjs"
+    "test:e2e:coverage": "rimraf coverage/server-v8 coverage/server-html coverage/client-html .nyc_output && cross-env COVERAGE=true VITE_COVERAGE=true playwright test --config config/test.playwright.config.ts && node scripts/test-e2e-coverage-report.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.234",
