@@ -426,7 +426,9 @@ export function buildDashboard(limit = 5) {
   };
 }
 
-export function createHydrationBooking(payload) {
+// Legt je nach payload.entryType entweder einen Trink- (entryType === 'hydration')
+// oder einen Bewegungspausen-Eintrag (planned_break_response/additional_break) an.
+export function createBooking(payload) {
   const config = loadConfig();
   if (payload?.entryType === 'hydration') {
     const now = new Date();

@@ -13,7 +13,7 @@ import {
   buildActivityRows,
   buildHeatmap,
   buildHydrationSummary,
-  createHydrationBooking,
+  createBooking,
   replaceAllBookings,
 } from '../../server/service.mjs';
 import { SERVER_PATHS } from '../../server/config.mjs';
@@ -215,7 +215,7 @@ test('buildHydrationSummary keeps only the latest (already cumulative) entry per
   ]);
 });
 
-test('createHydrationBooking appends a hydration entry and returns the running total', async (t) => {
+test('createBooking (entryType "hydration") appends a hydration entry and returns the running total', async (t) => {
   assert.equal(process.env.NODE_ENV, 'test');
 
   const hydrationPath = SERVER_PATHS.testHydrationExportPath;
@@ -230,7 +230,7 @@ test('createHydrationBooking appends a hydration entry and returns the running t
 
   fs.rmSync(hydrationPath, { force: true });
 
-  const result = createHydrationBooking({ entryType: 'hydration', value: 250 });
+  const result = createBooking({ entryType: 'hydration', value: 250 });
 
   assert.equal(result.item, null);
   assert.equal(result.total, 1);
@@ -241,7 +241,7 @@ test('createHydrationBooking appends a hydration entry and returns the running t
   assert.equal(entries[0].hydrationMl, 250);
 });
 
-test('createHydrationBooking records a movement booking and marks a repeat slot as an additional break', async (t) => {
+test('createAdditionalMovement (createBooking mit entryType "additional_break") legt eine Zusatzbewegung neben der geplanten Bewegungspause an', async (t) => {
   assert.equal(process.env.NODE_ENV, 'test');
 
   const exportPath = SERVER_PATHS.testExportPath;
@@ -261,15 +261,15 @@ test('createHydrationBooking records a movement booking and marks a repeat slot 
   // heutigen Tages erzeugen (ensureAutomaticReminderEntries/buildMissedActivityEntries) —
   // daher wird über die description gezielt der eigene Eintrag herausgesucht,
   // statt auf eine feste Gesamtzahl oder den zuletzt sortierten Eintrag zu vertrauen.
-  const first = createHydrationBooking({ value: 2, description: 'Spaziergang' });
-  assert.equal(first.item.value, 2);
-  assert.equal(first.item.description, 'Spaziergang');
+  const plannedBreak = createBooking({ value: 2, description: 'Spaziergang' });
+  assert.equal(plannedBreak.item.value, 2);
+  assert.equal(plannedBreak.item.description, 'Spaziergang');
 
   // entryType: 'additional_break' erzwingt den additional-break-Zweig explizit —
   // der implizite Zweig (zweite Buchung im selben Reminder-Slot) greift nur, wenn
   // response_time zufällig exakt auf die volle Reminder-Slot-Minute fällt.
-  const second = createHydrationBooking({ value: 3, description: 'Nochmal', entryType: 'additional_break' });
-  assert.equal(second.item.note, 'Zusatzbewegung');
+  const additionalMovement = createBooking({ value: 3, description: 'Nochmal', entryType: 'additional_break' });
+  assert.equal(additionalMovement.item.note, 'Zusatzbewegung');
 
   const { readEntries } = await import('../../server/storage.mjs');
   const entries = readEntries(exportPath);
