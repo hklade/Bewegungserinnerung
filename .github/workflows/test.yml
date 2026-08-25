@@ -49,6 +49,14 @@ jobs:
             allure-results/
           retention-days: 30
 
+      - name: Allure Results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results
+          path: allure-results/
+          retention-days: 30 
+
       - name: E2E-Ergebnis auswerten
         if: always()
         run: |
