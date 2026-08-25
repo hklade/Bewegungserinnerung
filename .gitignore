@@ -27,3 +27,7 @@ node_modules/.vite/deps/_metadata.json
 .vscode/
 config/test-results/
 allure-report/
+
+# Coverage
+.nyc_output/
+coverage/

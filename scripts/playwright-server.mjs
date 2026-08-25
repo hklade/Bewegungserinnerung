@@ -13,11 +13,17 @@ if (currentEnv !== "test") {
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = process.env.PLAYWRIGHT_PORT || "5173";
 const host = process.env.PLAYWRIGHT_HOST || "127.0.0.1";
+const coverageEnabled = process.env.COVERAGE === "true";
+const v8CoverageDir = path.join(projectRoot, "coverage", "server-v8");
 
 const api = spawn(process.execPath, ["server.mjs"], {
   cwd: projectRoot,
   stdio: "inherit",
   windowsHide: true,
+  env: {
+    ...process.env,
+    ...(coverageEnabled ? { NODE_V8_COVERAGE: v8CoverageDir } : {}),
+  },
 });
 
 let apiExited = false;

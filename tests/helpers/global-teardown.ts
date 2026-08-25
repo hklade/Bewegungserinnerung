@@ -7,7 +7,7 @@ const testConfigBackupPath = `${testConfigFilePath}.bak`;
 
 // XXX Playwright-Kurs prüfen, ob es gebraucht wird
 
-export default function globalTeardown(config: FullConfig) {
+export default async function globalTeardown(config: FullConfig) {
   /* Executed after all workers complete. Good place for cleanup tasks */
   console.log(`[INFO]: Starting the global teardown process (global-teardown.ts) ...`);
 
@@ -16,6 +16,19 @@ export default function globalTeardown(config: FullConfig) {
     fs.copyFileSync(testConfigBackupPath, testConfigFilePath);
     fs.rmSync(testConfigBackupPath);
     console.log(`[INFO]: Restored ${testConfigFilePath} to its pre-run state`);
+  }
+
+  // Playwright kills the webServer process group with SIGKILL, which never lets the API
+  // server's NODE_V8_COVERAGE exit-hook flush coverage. Ask it to flush explicitly first.
+  if (process.env.COVERAGE === "true") {
+    try {
+      const apiURL = (config.projects[0]?.use as { apiURL?: string } | undefined)?.apiURL ?? "http://127.0.0.1:3001/api";
+      const flushURL = `${apiURL.replace(/\/$/, "")}/test/flush-coverage`;
+      await fetch(flushURL, { method: "POST" });
+      console.log(`[INFO]: Flushed server coverage via ${flushURL}`);
+    } catch (error) {
+      console.error("[WARN]: Failed to flush server coverage:", error);
+    }
   }
 
   // Generate Allure report for local runs

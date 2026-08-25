@@ -1,5 +1,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
+import v8 from 'node:v8';
 
 /**
  * HTTP-Entry-Point für die Server-API.
@@ -132,6 +133,17 @@ export function createServer() {
             error: error instanceof Error ? error.message : 'Invalid payload',
           });
         });
+      return;
+    }
+
+    // Playwright kills the webServer process group with SIGKILL on teardown, which never
+    // lets Node's NODE_V8_COVERAGE exit-hook flush coverage. This lets the e2e teardown
+    // flush it explicitly first. Test-only: gated on NODE_ENV=test, never wired up in prod.
+    if (url.pathname === '/api/test/flush-coverage' && req.method === 'POST' && isTestEnvironment()) {
+      if (process.env.NODE_V8_COVERAGE) {
+        v8.takeCoverage();
+      }
+      sendJson(res, 200, { flushed: Boolean(process.env.NODE_V8_COVERAGE) });
       return;
     }
 
