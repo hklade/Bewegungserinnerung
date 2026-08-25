@@ -1,7 +1,7 @@
 {
   "image": "mcr.microsoft.com/devcontainers/typescript-node",
 
-  "forwardPorts": [5173, 5174, 3001],
+  "forwardPorts": [5173, 5174, 3001, 6080],
 
   "mounts": [
     "source=bewegungserinnerung-gh-config,target=/home/node/.config/gh,type=volume"
@@ -21,5 +21,5 @@
     }
   },
 
-  "postCreateCommand": "npm install && npx playwright install --with-deps chrome && sudo apt-get update && sudo apt-get install -y xauth && npm install -g allure-commandline && npx skills@latest add mattpocock/skills --skill=wayfinder"
+  "postCreateCommand": "npm install && npx playwright install --with-deps chrome && sudo apt-get update && sudo apt-get install -y xauth x11vnc novnc websockify && npm install -g allure-commandline && npx skills@latest add mattpocock/skills --skill=wayfinder"
 }
