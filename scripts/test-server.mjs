@@ -6,7 +6,7 @@ const testRun = spawnSync("node", ["--test", "--test-concurrency=1", "tests/serv
   cwd: rootDir,
   stdio: "inherit",
   shell: process.platform === "win32",
-  env: { ...process.env, NODE_ENV: "test" },
+  env: { ...process.env, NODE_ENV: "test", TZ: "Europe/Vienna" },
 });
 
 if (testRun.error) {
