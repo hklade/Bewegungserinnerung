@@ -1,7 +1,7 @@
 {
   "image": "mcr.microsoft.com/devcontainers/typescript-node",
 
-  "forwardPorts": [5173],
+  "forwardPorts": [5173, 5174, 3001],
 
   "mounts": [
     "source=bewegungserinnerung-gh-config,target=/home/node/.config/gh,type=volume"
@@ -15,10 +15,11 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-    "customizations": {
+  "customizations": {
     "vscode": {
       "extensions": ["anthropic.claude-code", "esbenp.prettier-vscode"]
-    },
+    }
+  },
 
   "postCreateCommand": "npm install && npx playwright install --with-deps && npm install -g allure-commandline && npx skills@latest add mattpocock/skills --skill=wayfinder"
 }
