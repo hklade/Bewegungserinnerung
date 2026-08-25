@@ -87,3 +87,42 @@ jobs:
       - name: Allure-Report auf GitHub Pages veröffentlichen
         id: deployment
         uses: actions/deploy-pages@v4
+
+  coverage:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    continue-on-error: true
+    env:
+      NODE_ENV: test
+      TZ: Europe/Vienna
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Server-Unit-Test-Coverage ausführen
+        run: npm run test:server:coverage
+
+      - name: Playwright-Browser installieren
+        run: npx playwright install --with-deps
+
+      - name: E2E-Coverage (Server + Client) ausführen
+        run: npm run test:e2e:coverage
+
+      - name: Coverage-Reports hochladen
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 30

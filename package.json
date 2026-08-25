@@ -9,6 +9,7 @@
     "build": "vite build --configLoader runner",
     "preview": "vite preview",
     "test:server": "node scripts/test-server.mjs",
+    "test:server:coverage": "c8 --reporter=text --reporter=html --report-dir=coverage/server-unit-html --include=server/** --include=shared/** --include=server.mjs node scripts/test-server.mjs",
     "test:unit": "vitest run",
     "test:e2e": "node scripts/test-e2e-with-allure.mjs",
     "test:e2e:plain": "playwright test --config config/test.playwright.config.ts",
