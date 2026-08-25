@@ -169,10 +169,10 @@ jobs:
           EOF
 
       - name: Pages-Artifact vorbereiten
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: pages-root/
 
       - name: Reports auf GitHub Pages veröffentlichen
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
