@@ -20,9 +20,11 @@ export function useReminderPopup(options: {
   const reminderPopupTimerRef = useRef<number | null>(null);
   const lastAutoReminderRef = useRef<string | null>(null);
 
+  const reminderEnabled =
+    currentConfig.hourlyReminderEnabled && dashboardState === "ready";
+
   useEffect(() => {
-    if (!currentConfig.hourlyReminderEnabled || dashboardState !== "ready") {
-      setReminderPopup(null);
+    if (!reminderEnabled) {
       return;
     }
 
@@ -75,8 +77,9 @@ export function useReminderPopup(options: {
         window.clearTimeout(reminderPopupTimerRef.current);
         reminderPopupTimerRef.current = null;
       }
+      setReminderPopup(null);
     };
-  }, [currentConfig, dashboardState]);
+  }, [currentConfig, dashboardState, reminderEnabled]);
 
   const nextReminderCountdown = useMemo(
     () => getNextReminderCountdown(now, currentConfig),

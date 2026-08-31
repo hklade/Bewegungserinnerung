@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import type { HeatmapData } from "./types.js";
-import { weekdayNames, defaultConfig, scale } from "./constants.js";
+import { defaultConfig, scale } from "./constants.js";
 import {
   formatDate,
   formatCurrentDay,

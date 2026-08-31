@@ -58,6 +58,7 @@ export function useDashboard() {
 
   useEffect(() => {
     const activeRef = { active: true };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-with-cleanup-guard: setState calls happen after the awaited fetch, not synchronously in the effect body
     void refreshDashboard(activeRef);
     const interval = window.setInterval(() => {
       void refreshDashboard(activeRef);
