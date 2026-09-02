@@ -21,6 +21,7 @@
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.234",
     "child_process": "^1.0.2",
+    "claude": "^0.1.1",
     "eslint": "^10.9.1",
     "fs": "^0.0.1-security",
     "path": "^0.12.7",
