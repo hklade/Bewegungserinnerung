@@ -22,16 +22,17 @@
 - `android-hydration-tracking`: The "Trinkmanager" daily hydration goal, +250 ml/−250 ml logging, and progress/overflow display.
 - `android-day-week-evaluation`: Day picker (last 14 active days) with per-day stats and hourly bar chart, plus the 7-day × hourly-slot heatmap.
 - `android-activity-history`: The recent-activity list (date, planned time, delay, value, description/note, type) with expand/collapse.
-- `android-csv-import-export`: CSV export via Share/SAF and full-replace CSV import with a destructive-action confirmation, using the same CSV schema as the web app where practical.
+- `android-csv-import-export` (optional): CSV export via Share/SAF and full-replace CSV import with a destructive-action confirmation, using the same CSV schema as the web app where practical. Not required for the app to be usable end-to-end — only for carrying data over from the web app or backing up/restoring locally (see tasks.md section 10).
 - `android-settings-configuration`: The settings screen covering reminder on/off, start/end time, weekdays-only, hydration goal, tone/vibration on/off with a test action, and export location.
+- `android-ci-pipeline`: Path-conditional GitHub Actions CI for the Android project (`android/**`), running Gradle unit/Compose UI tests without re-running the web app's suite for Android-only changes or vice versa.
 
 ### Modified Capabilities
-_None._ This change does not alter any existing spec — the current web app's specs (`ci-test-pipeline`, `cross-platform-dev-tooling`, `server-environment-isolation`) describe the existing Node/CSV server and are unaffected, since the Android app has no server component.
+_None._ This change does not alter any existing spec — the current web app's specs (`ci-test-pipeline`, `cross-platform-dev-tooling`, `server-environment-isolation`) describe the existing Node/CSV server and are unaffected, since the Android app has no server component. `ci-test-pipeline`'s existing web-facing guarantees are preserved unchanged; `android-ci-pipeline` is an independent, additive capability that shares the same workflow file (see design.md D12) but does not alter `ci-test-pipeline`'s behavior for web-relevant changes.
 
 ## Impact
 
-- **New code**: an entirely new Android project (not yet present in this repository — see design.md for proposed location and module layout). No existing `src/`, `server/`, or `shared/` files are modified.
-- **New build/tooling**: Gradle-based Android build, a new CI concern (out of scope for this change beyond noting it in tasks.md) separate from the existing `npm run test:e2e`/`test:server` pipeline.
+- **New code**: an entirely new Android project living in this repository under `android/` (see design.md D11 for the monorepo layout — a new top-level Gradle project root, independent of the existing `package.json`/`node_modules`/Vite toolchain). No existing `src/`, `server/`, or `shared/` files are modified.
+- **New build/tooling**: Gradle-based Android build, plus path-conditional CI (design.md D12, `android-ci-pipeline` spec) extending the existing `.github/workflows/test.yml` rather than introducing a separate pipeline — Android-only changes run only the new Gradle job, web-only changes run only the existing `npm run test:e2e`/`test:server` job(s), unchanged.
 - **Dependencies**: none of the existing npm dependencies are affected; the Android project brings its own dependency set (see design.md).
 - **Data compatibility**: CSV files produced by the existing web app should remain importable by the Android app's CSV import (same delimiter/column conventions), so a user can carry existing history over; this is a design constraint, not a live sync between the two apps.
 - **No shared runtime**: the Android app and the existing web app are two independent products; they do not talk to each other, share a server, or share a database.
