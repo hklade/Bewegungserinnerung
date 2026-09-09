@@ -34,7 +34,7 @@ Open this `android/` folder directly in Android Studio — **not** the repositor
 
 **Reference device (D8):** the one-screen "fits without scrolling" requirement for quick-entry is validated against a Samsung Galaxy A36 profile (~412dp × 892dp, portrait, gesture nav, default font scale) — the actual device this app is developed and tested against. Five activity-level options lay out as a 2-row (3+2) grid, not 1×5 or a vertical list. A non-binding visual reference lives at `../openspec/changes/add-android-app/design/screen-mockups.html`.
 
-**SDK levels (D9):** `minSdk = 33` (Android 13), `targetSdk = 36` (Android 16) — the reference device ships stable on API 36; API 37 was still in beta as of 2026-09. `minSdk = 33` avoids handling both the API 31 and API 33 exact-alarm permission variants for no product benefit.
+**SDK levels (D9):** `minSdk = 33` (Android 13), `compileSdk`/`targetSdk = 37` (Android 17) — raised from the originally-planned 36 because the current Compose BOM requires compiling against API 37+. `minSdk = 33` avoids handling both the API 31 and API 33 exact-alarm permission variants for no product benefit.
 
 **Export destination (D10):** CSV export writes to the public `Downloads` directory (via `MediaStore`/SAF, not app-private storage), plus a `Intent.ACTION_SEND` Share action.
 

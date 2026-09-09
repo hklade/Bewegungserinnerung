@@ -31,3 +31,15 @@ allure-report/
 # Coverage
 .nyc_output/
 coverage/
+
+# Android / Gradle
+android/.gradle/
+android/**/build/
+android/local.properties
+android/.idea/
+android/captures/
+android/*.hprof
+*.apk
+*.aab
+*.jks
+*.keystore
