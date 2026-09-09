@@ -59,9 +59,21 @@ Two behavioral rough edges in the web app inform this design and are explicitly 
 **Alternatives considered:** A new, Android-native CSV schema (rejected: breaks the stated cross-app portability goal for no benefit).
 
 ### D8: Reference device profile for the "fits on one screen" constraint
-**Decision:** The one-screen quick-entry requirement is validated against a baseline profile of a 5.8"-6.1" phone at 411dp × 891dp (Pixel-class `xxhdpi`, gesture navigation, default system font scale) in portrait, with the five activity-level options laid out as a 2-row chip/card grid (3+2 or similar) rather than a single row or a vertically stacked list, so the control panel's height stays bounded regardless of German label length. Larger devices get more breathing room for free; smaller/older devices (< ~360dp × 640dp) may require the note field to shrink but must never require scrolling to reach the save action.
-**Why:** "Fits on one screen" is untestable without a concrete reference size; picking one baseline gives design and QA a shared target. A 2-row grid (rather than 1×5) keeps per-item touch targets at a reasonable minimum width even with longer German labels like "Leichte Aktivität".
-**Alternatives considered:** Targeting only the smallest supported device (rejected: overly cramped layout for the common case); no reference device at all (rejected: makes the requirement unverifiable).
+**Decision:** The one-screen quick-entry requirement is validated against a baseline profile matching the Samsung Galaxy A36 (6.7", 1080×2340px, ~390ppi, ~412dp × 892dp at density bucket ~2.625, gesture navigation, default system font scale) in portrait, with the five activity-level options laid out as a 2-row chip/card grid (3+2 or similar) rather than a single row or a vertically stacked list, so the control panel's height stays bounded regardless of German label length. Larger devices get more breathing room for free; smaller/older devices (< ~360dp × 640dp) may require the note field to shrink but must never require scrolling to reach the save action.
+**Why:** "Fits on one screen" is untestable without a concrete reference size; picking one baseline gives design and QA a shared target. The Samsung Galaxy A36 was chosen as the reference because it's the actual device this app will be developed and tested against. A 2-row grid (rather than 1×5) keeps per-item touch targets at a reasonable minimum width even with longer German labels like "Leichte Aktivität".
+**Alternatives considered:** Targeting only the smallest supported device (rejected: overly cramped layout for the common case); no reference device at all (rejected: makes the requirement unverifiable); a generic Pixel-class profile (rejected once a concrete target device — the Galaxy A36 — was known).
+
+Non-binding visual reference: [design/screen-mockups.html](design/screen-mockups.html) is an HTML mockup (open in a browser) of the quick-entry, settings, and month-evaluation screens at the D8 reference device size, styled after the existing web app's palette/typography. It illustrates layout and information density, not final Material 3 component choices.
+
+### D9: `minSdk` 33, `targetSdk` 36
+**Decision:** Set `minSdk = 33` (Android 13) and `targetSdk = 36` (Android 16).
+**Why:** The reference device (D8, Samsung Galaxy A36) ships stable on Android 16/API 36, so `targetSdk` matches what it's actually developed and tested against; API 37 (Android 17) is still in beta as of 2026-09 and not yet a general-availability target. `minSdk = 33` is chosen over 31 because the exact-alarm permission model (D4) changed behavior between API 31 and 33, and 33 is the more conservative/current baseline for that API's runtime-permission semantics — the app has no other functional need to support API 31/32 specifically.
+**Alternatives considered:** `minSdk = 31` (rejected: would require handling both the API 31 and API 33 exact-alarm permission variants for no product benefit, since there's no stated requirement to support that narrow API 31-32 range); `minSdk`/`targetSdk` both pinned to 36 (rejected: unnecessarily excludes devices below Android 16 with no functional justification).
+
+### D10: Export writes to the public Downloads directory, plus a Share action
+**Decision:** CSV export writes the file to the public `Downloads` directory (via `MediaStore`/SAF, not app-private storage) and additionally offers a "Share" action (`Intent.ACTION_SEND`) so the exported file can be sent directly to another app.
+**Why:** Downloads is where users expect to find exported files on Android, consistent with how the web app's export already behaves (a file the user can locate afterward), and the added Share action covers the common next step of sending the export elsewhere without a separate file-manager round trip.
+**Alternatives considered:** App-private directory only (rejected: the user can't find or reuse the file without a share action, and Downloads is the more discoverable default); SAF document picker on every export (rejected: adds a chooser step to every export for no benefit over a fixed, predictable Downloads location plus Share).
 
 ## Risks / Trade-offs
 
@@ -72,6 +84,3 @@ Two behavioral rough edges in the web app inform this design and are explicitly 
 - [No CI/build pipeline is specified in this change, so regressions in the new Android code have no automated safety net until that follow-up work happens] → Mitigation: tracked explicitly as a task in tasks.md so it isn't forgotten, even though it's out of scope for this design.
 
 ## Open Questions
-
-- Exact minimum supported Android API level (`minSdk`) — affects which exact-alarm permission model applies (API 31 vs. 33 behavior differs). Does not change any spec-level behavior in this change and can be settled during project setup.
-- Whether the export/import location should default to a fixed app-private directory with a "share" action, or prompt via SAF's document picker on every export — both satisfy the `android-csv-import-export` spec's observable behavior; the choice is a UX default, not a behavior contract, and can be settled during implementation.

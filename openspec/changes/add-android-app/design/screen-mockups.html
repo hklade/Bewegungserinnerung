@@ -1,0 +1,1515 @@
+<title>Schnelleingabe & Optionen Mockup</title>
+<style>
+  :root {
+    --bg: #f2efe8;
+    --bg-2: #e5efe9;
+    --page-bg: #e9e4d8;
+    --panel: rgba(255, 255, 255, 0.74);
+    --panel-strong: rgba(255, 255, 255, 0.9);
+    --text: #17201a;
+    --muted: #5d6a63;
+    --line: rgba(23, 32, 26, 0.1);
+    --accent: #2f7d5b;
+    --accent-dark: #0f6a48;
+    --accent-2: #ee8d4f;
+    --accent-3: #5c7cfa;
+    --accent-4: #d79a1a;
+    --shadow: 0 18px 44px rgba(26, 35, 30, 0.16);
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+
+    --tone-red-1: #cb6f65;
+    --tone-red-2: #b14d43;
+    --tone-ochre-1: #bf8b3f;
+    --tone-ochre-2: #99661f;
+    --tone-orange-1: #f4a24f;
+    --tone-orange-2: #e37d2d;
+    --tone-blue-1: #5e84ff;
+    --tone-blue-2: #375fd7;
+    --tone-green-1: #0f8660;
+    --tone-green-2: #086142;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #14140f;
+      --bg: #1c2119;
+      --bg-2: #171d18;
+      --panel: rgba(35, 41, 36, 0.78);
+      --panel-strong: rgba(40, 47, 41, 0.92);
+      --text: #eef1ec;
+      --muted: #9aa79f;
+      --line: rgba(238, 241, 236, 0.1);
+      --shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #14140f;
+    --bg: #1c2119;
+    --bg-2: #171d18;
+    --panel: rgba(35, 41, 36, 0.78);
+    --panel-strong: rgba(40, 47, 41, 0.92);
+    --text: #eef1ec;
+    --muted: #9aa79f;
+    --line: rgba(238, 241, 236, 0.1);
+    --shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 32px 16px 48px;
+  }
+
+  .caption {
+    max-width: 412px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .caption b { color: var(--text); }
+
+  /* ---- phone frame ---- */
+  .phone {
+    width: 412px;
+    height: 892px;
+    border-radius: 42px;
+    background: #0b0d0a;
+    padding: 14px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35), inset 0 0 0 2px rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    background:
+      radial-gradient(circle at 85% 0%, rgba(94, 132, 255, 0.08), transparent 40%),
+      radial-gradient(circle at 0% 15%, rgba(15, 134, 96, 0.1), transparent 45%),
+      linear-gradient(165deg, var(--bg), var(--bg-2));
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 22px;
+    background: #0b0d0a;
+    border-radius: 0 0 16px 16px;
+    z-index: 5;
+  }
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 22px 2px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+  .statusbar .icons { display: flex; gap: 5px; align-items: center; opacity: 0.75; }
+
+  /* ---- fixed (no-scroll) region ---- */
+  .fixed-region {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px 16px 8px;
+    min-height: 0;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 2px 2px 0;
+  }
+  .date-line {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .date-line .weekday { font-weight: 700; }
+  .time-line {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-dark);
+  }
+
+  /* countdown card */
+  .countdown-card {
+    background: linear-gradient(180deg, #0f8660, #086142);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 12px 26px rgba(8, 97, 66, 0.35);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .countdown-card::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%);
+  }
+  .countdown-text { position: relative; z-index: 1; }
+  .countdown-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+    font-weight: 700;
+  }
+  .countdown-slot {
+    font-size: 12px;
+    opacity: 0.92;
+    margin-top: 1px;
+  }
+  .countdown-value {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .countdown-unit {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.85;
+    margin-left: 3px;
+  }
+
+  /* activity level section */
+  .section-label {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 2px 2px 0;
+  }
+
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .level-card {
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
+    padding: 8px 6px 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(26, 35, 30, 0.07);
+  }
+  .level-card.selected {
+    outline: 2px solid rgba(15, 134, 96, 0.4);
+    transform: translateY(-1px);
+    background: var(--panel-strong);
+  }
+  .level-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+  }
+  .level-badge.red { background: linear-gradient(180deg, var(--tone-red-1), var(--tone-red-2)); }
+  .level-badge.ochre { background: linear-gradient(180deg, var(--tone-ochre-1), var(--tone-ochre-2)); }
+  .level-badge.orange { background: linear-gradient(180deg, var(--tone-orange-1), var(--tone-orange-2)); }
+  .level-badge.blue { background: linear-gradient(180deg, var(--tone-blue-1), var(--tone-blue-2)); }
+  .level-badge.green { background: linear-gradient(180deg, var(--tone-green-1), var(--tone-green-2)); }
+  .level-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+  }
+  .level-desc {
+    font-size: 9.5px;
+    color: var(--muted);
+    line-height: 1.2;
+  }
+  .level-card.spacer { visibility: hidden; }
+
+  /* note field */
+  .note-field {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 9px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .note-field label {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .note-field .placeholder {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .save-btn {
+    background: linear-gradient(180deg, #1b9a67, #0f7d52);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 10px 22px rgba(15, 125, 82, 0.3);
+    flex-shrink: 0;
+    letter-spacing: 0.01em;
+  }
+
+  /* hydration bar */
+  .hydration-card {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex-shrink: 0;
+  }
+  .hydration-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .hydration-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .hydration-value {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .hydration-value .goal { color: var(--muted); font-weight: 600; }
+
+  .hydration-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hydro-btn {
+    width: 34px;
+    height: 30px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .hydro-btn.minus {
+    background: rgba(23, 32, 26, 0.08);
+    color: var(--text);
+  }
+  .hydro-btn.plus {
+    background: linear-gradient(180deg, rgba(43,111,255,0.96), rgba(98,177,255,0.96));
+    color: #fff;
+  }
+  .segments {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+  }
+  .segment {
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(223,228,235,0.98), rgba(210,216,225,0.98));
+  }
+  .segment.filled {
+    background: linear-gradient(180deg, rgba(43,111,255,0.98), rgba(98,177,255,0.98));
+  }
+
+  /* scroll cue between fixed and scrollable region */
+  .scroll-divider {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 2px 0 0;
+  }
+  .scroll-pill {
+    width: 34px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(23, 32, 26, 0.18);
+  }
+
+  /* scrollable region */
+  .scroll-region {
+    flex-shrink: 0;
+    height: 168px;
+    overflow-y: auto;
+    padding: 0 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent 24px);
+  }
+  .scroll-region::-webkit-scrollbar { width: 4px; }
+  .scroll-region::-webkit-scrollbar-thumb { background: rgba(23,32,26,0.2); border-radius: 999px; }
+
+  .eval-card {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+  .eval-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .eval-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .eval-day {
+    font-size: 11px;
+    color: var(--accent-dark);
+    font-weight: 700;
+  }
+  .eval-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .eval-stat {
+    text-align: center;
+  }
+  .eval-stat .num {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .eval-stat .lbl {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .eval-stat.green .num { color: var(--tone-green-2); }
+  .eval-stat.red .num { color: var(--tone-red-2); }
+
+  .eval-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 54px;
+    margin-top: 10px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+  .eval-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+  }
+  .eval-bar-track {
+    width: 100%;
+    height: 38px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .eval-bar {
+    width: 68%;
+    border-radius: 5px 5px 2px 2px;
+    min-height: 5px;
+  }
+  .eval-bar.tone-red { background: linear-gradient(180deg, var(--tone-red-1), var(--tone-red-2)); }
+  .eval-bar.tone-ochre { background: linear-gradient(180deg, var(--tone-ochre-1), var(--tone-ochre-2)); }
+  .eval-bar.tone-orange { background: linear-gradient(180deg, var(--tone-orange-1), var(--tone-orange-2)); }
+  .eval-bar.tone-blue { background: linear-gradient(180deg, var(--tone-blue-1), var(--tone-blue-2)); }
+  .eval-bar.tone-green { background: linear-gradient(180deg, var(--tone-green-1), var(--tone-green-2)); }
+  .eval-bar-label {
+    font-size: 8px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .history-card {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+  .history-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .history-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+  }
+  .history-row:first-of-type { border-top: none; }
+  .history-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .history-body { flex: 1; min-width: 0; }
+  .history-title-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .history-sub {
+    font-size: 10.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-time {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* nav bar */
+  .navbar {
+    flex-shrink: 0;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .navbar .bar {
+    width: 110px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(23,32,26,0.35);
+  }
+
+  .annotations {
+    max-width: 412px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .annotations b { color: var(--text); }
+
+  /* ---- gear / settings-entry button, shared across screens ---- */
+  .gear-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 10px rgba(26, 35, 30, 0.1);
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .gear-btn svg { width: 16px; height: 16px; }
+
+  /* ---- row layout for the two phone mockups ---- */
+  .frames-row {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .frame-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .frame-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---- settings screen ---- */
+  .settings-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 2px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    display: grid;
+    place-items: center;
+    color: var(--text);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .settings-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .settings-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+  .settings-scroll::-webkit-scrollbar { width: 4px; }
+  .settings-scroll::-webkit-scrollbar-thumb { background: rgba(23,32,26,0.2); border-radius: 999px; }
+
+  .settings-card {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 6px 16px rgba(26, 35, 30, 0.07);
+    flex-shrink: 0;
+  }
+  .settings-card-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .setting-row + .setting-row {
+    padding-top: 9px;
+    border-top: 1px solid var(--line);
+  }
+  .setting-label {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .setting-label .name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .setting-label .hint {
+    font-size: 10.5px;
+    color: var(--muted);
+    line-height: 1.25;
+  }
+
+  /* toggle switch */
+  .toggle {
+    width: 40px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(23, 32, 26, 0.15);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: left 0.15s ease;
+  }
+  .toggle.on {
+    background: linear-gradient(180deg, #0f8660, #086142);
+  }
+  .toggle.on::after { left: 20px; }
+
+  /* time input pill */
+  .time-pill {
+    background: var(--panel-strong);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-dark);
+    flex-shrink: 0;
+  }
+  .time-range-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .time-range-row .arrow { color: var(--muted); font-size: 12px; }
+
+  /* ml stepper */
+  .ml-stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .ml-stepper button {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(23, 32, 26, 0.08);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 13px;
+  }
+  .ml-stepper .ml-value {
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    min-width: 62px;
+    text-align: center;
+  }
+
+  /* chime option cards */
+  .chime-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .chime-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    background: var(--panel-strong);
+  }
+  .chime-option.selected {
+    border-color: rgba(15, 134, 96, 0.55);
+    background: rgba(15, 134, 96, 0.08);
+  }
+  .chime-radio {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 2px solid rgba(23, 32, 26, 0.25);
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+  }
+  .chime-option.selected .chime-radio {
+    border-color: var(--accent-dark);
+  }
+  .chime-option.selected .chime-radio::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-dark);
+  }
+  .chime-notes {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .chime-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chime-badge-current {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-dark);
+    background: rgba(15, 134, 96, 0.14);
+    border-radius: 999px;
+    padding: 1.5px 6px;
+  }
+  .chime-wave {
+    display: flex;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 16px;
+  }
+  .chime-wave span {
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--tone-blue-1), var(--tone-blue-2));
+  }
+  .chime-play-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(180deg, #1b9a67, #0f7d52);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+
+  .save-btn.settings-save { margin-top: 2px; }
+
+  /* export / import action row */
+  .data-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .data-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(47, 125, 91, 0.22);
+    background: rgba(47, 125, 91, 0.1);
+    color: var(--accent-dark);
+    font-size: 12.5px;
+    font-weight: 800;
+  }
+  .data-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .data-hint {
+    font-size: 10.5px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
+  /* ---- month evaluation screen ---- */
+  .month-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 2px;
+    flex-shrink: 0;
+  }
+  .month-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .month-nav-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    border: none;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.5);
+    color: var(--muted);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .month-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .month-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 8px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+  .month-scroll::-webkit-scrollbar { width: 4px; }
+  .month-scroll::-webkit-scrollbar-thumb { background: rgba(23,32,26,0.2); border-radius: 999px; }
+
+  .month-card {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 6px 16px rgba(26, 35, 30, 0.07);
+    flex-shrink: 0;
+  }
+  .month-card-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  /* month summary stat row (4 tiles) */
+  .month-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .month-stat {
+    text-align: center;
+    background: var(--panel-strong);
+    border-radius: 12px;
+    padding: 8px 4px;
+  }
+  .month-stat .num {
+    font-family: Georgia, serif;
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .month-stat .lbl {
+    font-size: 8px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+  }
+  .month-stat.green .num { color: var(--tone-green-2); }
+  .month-stat.red .num { color: var(--tone-red-2); }
+  .month-stat.blue .num { color: var(--tone-blue-2); }
+
+  /* calendar grid */
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-weekdays span {
+    text-align: center;
+    font-size: 9px;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    background: rgba(23, 32, 26, 0.045);
+    position: relative;
+  }
+  .cal-cell.empty { background: transparent; }
+  .cal-cell.today { outline: 2px solid var(--accent-dark); }
+  .cal-cell .cal-day-num { font-size: 10px; }
+  .cal-cell.tone-red { background: rgba(196, 91, 76, 0.22); color: #8f4238; }
+  .cal-cell.tone-ochre { background: rgba(191, 139, 63, 0.24); color: #7d5719; }
+  .cal-cell.tone-orange { background: rgba(238, 141, 79, 0.28); color: #9a5620; }
+  .cal-cell.tone-blue { background: rgba(94, 132, 255, 0.28); color: #33509e; }
+  .cal-cell.tone-green { background: rgba(15, 134, 96, 0.3); color: #0c5a3f; }
+  .cal-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .cal-legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+  }
+  .cal-legend span {
+    font-size: 8.5px;
+    color: var(--muted);
+  }
+
+  /* weekly trend bars within month */
+  .week-trend {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    height: 64px;
+    margin-top: 2px;
+  }
+  .week-trend-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .week-trend-track {
+    width: 100%;
+    height: 46px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .week-trend-bar {
+    width: 60%;
+    border-radius: 6px 6px 2px 2px;
+    background: linear-gradient(180deg, var(--tone-green-1), var(--tone-green-2));
+    min-height: 5px;
+  }
+  .week-trend-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .month-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+    background: rgba(15, 134, 96, 0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+</style>
+
+<div class="frames-row">
+<div class="frame-col">
+<div class="frame-label">Schnelleingabe</div>
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>09:14</span>
+      <span class="icons">•••</span>
+    </div>
+
+    <div class="fixed-region">
+      <div class="top-row">
+        <div class="date-line"><span class="weekday">Mittwoch</span>, 9. Sep.</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="time-line">09:14</div>
+          <div class="gear-btn" title="Optionen öffnen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="countdown-card">
+        <div class="countdown-text">
+          <div class="countdown-label">Nächste Erinnerung</div>
+          <div class="countdown-slot">Slot 10:00 Uhr</div>
+        </div>
+        <div class="countdown-value">23<span class="countdown-unit">Min.</span></div>
+      </div>
+
+      <div class="section-label">Aktivitätslevel</div>
+      <div class="level-grid">
+        <div class="level-card">
+          <div class="level-badge red">0</div>
+          <div class="level-title">Keine Pause</div>
+          <div class="level-desc">sitzen geblieben</div>
+        </div>
+        <div class="level-card selected">
+          <div class="level-badge ochre">1</div>
+          <div class="level-title">Mini-Pause</div>
+          <div class="level-desc">kurz innegehalten</div>
+        </div>
+        <div class="level-card">
+          <div class="level-badge orange">2</div>
+          <div class="level-title">Leichte Aktivität</div>
+          <div class="level-desc">Bürotätigkeit</div>
+        </div>
+        <div class="level-card">
+          <div class="level-badge blue">3</div>
+          <div class="level-title">Bewegung</div>
+          <div class="level-desc">gehen / dehnen</div>
+        </div>
+        <div class="level-card">
+          <div class="level-badge green">4</div>
+          <div class="level-title">Aktive Pause</div>
+          <div class="level-desc">Spaziergang / Übungen</div>
+        </div>
+        <div class="level-card spacer"></div>
+      </div>
+
+      <div class="note-field">
+        <label>Notiz (optional)</label>
+        <div class="placeholder">z. B. Treppe, Dehnen …</div>
+      </div>
+
+      <button class="save-btn">Eintrag speichern</button>
+
+      <div class="hydration-card">
+        <div class="hydration-head">
+          <span class="hydration-title">Trinkmanager</span>
+          <span class="hydration-value">500 ml <span class="goal">/ 2000 ml</span></span>
+        </div>
+        <div class="hydration-row">
+          <button class="hydro-btn minus">−</button>
+          <div class="segments">
+            <div class="segment filled"></div>
+            <div class="segment filled"></div>
+            <div class="segment"></div>
+            <div class="segment"></div>
+            <div class="segment"></div>
+            <div class="segment"></div>
+            <div class="segment"></div>
+            <div class="segment"></div>
+          </div>
+          <button class="hydro-btn plus">+</button>
+        </div>
+      </div>
+
+      <div class="scroll-divider"><div class="scroll-pill"></div></div>
+    </div>
+
+    <div class="scroll-region">
+      <div class="eval-card">
+        <div class="eval-head">
+          <span class="eval-title">Aktivitätsauswertung</span>
+          <span class="eval-day">Heute</span>
+        </div>
+        <div class="eval-stats">
+          <div class="eval-stat green">
+            <div class="num">6</div>
+            <div class="lbl">Beantwortet</div>
+          </div>
+          <div class="eval-stat">
+            <div class="num">2</div>
+            <div class="lbl">Extra</div>
+          </div>
+          <div class="eval-stat red">
+            <div class="num">1</div>
+            <div class="lbl">Verpasst</div>
+          </div>
+        </div>
+        <div class="eval-chart">
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-ochre" style="height:28%"></div></div>
+            <div class="eval-bar-label">07</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-blue" style="height:62%"></div></div>
+            <div class="eval-bar-label">08</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-red" style="height:12%"></div></div>
+            <div class="eval-bar-label">09</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-orange" style="height:45%"></div></div>
+            <div class="eval-bar-label">10</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-ochre" style="height:28%"></div></div>
+            <div class="eval-bar-label">11</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-green" style="height:100%"></div></div>
+            <div class="eval-bar-label">12</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-blue" style="height:62%"></div></div>
+            <div class="eval-bar-label">13</div>
+          </div>
+          <div class="eval-bar-col">
+            <div class="eval-bar-track"><div class="eval-bar tone-ochre" style="height:28%"></div></div>
+            <div class="eval-bar-label">14</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-card">
+        <div class="history-title">Letzte Aktivität</div>
+        <div class="history-row">
+          <div class="history-dot" style="background:linear-gradient(180deg, var(--tone-blue-1), var(--tone-blue-2))">3</div>
+          <div class="history-body">
+            <div class="history-title-row"><span>Bewegung</span></div>
+            <div class="history-sub">Treppe gegangen</div>
+          </div>
+          <div class="history-time">08:00</div>
+        </div>
+        <div class="history-row">
+          <div class="history-dot" style="background:linear-gradient(180deg, var(--tone-ochre-1), var(--tone-ochre-2))">1</div>
+          <div class="history-body">
+            <div class="history-title-row"><span>Mini-Pause</span></div>
+            <div class="history-sub">kurz innegehalten</div>
+          </div>
+          <div class="history-time">07:00</div>
+        </div>
+        <div class="history-row">
+          <div class="history-dot" style="background:linear-gradient(180deg, var(--tone-green-1), var(--tone-green-2))">4</div>
+          <div class="history-body">
+            <div class="history-title-row"><span>Aktive Pause</span></div>
+            <div class="history-sub">Spaziergang, 10 Min.</div>
+          </div>
+          <div class="history-time">Gestern 16:00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="navbar"><div class="bar"></div></div>
+  </div>
+</div>
+</div>
+
+<div class="frame-col">
+<div class="frame-label">Optionen</div>
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>09:14</span>
+      <span class="icons">•••</span>
+    </div>
+
+    <div class="settings-header">
+      <div class="back-btn">←</div>
+      <div class="settings-title">Optionen</div>
+    </div>
+
+    <div class="settings-scroll">
+
+      <div class="settings-card">
+        <div class="settings-card-title">Erinnerungen</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="name">Stündliche Erinnerung</span>
+            <span class="hint">Erinnert im gewählten Zeitfenster</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="name">Erinnerungsfenster</span>
+          </div>
+          <div class="time-range-row">
+            <span class="time-pill">07:55</span>
+            <span class="arrow">bis</span>
+            <span class="time-pill">16:55</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="name">Nur Werktage</span>
+            <span class="hint">Keine Erinnerungen am Wochenende</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="name">Popup beim Öffnen</span>
+            <span class="hint">Dialog zur aktiven Erinnerung anzeigen</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Trinkmanager</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="name">Tagesziel</span>
+            <span class="hint">In Millilitern, Standard 2000 ml</span>
+          </div>
+          <div class="ml-stepper">
+            <button>−</button>
+            <span class="ml-value">2000 ml</span>
+            <button>+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Ton</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="name">Erinnerungston</span>
+            <span class="hint">Spielt bei jeder Erinnerung ab</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+
+        <div class="chime-list">
+          <div class="chime-option selected">
+            <div class="chime-radio"></div>
+            <div class="chime-notes">
+              <div class="chime-name">Aufwärts <span class="chime-badge-current">Aktuell</span></div>
+              <div class="chime-wave">
+                <span style="height:6px"></span><span style="height:14px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span>
+              </div>
+            </div>
+            <button class="chime-play-btn">▶</button>
+          </div>
+
+          <div class="chime-option">
+            <div class="chime-radio"></div>
+            <div class="chime-notes">
+              <div class="chime-name">Doppelschlag</div>
+              <div class="chime-wave">
+                <span style="height:15px"></span><span style="height:6px"></span><span style="height:15px"></span><span style="height:6px"></span><span style="height:10px"></span>
+              </div>
+            </div>
+            <button class="chime-play-btn">▶</button>
+          </div>
+
+          <div class="chime-option">
+            <div class="chime-radio"></div>
+            <div class="chime-notes">
+              <div class="chime-name">Weicher Gong</div>
+              <div class="chime-wave">
+                <span style="height:8px"></span><span style="height:11px"></span><span style="height:13px"></span><span style="height:11px"></span><span style="height:8px"></span>
+              </div>
+            </div>
+            <button class="chime-play-btn">▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Daten</div>
+        <div class="data-hint">CSV-Dateien mit den bestehenden Web-App-Exporten sind kompatibel.</div>
+        <div class="data-actions">
+          <button class="data-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export
+          </button>
+          <button class="data-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Import
+          </button>
+        </div>
+      </div>
+
+      <button class="save-btn settings-save">Speichern</button>
+    </div>
+
+    <div class="navbar"><div class="bar"></div></div>
+  </div>
+</div>
+</div>
+
+<div class="frame-col">
+<div class="frame-label">Monatsauswertung</div>
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>09:14</span>
+      <span class="icons">•••</span>
+    </div>
+
+    <div class="month-header">
+      <div class="back-btn">←</div>
+      <div class="month-nav">
+        <button class="month-nav-arrow">‹</button>
+        <div class="month-title">September 2026</div>
+        <button class="month-nav-arrow">›</button>
+      </div>
+      <div class="gear-btn" title="Optionen öffnen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </div>
+    </div>
+
+    <div class="month-scroll">
+
+      <div class="month-card">
+        <div class="month-card-title">Monatsüberblick</div>
+        <div class="month-stats">
+          <div class="month-stat green">
+            <div class="num">142</div>
+            <div class="lbl">Beantwortet</div>
+          </div>
+          <div class="month-stat">
+            <div class="num">31</div>
+            <div class="lbl">Extra</div>
+          </div>
+          <div class="month-stat red">
+            <div class="num">18</div>
+            <div class="lbl">Verpasst</div>
+          </div>
+          <div class="month-stat blue">
+            <div class="num">12</div>
+            <div class="lbl">Ø Min. Delay</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="month-card">
+        <div class="month-card-title">Tage im Überblick</div>
+        <div class="cal-weekdays">
+          <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-cell empty"></div>
+          <div class="cal-cell tone-green">1</div>
+          <div class="cal-cell tone-blue">2</div>
+          <div class="cal-cell tone-ochre">3</div>
+          <div class="cal-cell tone-orange">4</div>
+          <div class="cal-cell tone-green">5</div>
+          <div class="cal-cell empty"></div>
+
+          <div class="cal-cell empty"></div>
+          <div class="cal-cell tone-blue">7</div>
+          <div class="cal-cell tone-green today">8</div>
+          <div class="cal-cell tone-ochre">9</div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell empty"></div>
+
+          <div class="cal-cell empty"></div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell"></div>
+          <div class="cal-cell empty"></div>
+        </div>
+        <div class="cal-legend">
+          <div class="cal-legend-dot" style="background:var(--tone-red-1)"></div><span>gering</span>
+          <div class="cal-legend-dot" style="background:var(--tone-orange-1)"></div><span>mittel</span>
+          <div class="cal-legend-dot" style="background:var(--tone-green-1)"></div><span>hoch</span>
+        </div>
+      </div>
+
+      <div class="month-card">
+        <div class="month-card-title">Wochentrend</div>
+        <div class="week-trend">
+          <div class="week-trend-col">
+            <div class="week-trend-track"><div class="week-trend-bar" style="height:58%"></div></div>
+            <div class="week-trend-label">KW 36</div>
+          </div>
+          <div class="week-trend-col">
+            <div class="week-trend-track"><div class="week-trend-bar" style="height:74%"></div></div>
+            <div class="week-trend-label">KW 37</div>
+          </div>
+          <div class="week-trend-col">
+            <div class="week-trend-track"><div class="week-trend-bar" style="height:42%"></div></div>
+            <div class="week-trend-label">KW 38</div>
+          </div>
+          <div class="week-trend-col">
+            <div class="week-trend-track"><div class="week-trend-bar" style="height:90%"></div></div>
+            <div class="week-trend-label">KW 39</div>
+          </div>
+        </div>
+        <div class="month-note">Ø Aktivitätslevel steigt gegenüber dem Vormonat leicht an — höchster Wert in KW 39.</div>
+      </div>
+
+    </div>
+
+    <div class="navbar"><div class="bar"></div></div>
+  </div>
+</div>
+</div>
+
+</div>
+
+<div class="caption">
+  Mockup <b>Schnelleingabe</b> · <b>Optionen</b> · <b>Monatsauswertung</b> · Referenzgerät Samsung Galaxy A36 (412 × 892 dp). Das Zahnrad-Symbol öffnet von jedem Screen aus die Optionsseite. In der Schnelleingabe ist alles oberhalb der gepunkteten Trennlinie ohne Scrollen sichtbar; der scrollbare Bereich beginnt direkt mit der Aktivitätsauswertung (jetzt inkl. stündlicher Balkengrafik), darunter folgt die letzte Aktivität. Die Optionsseite übernimmt alle bisherigen Einstellungen außer dem Exportpfad, zeigt das Trinkziel in ml (Standard 2000) und bietet 3 kurze Erinnerungstöne inkl. Testabspielen — „Aufwärts" ist der bereits bestehende Ton. Eine eigene Daten-Karte bietet Export/Import als CSV. Die Monatsauswertung zeigt Gesamtstatistik, eine Kalender-Heatmap pro Tag und den Wochentrend über den Monat.
+</div>
