@@ -11,11 +11,11 @@ Für vier Aufgaben gilt diese Disziplin mit erhöhter Sorgfalt, weil design.md s
 
 ## 1. Project setup
 
-- [ ] 1.1 Create new Android project (Kotlin, Jetpack Compose/Material 3, single module) under a new top-level directory (e.g. `android/`) in this repo, and verify it builds and runs an empty "Hello" screen on an emulator/device
-- [ ] 1.1a Add the Android/Gradle block to the repo root `.gitignore` (`android/.gradle/`, `android/**/build/`, `android/local.properties`, `android/.idea/`, `android/captures/`, `android/*.hprof`, `*.apk`, `*.aab`, `*.jks`, `*.keystore`) and a `.gitattributes` entry (`android/gradlew text eol=lf`) before committing the new project, per design.md D11; verify `git status` shows none of the ignored build/IDE artifacts as untracked after a clean build
-- [ ] 1.2 Add Room, WorkManager, and Compose Navigation dependencies to the Gradle build, and verify a clean `./gradlew assembleDebug` succeeds
-- [ ] 1.3 Define the target `minSdk`/`compileSdk`/`targetSdk` values (resolving design.md's open question on exact-alarm permission behavior per API level), and document the choice in the project's README/module notes
-- [ ] 1.4 Set up the app's Compose theme (Material 3, portrait-first) and verify it renders on the reference device profile from design.md (411dp × 891dp emulator profile)
+- [x] 1.1 Create new Android project (Kotlin, Jetpack Compose/Material 3, single module) under a new top-level directory (e.g. `android/`) in this repo, and verify it builds and runs an empty "Hello" screen on an emulator/device — build verified (`./gradlew assembleDebug`); emulator/device run not verifiable in this devcontainer (no `/dev/kvm`, no connected device) and still needs manual confirmation
+- [x] 1.1a Add the Android/Gradle block to the repo root `.gitignore` (`android/.gradle/`, `android/**/build/`, `android/local.properties`, `android/.idea/`, `android/captures/`, `android/*.hprof`, `*.apk`, `*.aab`, `*.jks`, `*.keystore`) and a `.gitattributes` entry (`android/gradlew text eol=lf`) before committing the new project, per design.md D11; verify `git status` shows none of the ignored build/IDE artifacts as untracked after a clean build
+- [x] 1.2 Add Room, WorkManager, and Compose Navigation dependencies to the Gradle build, and verify a clean `./gradlew assembleDebug` succeeds
+- [x] 1.3 Define the target `minSdk`/`compileSdk`/`targetSdk` values (resolving design.md's open question on exact-alarm permission behavior per API level), and document the choice in the project's README/module notes — `minSdk=33`, `compileSdk`/`targetSdk=37` (raised from planned 36, see design.md D9); documented in `android/README.md`
+- [ ] 1.4 Set up the app's Compose theme (Material 3, portrait-first) and verify it renders on the reference device profile from design.md (411dp × 891dp emulator profile) — theme implemented; on-device/emulator rendering verification still outstanding (no emulator available in this devcontainer)
 
 ## 2. CI pipeline (`android-ci-pipeline`)
 
