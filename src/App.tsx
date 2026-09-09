@@ -23,7 +23,7 @@ import { useReminderPopup } from "./hooks/useReminderPopup.js";
 
 export default function App() {
   const [selectedScore, setSelectedScore] = useState<number>(1);
-  const [note, setNote] = useState("Mustereintrag");
+  const [note, setNote] = useState("");
   const {
     now,
     dashboard,
