@@ -1,10 +1,10 @@
 # Bewegungserinnerung (Android)
 
-Native Android counterpart to the root web app. See [CLAUDE.md](CLAUDE.md) for architecture, and `../openspec/changes/add-android-app/` for the full specification.
+Native Android counterpart to the root web app. See [CLAUDE.md](CLAUDE.md) for architecture, and `../openspec/changes/add-android-*/` (one change per capability — `add-android-ci-pipeline` covers project setup/CI, the rest cover individual screens/features) for the full specification.
 
 ## SDK levels
 
-- `minSdk = 33` (Android 13) — see design.md D9. Chosen over 31 to avoid handling two different exact-alarm permission variants (API 31 vs. 33) for no product benefit.
+- `minSdk = 33` (Android 13) — see `add-android-ci-pipeline/design.md` D9. Chosen over 31 to avoid handling two different exact-alarm permission variants (API 31 vs. 33) for no product benefit.
 - `compileSdk` / `targetSdk = 37` (Android 17) — raised from the originally-planned 36 because the Compose BOM in use (2026.08.00) requires compiling against API 37 or later; API 37.2 is a stable (non-beta) platform release at implementation time.
 
 ## Build
