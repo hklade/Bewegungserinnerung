@@ -43,5 +43,3 @@ android/*.hprof
 *.aab
 *.jks
 *.keystore
-*.iml
-.idea/
