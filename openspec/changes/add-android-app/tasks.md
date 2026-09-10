@@ -30,8 +30,8 @@ Diese Punkte sind keine Spec-Verifikationsschritte, sondern einmaliges Setup auf
 
 ## 2. CI pipeline (`android-ci-pipeline`)
 
-- [ ] 2.1 Extend `.github/workflows/test.yml` with a `changes` job (`dorny/paths-filter`) computing `web`/`android` booleans from the PR/push diff, per design.md D12; gate the existing web test job(s) with `if: needs.changes.outputs.web == 'true'` without changing their internal steps
-- [ ] 2.2 Add a new `android-test` job gated with `if: needs.changes.outputs.android == 'true'` that runs `./gradlew testDebugUnitTest` (JVM unit tests + Compose UI tests) and uploads the Gradle HTML test report and JUnit XML results as CI artifacts, and verify a local dry run (or `act`) confirms the job's steps execute against the `android/` project created in section 1
+- [x] 2.1 Extend `.github/workflows/test.yml` with a `changes` job (`dorny/paths-filter`) computing `web`/`android` booleans from the PR/push diff, per design.md D12; gate the existing web test job(s) with `if: needs.changes.outputs.web == 'true'` without changing their internal steps
+- [x] 2.2 Add a new `android-test` job gated with `if: needs.changes.outputs.android == 'true'` that runs `./gradlew testDebugUnitTest` (JVM unit tests + Compose UI tests) and uploads the Gradle HTML test report and JUnit XML results as CI artifacts, and verify a local dry run (or `act`) confirms the job's steps execute against the `android/` project created in section 1 — validated locally: `./gradlew testDebugUnitTest` runs successfully against `android/`, workflow YAML validated with `action-validator`
 - [ ] 2.3 Verify, via a real push/PR, that a change touching only `android/**` skips the web job(s) and runs `android-test`, and that a change touching only `src/`/`server/`/`shared/`/`tests/**` skips `android-test` and runs the web job(s) unaffected, per `android-ci-pipeline`'s path-scoping scenarios
 - [ ] 2.4 Verify a push/PR touching both `android/**` and a web-relevant path runs both jobs, and that an `openspec/**`-only change runs neither
 
