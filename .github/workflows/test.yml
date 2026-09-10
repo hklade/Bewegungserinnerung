@@ -10,7 +10,40 @@ permissions:
   id-token: write
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      android: ${{ steps.filter.outputs.android }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Betroffene Bereiche ermitteln
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'src/**'
+              - 'server/**'
+              - 'shared/**'
+              - 'tests/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+              - 'vite.config.ts'
+              - 'playwright.config.ts'
+              - 'dev.playwright.config.ts'
+              - 'vitest.config.ts'
+              - 'eslint.config.js'
+              - 'server.mjs'
+            android:
+              - 'android/**'
+
   test:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -79,8 +112,54 @@ jobs:
           retention-days: 30
 
 
+  android-test:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: JDK einrichten
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: gradlew ausführbar machen
+        run: chmod +x gradlew
+
+      - name: Android-Unit-/Compose-UI-Tests ausführen
+        run: ./gradlew testDebugUnitTest
+
+      - name: Gradle-Testreport hochladen
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-test-report
+          path: android/app/build/reports/tests/testDebugUnitTest/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: JUnit-Ergebnisse hochladen
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-test-results
+          path: android/app/build/test-results/testDebugUnitTest/
+          retention-days: 30
+          if-no-files-found: ignore
+
   coverage:
-    if: github.ref == 'refs/heads/main'
+    needs: changes
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     continue-on-error: true
@@ -130,14 +209,15 @@ jobs:
           retention-days: 30
 
   deploy-report:
-    if: always() && github.ref == 'refs/heads/main'
-    needs: [test, coverage]
+    if: always() && github.ref == 'refs/heads/main' && needs.changes.outputs.web == 'true'
+    needs: [changes, test, coverage]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Allure-Report herunterladen
+        continue-on-error: true
         uses: actions/download-artifact@v7
         with:
           name: pages-allure-report
