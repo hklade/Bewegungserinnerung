@@ -40,8 +40,9 @@ Open this `android/` folder directly in Android Studio — **not** the repositor
 
 ## Test layout
 
-- `app/src/test/` — JVM unit tests (JUnit, Room via `Room.inMemoryDatabaseBuilder` — runs fully on-JVM, no emulator needed) and Compose UI tests (`createComposeRule`). This is where most logic (slot computation, slot-status enum, backfill rule, CSV parsing) is tested.
+- `app/src/test/` — JVM unit tests (JUnit, Robolectric, Room via `Room.inMemoryDatabaseBuilder`, Compose UI tests via `createComposeRule`) — runs fully on-JVM, no emulator needed. This is where most logic (slot computation, slot-status enum, backfill rule, CSV parsing) and screen-level Compose tests are tested.
 - `app/src/androidTest/` — instrumented tests requiring a real Android runtime: Room migrations against real SQLite, WorkManager via `TestListenableWorkerBuilder`, notification/AlarmManager/boot-receiver behavior.
+- **Robolectric SDK is pinned to 34, not the project's `compileSdk`/`targetSdk = 37`** (`app/src/test/resources/robolectric.properties`, `sdk=34`). Robolectric 4.16's own supported ceiling is API 36 (a `targetSdk=37 > maxSdkVersion=36` error otherwise), and API 36 itself requires Java 21 (`Failed to create a Robolectric sandbox: Android SDK 36 requires Java 21`) which this devcontainer doesn't have (Java 17 only) — API 34 is the highest level that's both Robolectric-supported and Java-17-compatible. Don't bump this without first confirming a newer JDK is available; a per-test `@Config(sdk = [...])` overrides it for one test class if a specific case ever needs a different level.
 - See each `../openspec/changes/add-android-*/test-plan.md` for the per-requirement mapping of which of the 5 test levels (unit / Compose UI / instrumented-automatable / instrumented-device-only / manual) covers that change's capability — check this before assuming something needs a device when it doesn't (or vice versa).
 
 ## Validation
@@ -63,3 +64,4 @@ Fix all errors before returning results.
 - **Scope discipline: do not touch code outside the current change.** Only edit files/lines relevant to the requested task — no drive-by refactors, unrelated cleanups, or "while I'm here" fixes in untouched code paths. Flag unrelated issues instead of fixing them inline.
 - **Do not install new dependencies** (Gradle or otherwise) — check with the user first.
 - **Do not touch the repo-root web app** (`src/`, `server/`, `shared/`, `tests/`, `package.json`) while working here; this app has no dependency on it and no change here should require editing it.
+- **Always pass an explicit `Locale`/`ZoneId` to `DateTimeFormatter`, never rely on JVM defaults.** `DateTimeFormatter.ofPattern("EEEE")` without `Locale.GERMAN` silently produces English weekday names ("Thursday" instead of "Donnerstag"), breaking the German-domain-text requirement without any compile or lint error. Similarly, always format date/time fields against `ZoneId.of("Europe/Vienna")`, not `ZoneOffset.UTC` or the system default — mixing zones across modules that both derive a slot's `date`/`reminderTime` string from an `Instant` causes CSV-schema string fields to disagree on which calendar day/hour a slot falls on.
