@@ -36,6 +36,7 @@ coverage/
 android/.gradle/
 android/**/build/
 android/local.properties
+android/gradle/gradle-daemon-jvm.properties
 android/.idea/
 android/captures/
 android/*.hprof
