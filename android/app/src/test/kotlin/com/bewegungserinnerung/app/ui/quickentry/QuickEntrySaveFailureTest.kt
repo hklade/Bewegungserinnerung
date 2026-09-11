@@ -26,7 +26,7 @@ class QuickEntrySaveFailureTest {
     }
 
     @Test
-    fun `a failed save shows an error state and preserves the note`() = runBlocking {
+    fun `Fehlgeschlagenes Speichern zeigt einen Fehlerzustand und behält die Notiz bei`() = runBlocking {
         val slotTime = Instant.parse("2026-09-10T08:55:00Z")
         val viewModel = QuickEntryViewModel(
             dao = FailingDao(),

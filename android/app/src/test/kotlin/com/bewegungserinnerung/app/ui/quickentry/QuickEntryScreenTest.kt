@@ -40,7 +40,7 @@ class QuickEntryScreenTest {
     }
 
     @Test
-    fun `active slot time is shown when a reminder slot is current`() {
+    fun `Aktive Slot-Zeit wird angezeigt wenn ein Erinnerungs-Zeitfenster aktuell ist`() {
         val slotTime = Instant.parse("2026-09-10T08:55:00Z")
         val viewModel = QuickEntryViewModel(
             dao = database.movementEntryDao(),
@@ -56,7 +56,7 @@ class QuickEntryScreenTest {
     }
 
     @Test
-    fun `no active reminder is shown explicitly when there is no current slot`() {
+    fun `Keine aktive Erinnerung wird explizit angezeigt wenn kein Zeitfenster aktuell ist`() {
         val viewModel = QuickEntryViewModel(
             dao = database.movementEntryDao(),
             clock = Clock.fixed(Instant.parse("2026-09-10T08:55:00Z"), ZoneOffset.UTC),
@@ -71,7 +71,7 @@ class QuickEntryScreenTest {
     }
 
     @Test
-    fun `typing a note and saving persists it verbatim`() {
+    fun `Eintippen einer Notiz und Speichern übernimmt sie unverändert`() {
         val slotTime = Instant.parse("2026-09-10T08:55:00Z")
         val viewModel = QuickEntryViewModel(
             dao = database.movementEntryDao(),

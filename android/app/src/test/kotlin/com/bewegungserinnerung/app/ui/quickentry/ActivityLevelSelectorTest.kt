@@ -16,7 +16,7 @@ class ActivityLevelSelectorTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun `default selection is Mini-Pause`() {
+    fun `Standardauswahl ist Mini-Pause`() {
         var selected = ActivityLevel.default
         composeRule.setContent {
             ActivityLevelSelector(selected = selected, onSelect = { selected = it })
@@ -26,7 +26,7 @@ class ActivityLevelSelectorTest {
     }
 
     @Test
-    fun `tapping another option changes the selection`() {
+    fun `Antippen einer anderen Option ändert die Auswahl`() {
         var selected = ActivityLevel.default
         composeRule.setContent {
             ActivityLevelSelector(selected = selected, onSelect = { selected = it })

@@ -46,7 +46,7 @@ class QuickEntryViewModelTest {
     }
 
     @Test
-    fun `first save for a slot is recorded as the primary answer`() = runBlocking {
+    fun `Erstes Speichern für ein Zeitfenster wird als primäre Antwort erfasst`() = runBlocking {
         viewModel.selectLevel(ActivityLevel.Movement)
 
         val result = viewModel.save()
@@ -62,7 +62,7 @@ class QuickEntryViewModelTest {
     }
 
     @Test
-    fun `second save for an already-answered slot is recorded as additional`() = runBlocking {
+    fun `Zweites Speichern für ein bereits beantwortetes Zeitfenster wird als Zusatzeintrag erfasst`() = runBlocking {
         viewModel.selectLevel(ActivityLevel.Mini)
         viewModel.save()
 
@@ -79,7 +79,7 @@ class QuickEntryViewModelTest {
     }
 
     @Test
-    fun `note field clears after a successful save, selection is preserved`() = runBlocking {
+    fun `Notizfeld wird nach erfolgreichem Speichern geleert, Auswahl bleibt erhalten`() = runBlocking {
         viewModel.selectLevel(ActivityLevel.Movement)
         viewModel.updateNote("Kurzer Spaziergang")
 
@@ -90,7 +90,7 @@ class QuickEntryViewModelTest {
     }
 
     @Test
-    fun `empty note uses a default description derived from the level label`() = runBlocking {
+    fun `Leere Notiz verwendet eine aus dem Stufen-Label abgeleitete Standardbeschreibung`() = runBlocking {
         viewModel.selectLevel(ActivityLevel.Light)
 
         viewModel.save()
@@ -103,7 +103,7 @@ class QuickEntryViewModelTest {
     }
 
     @Test
-    fun `typed note is saved verbatim`() = runBlocking {
+    fun `Eingetippte Notiz wird unverändert gespeichert`() = runBlocking {
         viewModel.selectLevel(ActivityLevel.Light)
         viewModel.updateNote("Kaffee geholt")
 

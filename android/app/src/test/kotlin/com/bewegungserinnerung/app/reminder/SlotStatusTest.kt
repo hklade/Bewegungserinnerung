@@ -9,7 +9,7 @@ class SlotStatusTest {
     private val slotTime = Instant.parse("2026-09-10T08:55:00Z")
 
     @Test
-    fun `slot with time not yet reached is Pending`() {
+    fun `Zeitfenster dessen Zeit noch nicht erreicht ist hat Status Pending`() {
         val now = slotTime.minusSeconds(60)
 
         val status = computeSlotStatus(slotTime = slotTime, now = now, entryCount = 0)
@@ -18,7 +18,7 @@ class SlotStatusTest {
     }
 
     @Test
-    fun `slot more than 59 minutes past due with no entry is Unanswered`() {
+    fun `Zeitfenster über 59 Minuten überfällig ohne Eintrag hat Status Unanswered`() {
         val now = slotTime.plusSeconds(60 * 60)
 
         val status = computeSlotStatus(slotTime = slotTime, now = now, entryCount = 0)
@@ -27,7 +27,7 @@ class SlotStatusTest {
     }
 
     @Test
-    fun `slot within 59 minutes of due time with no entry is still Pending`() {
+    fun `Zeitfenster innerhalb von 59 Minuten ohne Eintrag hat weiterhin Status Pending`() {
         val now = slotTime.plusSeconds(59 * 60)
 
         val status = computeSlotStatus(slotTime = slotTime, now = now, entryCount = 0)
@@ -36,7 +36,7 @@ class SlotStatusTest {
     }
 
     @Test
-    fun `slot with exactly one entry is Answered`() {
+    fun `Zeitfenster mit genau einem Eintrag hat Status Answered`() {
         val now = slotTime.plusSeconds(5 * 60)
 
         val status = computeSlotStatus(slotTime = slotTime, now = now, entryCount = 1)
@@ -45,7 +45,7 @@ class SlotStatusTest {
     }
 
     @Test
-    fun `slot with more than one entry is AnsweredWithExtra`() {
+    fun `Zeitfenster mit mehr als einem Eintrag hat Status AnsweredWithExtra`() {
         val now = slotTime.plusSeconds(5 * 60)
 
         val status = computeSlotStatus(slotTime = slotTime, now = now, entryCount = 2)

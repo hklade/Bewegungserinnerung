@@ -32,7 +32,7 @@ class MovementEntryDaoTest {
     }
 
     @Test
-    fun `insert and query round-trips all fields`() = runBlocking {
+    fun `Einfügen und Abfragen liefert alle Felder unverändert zurück`() = runBlocking {
         val entry = MovementEntry(
             date = "2026-09-10",
             weekday = "Donnerstag",
@@ -66,7 +66,7 @@ class MovementEntryDaoTest {
     }
 
     @Test
-    fun `entries for a slot are returned by date and reminder time`() = runBlocking {
+    fun `Einträge für ein Zeitfenster werden nach Datum und Erinnerungszeit gefiltert`() = runBlocking {
         val matching = MovementEntry(
             date = "2026-09-10",
             weekday = "Donnerstag",
