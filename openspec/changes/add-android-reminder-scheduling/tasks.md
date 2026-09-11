@@ -11,8 +11,8 @@ Für vier Aufgaben gilt diese Disziplin mit erhöhter Sorgfalt, weil design.md s
 
 ## 1. Data layer (Room)
 
-- [ ] 1.1 Implement the shared reminder-slot computation module (hourly slots from start/end time, fallback rules, weekday eligibility) per `android-reminder-scheduling` requirements, and verify unit tests cover: default 10-slot window, end-before-start fallback, unparseable-time fallback, and weekend exclusion
-- [ ] 1.2 Implement the single authoritative slot-status computation (`Pending`/`Unanswered`/`Answered`/`AnsweredWithExtra`) as one shared function consumed by all screens, and verify unit tests cover all four status transitions from `android-reminder-scheduling`'s "authoritative answer status" requirement — depends on the movement entity/DAO from `add-android-quick-entry` (task 1.1 there)
+- [x] 1.1 Implement the shared reminder-slot computation module (hourly slots from start/end time, fallback rules, weekday eligibility) per `android-reminder-scheduling` requirements, and verify unit tests cover: default 10-slot window, end-before-start fallback, unparseable-time fallback, and weekend exclusion — `ReminderSchedule.kt` (`buildReminderSlots`, `isWeekdayEligible`), verified by `ReminderScheduleTest`. Implemented ahead of schedule as a minimal prerequisite for `add-android-quick-entry`'s save-classification (task 2.3 there); alarm/notification/backfill scheduling (section 2 below) is not implemented.
+- [x] 1.2 Implement the single authoritative slot-status computation (`Pending`/`Unanswered`/`Answered`/`AnsweredWithExtra`) as one shared function consumed by all screens, and verify unit tests cover all four status transitions from `android-reminder-scheduling`'s "authoritative answer status" requirement — depends on the movement entity/DAO from `add-android-quick-entry` (task 1.1 there); `SlotStatus.kt` (`computeSlotStatus`), verified by `SlotStatusTest`. Same note as 1.1: implemented as a prerequisite for `add-android-quick-entry`.
 
 ## 2. Reminder scheduling & notifications
 
