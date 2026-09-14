@@ -21,6 +21,7 @@ fun QuickEntryScreen(
     viewModel: QuickEntryViewModel,
     currentSlotLabel: String?,
     modifier: Modifier = Modifier,
+    exactAlarmPermissionGranted: Boolean = true,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -31,6 +32,14 @@ fun QuickEntryScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        if (!exactAlarmPermissionGranted) {
+            Text(
+                text = "Erinnerungen können möglicherweise nicht pünktlich zugestellt werden, " +
+                    "da die Berechtigung für exakte Alarme fehlt. Bitte in den Systemeinstellungen aktivieren.",
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+
         Text(
             text = currentSlotLabel ?: "Keine aktive Erinnerung",
             style = MaterialTheme.typography.titleMedium,

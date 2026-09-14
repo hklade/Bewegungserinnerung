@@ -8,9 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.room.Room
 import com.bewegungserinnerung.app.data.AppDatabase
+import com.bewegungserinnerung.app.reminder.ReminderScheduler
 import com.bewegungserinnerung.app.reminder.currentSlotInstant
+import com.bewegungserinnerung.app.reminder.isExactAlarmPermissionGranted
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryScreen
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryViewModel
 import com.bewegungserinnerung.app.ui.theme.BewegungserinnerungTheme
@@ -22,14 +23,14 @@ private val SLOT_LABEL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withZone
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var database: AppDatabase
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        database = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "bewegungserinnerung.db")
-            .build()
+        val database = AppDatabase.getInstance(applicationContext)
+
+        ReminderScheduler.scheduleNextAlarm(applicationContext)
+        val exactAlarmPermissionGranted = isExactAlarmPermissionGranted(applicationContext)
 
         val clock = Clock.systemDefaultZone()
         val currentSlot = currentSlotInstant(clock.instant())
@@ -48,14 +49,10 @@ class MainActivity : ComponentActivity() {
                     QuickEntryScreen(
                         viewModel = viewModel,
                         currentSlotLabel = currentSlot?.let { SLOT_LABEL_FORMATTER.format(it) },
+                        exactAlarmPermissionGranted = exactAlarmPermissionGranted,
                     )
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        database.close()
     }
 }
