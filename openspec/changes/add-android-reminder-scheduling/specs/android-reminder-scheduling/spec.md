@@ -128,6 +128,10 @@ The system SHALL create a persisted `Unanswered` record for a reminder slot once
 - **WHEN** a background schedule check runs and finds a reminder slot whose time is more than 59 minutes in the past with no logged entry, and no entry exists for any later slot that same day
 - **THEN** the system does not create an `Unanswered` record for that slot, treating the absence of further entries as the end of the user's workday rather than a missed reminder
 
+#### Scenario: Backfill never reaches back into a previous day
+- **WHEN** a background schedule check runs today and a prior day has unfilled trailing slots (per the previous scenario)
+- **THEN** the system does not create `Unanswered` records for that prior day's slots, regardless of how much later the check runs — each day's end-of-workday state, once reached, is final
+
 #### Scenario: Backfill respects reminders-off and weekend exclusion
 - **WHEN** hourly reminders are disabled, or the current day is excluded by "weekdays only"
 - **THEN** no `Unanswered` backfill record is created for that day

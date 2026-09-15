@@ -67,7 +67,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "08:55",
-            lookbackDays = 0,
         )
 
         assertEquals(1, created)
@@ -89,7 +88,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "08:55",
-            lookbackDays = 0,
         )
 
         assertEquals(0, created)
@@ -112,7 +110,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "11:55",
-            lookbackDays = 0,
         )
 
         assertEquals(2, created)
@@ -137,7 +134,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "09:55",
-            lookbackDays = 0,
         )
         val createdOnSecondRun = runBackfill(
             dao,
@@ -146,7 +142,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "09:55",
-            lookbackDays = 0,
         )
 
         assertEquals(0, createdOnSecondRun)
@@ -167,7 +162,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "09:55",
-            lookbackDays = 0,
         )
 
         assertEquals(0, created)
@@ -187,16 +181,15 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "09:55",
-            lookbackDays = 0,
         )
 
         assertEquals(0, created)
     }
 
     @Test
-    fun `Lookback trägt auch überfällige Zeitfenster von gestern mit späterem Eintrag nach`() = runBlocking {
-        // 2026-09-10 (yesterday) is a Thursday with a real entry at 09:55; today, 2026-09-11
-        // (Friday), is still before its own first slot.
+    fun `Überfällige Zeitfenster von gestern werden nicht nachgetragen`() = runBlocking {
+        // 2026-09-10 (yesterday) has a real entry at 09:55 but no entry at 07:55/08:55; today,
+        // 2026-09-11, only ever looks at its own slots, so yesterday's gap stays as-is forever.
         val dao = database.movementEntryDao()
         insertRealEntry(dao, date = "2026-09-10", reminderTime = "09:55")
         val now = ZonedDateTime.of(2026, 9, 11, 7, 0, 0, 0, zone).toInstant()
@@ -208,38 +201,11 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "09:55",
-            lookbackDays = 1,
         )
 
-        assertEquals(2, created)
+        assertEquals(0, created)
         val entries = dao.observeAll().first()
-        assertEquals(setOf("2026-09-10"), entries.filter { it.entryType == "unanswered" }.map { it.date }.toSet())
-    }
-
-    @Test
-    fun `Der Standard-Lookback trägt ein am Freitag verpasstes Zeitfenster am folgenden Montag nach`() = runBlocking {
-        // 2026-09-11 (Friday) has a real entry at 09:55, so 07:55/08:55 are backfilled;
-        // 2026-09-12/13 (Sat/Sun) are skipped by weekdaysOnly; 2026-09-14 (Monday) is "today"
-        // when the worker next runs, using the default lookbackDays.
-        val dao = database.movementEntryDao()
-        insertRealEntry(dao, date = "2026-09-11", reminderTime = "09:55")
-        val now = ZonedDateTime.of(2026, 9, 14, 7, 0, 0, 0, zone).toInstant()
-
-        val created = runBackfill(
-            dao,
-            now,
-            remindersEnabled = true,
-            weekdaysOnly = true,
-            startTime = "07:55",
-            endTime = "09:55",
-        )
-
-        assertEquals(2, created)
-        val entries = dao.observeAll().first()
-        assertEquals(
-            setOf("2026-09-11"),
-            entries.filter { it.entryType == "unanswered" }.map { it.date }.toSet(),
-        )
+        assertEquals(0, entries.count { it.entryType == "unanswered" })
     }
 
     @Test
@@ -256,7 +222,6 @@ class BackfillTest {
             weekdaysOnly = true,
             startTime = "07:55",
             endTime = "09:55",
-            lookbackDays = 0,
         )
 
         // 08:55 and 09:55 already have real entries, so only 07:55 (which has neither an entry
