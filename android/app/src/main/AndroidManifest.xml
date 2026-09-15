@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- SCHEDULE_EXACT_ALARM (not USE_EXACT_ALARM) so the user can revoke it in system settings;
+         the app is designed to detect that (isExactAlarmPermissionGranted) and show a warning,
+         per android-reminder-scheduling's exact-alarm risk mitigation. USE_EXACT_ALARM would make
+         canScheduleExactAlarms() always return true, making that warning unreachable. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
