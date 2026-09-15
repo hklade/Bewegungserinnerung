@@ -10,7 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.bewegungserinnerung.app.data.AppDatabase
+import com.bewegungserinnerung.app.reminder.ReminderAlarmReceiver
+import com.bewegungserinnerung.app.reminder.ReminderBackfillWorker
 import com.bewegungserinnerung.app.reminder.ReminderScheduler
 import com.bewegungserinnerung.app.reminder.currentSlotInstant
 import com.bewegungserinnerung.app.reminder.isExactAlarmPermissionGranted
@@ -38,7 +43,14 @@ class MainActivity : ComponentActivity() {
 
         val database = AppDatabase.getInstance(applicationContext)
 
-        ReminderScheduler.scheduleNextAlarm(applicationContext)
+        // Same recompute-and-re-arm work as ReminderAlarmReceiver runs after an alarm fires,
+        // enqueued (not called directly) so there is exactly one code path for this bookkeeping
+        // (D4) rather than a second one that bypasses WorkManager's retry/Doze-safety guarantees.
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+            ReminderAlarmReceiver.REARM_WORK_NAME,
+            ExistingWorkPolicy.KEEP,
+            OneTimeWorkRequestBuilder<ReminderBackfillWorker>().build(),
+        )
         ReminderScheduler.ensurePeriodicBackfillScheduled(applicationContext)
         val exactAlarmPermissionGranted = isExactAlarmPermissionGranted(applicationContext)
 
