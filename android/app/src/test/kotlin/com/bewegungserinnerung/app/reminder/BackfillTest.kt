@@ -141,6 +141,26 @@ class BackfillTest {
     }
 
     @Test
+    fun `Der Standard-Lookback trägt ein am Freitag verpasstes Zeitfenster am folgenden Montag nach`() = runBlocking {
+        // 2026-09-11 (Friday) has no entries; 2026-09-12/13 (Sat/Sun) are skipped by weekdaysOnly;
+        // 2026-09-14 (Monday) is "today" when the worker next runs, using the default lookbackDays.
+        val now = ZonedDateTime.of(2026, 9, 14, 7, 0, 0, 0, zone).toInstant()
+
+        val created = runBackfill(
+            database.movementEntryDao(),
+            now,
+            remindersEnabled = true,
+            weekdaysOnly = true,
+            startTime = "07:55",
+            endTime = "08:55",
+        )
+
+        assertEquals(2, created)
+        val entries = database.movementEntryDao().observeAll().first()
+        assertEquals(setOf("2026-09-11"), entries.map { it.date }.toSet())
+    }
+
+    @Test
     fun `Ein bereits beantwortetes Zeitfenster wird nicht nachgetragen`() = runBlocking {
         val now = ZonedDateTime.of(2026, 9, 10, 10, 0, 0, 0, zone).toInstant()
         val dao = database.movementEntryDao()

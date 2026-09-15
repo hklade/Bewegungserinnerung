@@ -21,6 +21,10 @@ const val UNANSWERED_ENTRY_TYPE = "unanswered"
  * backfill rule (D6). Never runs as a side effect of a UI read — call this only from the
  * scheduled background job.
  *
+ * The default of 3 days covers the common "off since Friday, next alarm fires Monday" case (Sat
+ * and Sun are skipped anyway when weekdays-only is on, so 3 calendar days reaches back to the
+ * prior Friday) without scanning indefinitely far into the past.
+ *
  * Returns the number of `Unanswered` records created.
  */
 suspend fun runBackfill(
@@ -30,7 +34,7 @@ suspend fun runBackfill(
     weekdaysOnly: Boolean,
     startTime: String,
     endTime: String,
-    lookbackDays: Int = 1,
+    lookbackDays: Int = 3,
 ): Int {
     if (!remindersEnabled) return 0
 
