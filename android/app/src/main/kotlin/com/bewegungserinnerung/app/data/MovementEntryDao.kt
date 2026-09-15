@@ -18,4 +18,21 @@ interface MovementEntryDao {
         "SELECT * FROM movement_entries WHERE date = :date AND reminder_time = :reminderTime ORDER BY id ASC",
     )
     suspend fun entriesForSlot(date: String, reminderTime: String): List<MovementEntry>
+
+    /**
+     * Whether at least one real (non-backfilled) entry exists for [date] at a `reminder_time`
+     * later than [afterReminderTime] — used to tell "the user's workday continued past this
+     * slot" apart from "the user was done for the day and just didn't log anything more".
+     */
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM movement_entries
+            WHERE date = :date
+              AND reminder_time > :afterReminderTime
+              AND entry_type != 'unanswered'
+        )
+        """,
+    )
+    suspend fun hasRealEntryLaterThan(date: String, afterReminderTime: String): Boolean
 }

@@ -17,9 +17,11 @@ const val UNANSWERED_ENTRY_TYPE = "unanswered"
 /**
  * Creates a persisted `Unanswered` record for every eligible reminder slot from today (and up to
  * [lookbackDays] earlier days, to catch slots missed while the app/device was off) that is more
- * than 59 minutes in the past and still has no entry, per `android-reminder-scheduling`'s single
- * backfill rule (D6). Never runs as a side effect of a UI read — call this only from the
- * scheduled background job.
+ * than 59 minutes in the past, still has no entry, and is followed later that same day by a real
+ * entry — per `android-reminder-scheduling`'s single backfill rule (D6). A slot with no later
+ * entry that day is treated as the end of the user's workday, not a missed reminder, and is left
+ * unfilled (see that requirement's "Trailing slots after the day's last entry" scenario). Never
+ * runs as a side effect of a UI read — call this only from the scheduled background job.
  *
  * The default of 3 days covers the common "off since Friday, next alarm fires Monday" case (Sat
  * and Sun are skipped anyway when weekdays-only is on, so 3 calendar days reaches back to the
@@ -54,6 +56,11 @@ suspend fun runBackfill(
             val entryCount = dao.entriesForSlot(date = dateString, reminderTime = timeString).size
             if (computeSlotStatus(slotTime = slotInstant, now = now, entryCount = entryCount) != SlotStatus.Unanswered) {
                 continue
+            }
+            if (!dao.hasRealEntryLaterThan(date = dateString, afterReminderTime = timeString)) {
+                // No entry after this slot that day: the user ended their workday here rather
+                // than missing a reminder, so this and every later slot that day stay unfilled.
+                break
             }
 
             dao.insert(

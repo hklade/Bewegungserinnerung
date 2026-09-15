@@ -114,15 +114,19 @@ For any given day and reminder slot, the system SHALL derive exactly one authori
 - **THEN** it reads the same computed status rather than deriving it independently through its own logic
 
 ### Requirement: Unanswered slots are backfilled by a single, deterministic rule
-The system SHALL create a persisted `Unanswered` record for a reminder slot once that slot's time is more than 59 minutes in the past and no entry has been logged for it, evaluated by exactly one background mechanism on a regular schedule, and SHALL NOT create such records as a side effect of the user merely viewing data (e.g. opening the quick-entry, history, or evaluation screens).
+The system SHALL create a persisted `Unanswered` record for a reminder slot once that slot's time is more than 59 minutes in the past, no entry has been logged for it, and at least one entry exists later that same day (proving the user was still actively logging that day rather than having ended their workday) — evaluated by exactly one background mechanism on a regular schedule, and SHALL NOT create such records as a side effect of the user merely viewing data (e.g. opening the quick-entry, history, or evaluation screens).
 
 #### Scenario: Backfill runs on a schedule, not on read
 - **WHEN** the user opens the app and views today's stats or activity history
 - **THEN** viewing that data does not itself create, modify, or delete any backfill record
 
-#### Scenario: Slot backfilled once eligibility window has passed
-- **WHEN** a background schedule check runs and finds a reminder slot whose time is more than 59 minutes in the past with no logged entry
+#### Scenario: Slot backfilled once eligibility window has passed and a later entry confirms the day continued
+- **WHEN** a background schedule check runs and finds a reminder slot whose time is more than 59 minutes in the past with no logged entry, and at least one entry exists for a later slot that same day
 - **THEN** the system creates exactly one `Unanswered` record for that slot, and does not create a duplicate on a later check of the same slot
+
+#### Scenario: Trailing slots after the day's last entry are left unfilled
+- **WHEN** a background schedule check runs and finds a reminder slot whose time is more than 59 minutes in the past with no logged entry, and no entry exists for any later slot that same day
+- **THEN** the system does not create an `Unanswered` record for that slot, treating the absence of further entries as the end of the user's workday rather than a missed reminder
 
 #### Scenario: Backfill respects reminders-off and weekend exclusion
 - **WHEN** hourly reminders are disabled, or the current day is excluded by "weekdays only"
