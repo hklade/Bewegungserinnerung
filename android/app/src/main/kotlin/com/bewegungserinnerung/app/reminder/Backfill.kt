@@ -2,20 +2,16 @@ package com.bewegungserinnerung.app.reminder
 
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.data.MovementEntryDao
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val ZONE = ZoneId.of("Europe/Vienna")
 private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZONE)
 private val WEEKDAY_FORMATTER = DateTimeFormatter.ofPattern("EEEE", Locale.GERMAN).withZone(ZONE)
 private val TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT
-private val BACKFILL_THRESHOLD = Duration.ofMinutes(59)
 const val UNANSWERED_ENTRY_TYPE = "unanswered"
 
 /**
@@ -48,11 +44,13 @@ suspend fun runBackfill(
 
         for (minutes in slotMinutes) {
             val slotInstant = slotInstantFor(date, minutes)
-            if (Duration.between(slotInstant, now) <= BACKFILL_THRESHOLD) continue
-
             val dateString = DATE_FORMATTER.format(slotInstant)
             val timeString = formatMinutesToTime(minutes)
-            if (dao.entriesForSlot(date = dateString, reminderTime = timeString).isNotEmpty()) continue
+
+            val entryCount = dao.entriesForSlot(date = dateString, reminderTime = timeString).size
+            if (computeSlotStatus(slotTime = slotInstant, now = now, entryCount = entryCount) != SlotStatus.Unanswered) {
+                continue
+            }
 
             dao.insert(
                 MovementEntry(

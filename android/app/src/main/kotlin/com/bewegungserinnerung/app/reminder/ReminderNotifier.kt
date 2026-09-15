@@ -7,12 +7,10 @@ import android.os.VibrationEffect
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private const val CHANNEL_ID = "reminder"
 private const val NOTIFICATION_ID = 1
-private val ZONE = ZoneId.of("Europe/Vienna")
 private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withZone(ZONE)
 private val VIBRATION_PATTERN = longArrayOf(0, 250, 150, 250)
 

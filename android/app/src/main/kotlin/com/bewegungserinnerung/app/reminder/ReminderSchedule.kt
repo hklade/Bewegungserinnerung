@@ -5,11 +5,9 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 
-private val ZONE = ZoneId.of("Europe/Vienna")
 private const val MAX_LOOKAHEAD_DAYS = 14
 
 private val DEFAULT_SLOTS = listOf(
