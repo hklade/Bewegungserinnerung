@@ -33,7 +33,6 @@ object ReminderScheduler {
      */
     fun scheduleNextAlarm(context: Context, now: Instant = Instant.now()) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pendingIntent = reminderPendingIntent(context)
 
         val countdown = nextReminderCountdown(
             now = now,
@@ -43,9 +42,13 @@ object ReminderScheduler {
             endTime = ReminderDefaults.END_TIME,
         )
 
-        alarmManager.cancel(pendingIntent)
+        alarmManager.cancel(reminderPendingIntent(context, slotTime = null))
 
         if (countdown !is NextReminderCountdown.Eligible) return
+
+        // The slot time travels with the alarm (not read via Instant.now() when it fires) so the
+        // notification shows the intended slot even if an inexact fallback alarm fires late.
+        val pendingIntent = reminderPendingIntent(context, slotTime = countdown.nextSlot)
 
         if (alarmManager.canScheduleExactAlarms()) {
             alarmManager.setExactAndAllowWhileIdle(
@@ -63,7 +66,7 @@ object ReminderScheduler {
     /** Cancels any pending reminder alarm, e.g. when the user turns reminders off. */
     fun cancelAlarm(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.cancel(reminderPendingIntent(context))
+        alarmManager.cancel(reminderPendingIntent(context, slotTime = null))
     }
 
     /**
@@ -83,8 +86,11 @@ object ReminderScheduler {
         )
     }
 
-    private fun reminderPendingIntent(context: Context): PendingIntent {
+    private fun reminderPendingIntent(context: Context, slotTime: Instant?): PendingIntent {
         val intent = Intent(context, ReminderAlarmReceiver::class.java)
+        if (slotTime != null) {
+            intent.putExtra(ReminderAlarmReceiver.EXTRA_SLOT_TIME_EPOCH_MILLI, slotTime.toEpochMilli())
+        }
         return PendingIntent.getBroadcast(
             context,
             REQUEST_CODE_REMINDER_ALARM,

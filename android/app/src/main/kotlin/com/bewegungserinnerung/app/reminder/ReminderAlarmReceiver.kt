@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import java.time.Instant
 
 /**
  * Fires when a scheduled reminder alarm goes off. Shows the notification for the current slot
@@ -16,7 +17,10 @@ import androidx.work.WorkManager
 class ReminderAlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        ReminderNotifier.showReminderNotification(context, ReminderDefaults.TONE_ENABLED)
+        val slotTimeEpochMilli = intent.getLongExtra(EXTRA_SLOT_TIME_EPOCH_MILLI, -1L)
+        val slotTime = if (slotTimeEpochMilli >= 0) Instant.ofEpochMilli(slotTimeEpochMilli) else Instant.now()
+
+        ReminderNotifier.showReminderNotification(context, ReminderDefaults.TONE_ENABLED, slotTime)
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             REARM_WORK_NAME,
@@ -27,5 +31,6 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
 
     companion object {
         const val REARM_WORK_NAME = "reminder-rearm-after-alarm"
+        const val EXTRA_SLOT_TIME_EPOCH_MILLI = "slot_time_epoch_milli"
     }
 }
