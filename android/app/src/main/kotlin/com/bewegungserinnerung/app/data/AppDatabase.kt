@@ -22,15 +22,5 @@ abstract class AppDatabase : RoomDatabase() {
                     .build()
                     .also { instance = it }
             }
-
-        /** Test-only: overrides the shared instance, e.g. with an in-memory database. */
-        fun setInstanceForTest(database: AppDatabase) {
-            instance = database
-        }
-
-        /** Test-only: clears an override set via [setInstanceForTest]. */
-        fun clearInstanceForTest() {
-            instance = null
-        }
     }
 }
