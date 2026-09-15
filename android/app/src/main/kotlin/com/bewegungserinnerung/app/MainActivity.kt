@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getInstance(applicationContext)
 
         ReminderScheduler.scheduleNextAlarm(applicationContext)
+        ReminderScheduler.ensurePeriodicBackfillScheduled(applicationContext)
         val exactAlarmPermissionGranted = isExactAlarmPermissionGranted(applicationContext)
 
         if (!isNotificationPermissionGranted(applicationContext)) {
