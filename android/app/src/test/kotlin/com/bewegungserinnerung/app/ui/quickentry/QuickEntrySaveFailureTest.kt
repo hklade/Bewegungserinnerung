@@ -23,6 +23,8 @@ class QuickEntrySaveFailureTest {
 
         override suspend fun entriesForSlot(date: String, reminderTime: String): List<MovementEntry> =
             emptyList()
+
+        override suspend fun hasRealEntryLaterThan(date: String, afterReminderTime: String): Boolean = false
     }
 
     @Test

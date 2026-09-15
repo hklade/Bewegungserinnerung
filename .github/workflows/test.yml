@@ -138,6 +138,8 @@ jobs:
 
       - name: Android-Unit-/Compose-UI-Tests ausführen
         run: ./gradlew testDebugUnitTest
+        continue-on-error: true
+        id: android_unit_tests
 
       - name: Gradle-Testreport hochladen
         if: always()
@@ -154,6 +156,44 @@ jobs:
         with:
           name: android-test-results
           path: android/app/build/test-results/testDebugUnitTest/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Node einrichten (für Allure-CLI)
+        if: always()
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Allure-Report aus den Android-Testergebnissen erzeugen
+        if: always()
+        run: npx --yes allure-commandline generate app/build/allure-results --clean -o allure-report
+
+      - name: Android-Allure-Report hochladen
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-allure-report
+          path: |
+            android/allure-report/
+            android/app/build/allure-results/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Android-Unit-Test-Ergebnis auswerten
+        if: always()
+        run: |
+          if [ "${{ steps.android_unit_tests.outcome }}" != "success" ]; then
+            echo "Android-Unit-Tests sind fehlgeschlagen."
+            exit 1
+          fi
+
+      - name: Android-Allure-Report als Artifact für Pages-Job vorbereiten
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pages-android-allure-report
+          path: android/allure-report/
           retention-days: 30
           if-no-files-found: ignore
 
@@ -209,8 +249,8 @@ jobs:
           retention-days: 30
 
   deploy-report:
-    if: always() && github.ref == 'refs/heads/main' && needs.changes.outputs.web == 'true'
-    needs: [changes, test, coverage]
+    if: always() && github.ref == 'refs/heads/main' && (needs.changes.outputs.web == 'true' || needs.changes.outputs.android == 'true')
+    needs: [changes, test, android-test, coverage]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -222,6 +262,13 @@ jobs:
         with:
           name: pages-allure-report
           path: pages-root/allure
+
+      - name: Android-Allure-Report herunterladen
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: pages-android-allure-report
+          path: pages-root/android-allure
 
       - name: Coverage-Reports herunterladen
         continue-on-error: true
@@ -243,6 +290,10 @@ jobs:
               <li><a href="coverage/server-unit-html/">Server-Unit-Test-Coverage</a></li>
               <li><a href="coverage/server-html/">Server-E2E-Coverage</a></li>
               <li><a href="coverage/client-html/">Client-E2E-Coverage</a></li>
+            </ul>
+            <h2>Android Tests</h2>
+            <ul>
+              <li><a href="android-allure/">Android-Allure-Testreport</a></li>
             </ul>
           </body>
           </html>
