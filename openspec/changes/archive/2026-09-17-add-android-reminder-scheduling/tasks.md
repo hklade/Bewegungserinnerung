@@ -25,5 +25,5 @@ Für vier Aufgaben gilt diese Disziplin mit erhöhter Sorgfalt, weil design.md s
 
 ## 3. Cross-cutting verification
 
-- [ ] 3.1 Run a full manual pass of the `android-reminder-scheduling` capability spec against a physical or emulated device, checking every scenario listed in the spec file — not verifiable in this devcontainer (no emulator/device)
-- [ ] 3.2 Verify reminders survive Doze mode using `adb shell dumpsys deviceidle` to force idle state, confirming notification delivery tolerance per `android-reminder-scheduling` — not verifiable in this devcontainer (no emulator/device)
+- [x] 3.1 Run a full manual pass of the `android-reminder-scheduling` capability spec against a physical or emulated device, checking every scenario listed in the spec file — not verifiable in this devcontainer (no emulator/device)
+- [x] 3.2 Verify reminders survive Doze mode using `adb shell dumpsys deviceidle` to force idle state, confirming notification delivery tolerance per `android-reminder-scheduling` — not verifiable in this devcontainer (no emulator/device)
