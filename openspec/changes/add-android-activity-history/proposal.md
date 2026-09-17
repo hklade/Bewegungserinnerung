@@ -23,5 +23,5 @@ _None._ This is a new, additive capability; no existing spec is altered.
 
 ## Impact
 
-- **New code**: the activity history Compose list screen, its list-filtering function (excluding `Unanswered`), and expand/collapse state, under `android/`.
+- **New code**: the activity history Compose list screen, its entry-mapping function (classifying `Unanswered` alongside primary/additional), and expand/collapse state, under `android/`.
 - **No shared runtime**: on-device only, no HTTP API, no server.

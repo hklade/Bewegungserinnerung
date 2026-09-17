@@ -15,7 +15,7 @@ The existing web app's recent-activity list is rendered client-side from the ser
 ## Goals / Non-Goals
 
 **Goals:**
-- The activity list reads the same authoritative slot-status enum used elsewhere in the app to decide which entries to exclude (`Unanswered`), not an independent heuristic.
+- The activity list reads the same authoritative slot-status enum used elsewhere in the app to classify each entry's type (including `Unanswered`), not an independent heuristic.
 
 **Non-Goals:**
 - No sync between the Android app and the existing web app, no shared backend, no cloud storage, no multi-device sync.
