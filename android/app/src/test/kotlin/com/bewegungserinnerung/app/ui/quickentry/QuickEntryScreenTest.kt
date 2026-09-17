@@ -52,7 +52,7 @@ class QuickEntryScreenTest {
             QuickEntryScreen(viewModel = viewModel, currentSlotLabel = "08:55")
         }
 
-        composeRule.onNodeWithText("08:55").assertIsDisplayed()
+        composeRule.onNodeWithText("Nächster Alarm: 08:55").assertIsDisplayed()
     }
 
     @Test

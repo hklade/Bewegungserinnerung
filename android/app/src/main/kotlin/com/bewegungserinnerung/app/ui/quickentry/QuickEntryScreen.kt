@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -29,7 +30,8 @@ fun QuickEntryScreen(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .statusBarsPadding()
+            .padding(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (!exactAlarmPermissionGranted) {
@@ -41,7 +43,7 @@ fun QuickEntryScreen(
         }
 
         Text(
-            text = currentSlotLabel ?: "Keine aktive Erinnerung",
+            text = currentSlotLabel?.let { "Nächster Alarm: $it" } ?: "Keine aktive Erinnerung",
             style = MaterialTheme.typography.titleMedium,
         )
 
