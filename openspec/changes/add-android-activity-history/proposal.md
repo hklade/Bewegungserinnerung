@@ -4,13 +4,13 @@ The existing web app's recent-activity list only runs on a workstation browser. 
 
 ## Dependencies
 
-Depends on: `add-android-ci-pipeline` (project setup must land first), `add-android-reminder-scheduling` (excludes `Unanswered`-status entries from the list per the authoritative slot-status enum), `add-android-quick-entry` (consumes the movement entry Room entity/DAO defined there).
+Depends on: `add-android-ci-pipeline` (project setup must land first), `add-android-reminder-scheduling` (classifies `Unanswered`-status entries per the authoritative slot-status enum, used for statistics elsewhere), `add-android-quick-entry` (consumes the movement entry Room entity/DAO defined there).
 Consumed by: none.
 
 ## What Changes
 
 - A chronological list shows the user's most recent logged activity entries, each with date, planned (slot) time, response delay (or an explicit "none" indicator), activity value, description/note, and type classification (primary/additional/unanswered).
-- Entries with `Unanswered` status are excluded from this scrollable list — since no activity was actually logged for them — while still counting toward the day/week statistics in `android-day-week-evaluation`.
+- Entries with `Unanswered` status appear in this scrollable list like any other entry, with no distinct visual treatment, while still counting toward the day/week statistics in `android-day-week-evaluation`.
 - The list initially shows the 5 most recent entries, expandable to a bounded maximum with one action, and collapsible back to 5 with another.
 
 ## Capabilities

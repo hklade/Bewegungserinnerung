@@ -15,12 +15,12 @@ The system SHALL display a list of the user's most recent logged activity entrie
 - **WHEN** an entry has no meaningful response delay (e.g. an unanswered slot with no response time)
 - **THEN** the row shows an explicit placeholder instead of a numeric delay
 
-### Requirement: Unanswered slots are excluded from the primary activity list but included in counts elsewhere
-The system SHALL exclude entries with `Unanswered` status from the scrollable activity list (which shows actual logged activity), while still counting them in the day/week statistics defined in [[android-day-week-evaluation]].
+### Requirement: Unanswered slots appear in the activity list like any other entry
+The system SHALL include entries with `Unanswered` status in the scrollable activity list alongside logged entries, displayed as an ordinary row with no distinct visual treatment, while still counting them in the day/week statistics defined in [[android-day-week-evaluation]].
 
-#### Scenario: Unanswered slot does not appear as a list row
+#### Scenario: Unanswered slot appears as a list row
 - **WHEN** a reminder slot has been backfilled with `Unanswered` status and no entry was ever logged for it
-- **THEN** it does not appear as a row in the activity history list
+- **THEN** it appears as a row in the activity history list, in chronological order like any other entry
 
 #### Scenario: Unanswered slot still counts in statistics
 - **WHEN** a reminder slot has `Unanswered` status
