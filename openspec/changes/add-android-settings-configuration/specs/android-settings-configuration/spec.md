@@ -63,6 +63,18 @@ The system SHALL let the user configure or choose the destination for CSV export
 - **WHEN** the user has configured an export destination and later triggers CSV export per [[android-csv-import-export]]
 - **THEN** the export flow uses or defaults to that configured destination
 
+### Requirement: Missed reminders can be hidden from the activity history
+
+The system SHALL let the user configure, on the settings screen, whether missed (unanswered) reminders are hidden from the activity history list, defaulting to `false` (missed reminders shown).
+
+#### Scenario: Default is to show missed reminders
+- **WHEN** the settings screen is opened for the first time, with no prior explicit save of this setting
+- **THEN** the "hide missed reminders" toggle is off, and missed reminders remain visible in the activity history per [[android-activity-history]]
+
+#### Scenario: Enabling the toggle hides missed reminders going forward
+- **WHEN** the user enables "hide missed reminders" and saves
+- **THEN** the activity history list defined in [[android-activity-history]] no longer displays `Unanswered` entries, without requiring an app restart
+
 ### Requirement: Settings changes are explicitly saved and confirmed
 The system SHALL require an explicit save action to persist settings changes (not save on every keystroke/toggle), and SHALL show the user a clear confirmation when settings have been saved successfully, or an error state if saving fails.
 

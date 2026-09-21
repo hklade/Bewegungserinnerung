@@ -25,7 +25,7 @@ The existing web app's settings live in a server-side JSON config file (`config.
 ## Decisions
 
 ### D3: Settings storage split — Room for domain settings row, DataStore only if needed for simple flags
-**Decision:** Store the single settings/config row (reminder window, weekdays-only, hydration goal, tone/vibration flags, export location) as one row in Room alongside the entry tables, not in SharedPreferences/DataStore.
+**Decision:** Store the single settings/config row (reminder window, weekdays-only, hydration goal, tone/vibration flags, export location, hide-missed-reminders flag) as one row in Room alongside the entry tables, not in SharedPreferences/DataStore.
 **Why:** Settings changes must be observed reactively by both the UI and the alarm-rescheduling logic (changing the reminder window must reschedule alarms); Room's `Flow`-based DAOs give that for free and keep a single persistence technology in the app rather than two.
 **Alternatives considered:** Jetpack DataStore (rejected: would require a second persistence mechanism and a second migration story for one settings row; no benefit over a Room table here).
 
