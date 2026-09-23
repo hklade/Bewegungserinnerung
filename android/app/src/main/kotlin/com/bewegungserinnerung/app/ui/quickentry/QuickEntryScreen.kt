@@ -15,6 +15,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.bewegungserinnerung.app.data.MovementEntry
+import com.bewegungserinnerung.app.data.MovementEntryDao
+import com.bewegungserinnerung.app.ui.history.ActivityHistoryScreen
+import com.bewegungserinnerung.app.ui.history.toActivityHistory
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -23,9 +29,12 @@ fun QuickEntryScreen(
     currentSlotLabel: String?,
     modifier: Modifier = Modifier,
     exactAlarmPermissionGranted: Boolean = true,
+    dao: MovementEntryDao? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
+    val entriesFlow: Flow<List<MovementEntry>> = dao?.observeAll() ?: emptyFlow()
+    val entries by entriesFlow.collectAsState(initial = emptyList())
 
     Column(
         modifier = modifier
@@ -72,5 +81,7 @@ fun QuickEntryScreen(
         ) {
             Text("Speichern")
         }
+
+        ActivityHistoryScreen(entries = toActivityHistory(entries))
     }
 }

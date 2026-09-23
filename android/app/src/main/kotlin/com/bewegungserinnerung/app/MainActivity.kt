@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
                         viewModel = viewModel,
                         currentSlotLabel = currentSlot?.let { SLOT_LABEL_FORMATTER.format(it) },
                         exactAlarmPermissionGranted = exactAlarmPermissionGranted,
+                        dao = database.movementEntryDao(),
                     )
                 }
             }

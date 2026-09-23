@@ -1,7 +1,9 @@
 package com.bewegungserinnerung.app.ui.quickentry
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -36,6 +38,7 @@ class QuickEntryScreenTest {
 
     @After
     fun tearDown() {
+        composeRule.waitForIdle()
         database.close()
     }
 
@@ -88,5 +91,31 @@ class QuickEntryScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Notiz").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Neu gespeicherter Eintrag erscheint im Aktivitätsverlauf ohne Neustart`() {
+        val slotTime = Instant.parse("2026-09-10T08:55:00Z")
+        val viewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = Clock.fixed(slotTime.plusSeconds(60), ZoneOffset.UTC),
+            currentSlotTime = slotTime,
+        )
+
+        composeRule.setContent {
+            QuickEntryScreen(
+                viewModel = viewModel,
+                currentSlotLabel = "08:55",
+                dao = database.movementEntryDao(),
+            )
+        }
+
+        composeRule.onNodeWithText("Notiz").performTextInput("Kurzer Spaziergang")
+        composeRule.onNodeWithText("Speichern").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText("Kurzer Spaziergang", substring = true)
+            .assertCountEquals(1)[0]
+            .assertIsDisplayed()
     }
 }

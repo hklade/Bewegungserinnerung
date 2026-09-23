@@ -17,5 +17,6 @@ Maps every requirement in the `android-activity-history` capability spec to the 
 | Requirement | Level | Representative test location/name | Notes |
 |---|---|---|---|
 | Recent activity entries are listed with full detail | 2 | Compose UI test: row shows date/planned time/delay/value/description/type; no-delay shows explicit placeholder | |
-| Unanswered slots are excluded from the primary activity list but included in counts elsewhere | 1 | Unit test on the list-filtering function plus the day/week counts function | |
+| Unanswered slots appear in the activity list like any other entry | 1 | Unit test confirming unanswered entries are mapped into the list plus the day/week counts function | |
 | The list shows a limited number of entries by default, expandable on demand | 2 | Compose UI test: default 5 rows, expand/collapse actions | |
+| Today's and yesterday's dates are shown as relative labels; the description/note is bold | 2 | Compose UI test: today's entry shows "Heute", yesterday's entry shows "Gestern", an older entry keeps dd.MM.yyyy, description/note renders bold | |

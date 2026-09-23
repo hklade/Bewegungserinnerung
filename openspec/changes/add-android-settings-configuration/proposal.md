@@ -5,7 +5,7 @@ The existing web app's settings (reminder window, weekdays-only, hydration goal,
 ## Dependencies
 
 Depends on: `add-android-ci-pipeline` (project setup must land first).
-Consumed by: `add-android-reminder-scheduling` (reminder window/weekdays-only/tone settings), `add-android-hydration-tracking` (hydration goal), `add-android-csv-import-export` (export-location setting).
+Consumed by: `add-android-reminder-scheduling` (reminder window/weekdays-only/tone settings), `add-android-hydration-tracking` (hydration goal), `add-android-csv-import-export` (export-location setting), `add-android-activity-history` (hide-missed-reminders setting).
 
 ## What Changes
 
@@ -14,12 +14,13 @@ Consumed by: `add-android-reminder-scheduling` (reminder window/weekdays-only/to
 - The daily hydration goal is configurable in liters, falling back to the 2 L default on invalid input.
 - Notification tone/vibration is configurable, with a "test" action (disabled when tone is off) that plays the tone/vibration without side effects.
 - The export location is configured via an Android-native storage/document picker, replacing the web app's free-text filesystem-path field.
+- Missed reminders can be hidden from the activity history list via a "hide missed reminders" toggle, defaulting to off (missed reminders shown).
 - All settings changes require an explicit save action (no autosave-on-change) and show a clear success confirmation or error state; navigating away without saving leaves prior settings in effect.
 
 ## Capabilities
 
 ### New Capabilities
-- `android-settings-configuration`: The settings screen covering reminder on/off, start/end time, weekdays-only, hydration goal, tone/vibration on/off with a test action, and export location.
+- `android-settings-configuration`: The settings screen covering reminder on/off, start/end time, weekdays-only, hydration goal, tone/vibration on/off with a test action, export location, and hide-missed-reminders.
 
 ### Modified Capabilities
 _None._ This is a new, additive capability; no existing spec is altered.

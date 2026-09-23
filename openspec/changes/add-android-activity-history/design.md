@@ -15,7 +15,7 @@ The existing web app's recent-activity list is rendered client-side from the ser
 ## Goals / Non-Goals
 
 **Goals:**
-- The activity list reads the same authoritative slot-status enum used elsewhere in the app to decide which entries to exclude (`Unanswered`), not an independent heuristic.
+- The activity list reads the same authoritative slot-status enum used elsewhere in the app to classify each entry's type (including `Unanswered`), not an independent heuristic.
 
 **Non-Goals:**
 - No sync between the Android app and the existing web app, no shared backend, no cloud storage, no multi-device sync.
@@ -25,9 +25,14 @@ The existing web app's recent-activity list is rendered client-side from the ser
 ## Decisions
 
 ### D5: Single explicit "slot status" model replaces the dual additional-break heuristic
-**Decision:** The activity history list excludes entries with `Unanswered` status (computed once by the shared data layer owned by `android-reminder-scheduling`), while still counting them in the day/week statistics owned by `android-day-week-evaluation`. The list does not independently re-derive which entries count as "actually logged."
-**Why:** This directly resolves the "known weak point" of the web app: two independent computations of the same fact could disagree. The list only ever consumes the enum, never computes it.
-**Alternatives considered:** Filter based on presence/absence of a response timestamp locally (rejected: would duplicate the exact computation this design centralizes elsewhere).
+**Decision:** The activity history list includes entries with `Unanswered` status (computed once by the shared data layer owned by `android-reminder-scheduling`) as ordinary rows, with no distinct visual treatment, while also counting them in the day/week statistics owned by `android-day-week-evaluation`. The list does not independently re-derive which entries count as "actually logged" — it reads the persisted `entry_type`/`isAdditionalBreak` fields as-is rather than recomputing status.
+**Why:** This directly resolves the "known weak point" of the web app: two independent computations of the same fact could disagree. The list only ever consumes the persisted classification, never recomputes it.
+**Alternatives considered:** Excluding `Unanswered` entries from the list (superseded: product decision to show every entry, including unanswered slots, for a complete chronological record). Filter based on presence/absence of a response timestamp locally (rejected: would duplicate the exact computation this design centralizes elsewhere).
+
+### D6: Relative date label ("Heute"/"Gestern") and bold description/note require structured first-line text, not a plain string
+**Decision:** `firstLineText()` (or its Compose call site) must stop returning a single plain `String` for the row's first line, since part of that line (the description/note) needs bold styling while the date/time portion does not. Use a Compose `AnnotatedString` (or equivalent multi-`Text`/`Span` composition) built from: the relative date label ("Heute"/"Gestern", computed against the current date in `Europe/Vienna` — see `android/CLAUDE.md`'s zone-handling rule — falling back to the existing `dd.MM.yyyy` format for any other date) plus the planned time, followed by the bold description/note.
+**Why:** Keeps the existing "always pass an explicit `ZoneId`" convention consistent with the rest of the app, and avoids re-deriving date formatting elsewhere once the row needs mixed styling.
+**Alternatives considered:** Two separate `Text` composables side by side instead of one `AnnotatedString` (viable, slightly more layout code; either is acceptable as long as only the description/note is bold).
 
 ## Risks / Trade-offs
 
