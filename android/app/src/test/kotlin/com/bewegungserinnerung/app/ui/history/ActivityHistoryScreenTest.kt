@@ -28,6 +28,7 @@ class ActivityHistoryScreenTest {
         description = "Bewegung",
         note = "",
         type = ActivityEntryType.Primary,
+        createdAt = "2026-09-10T07:00:00.000Z",
     )
 
     private fun entries(count: Int) = (count downTo 1).map { entry(reminderTime = "%02d:00".format(it)) }
@@ -74,6 +75,7 @@ class ActivityHistoryScreenTest {
         }
 
         composeRule.onAllNodesWithTag("activity-history-row").assertCountEquals(3)
+        composeRule.onNodeWithText("Mehr anzeigen").assertDoesNotExist()
     }
 
     @Test

@@ -109,6 +109,21 @@ class ActivityHistoryTest {
     }
 
     @Test
+    fun `Mehrere Einträge im selben Zeitfenster werden nach Erstellungszeitpunkt aufsteigend sortiert`() {
+        val entries = listOf(
+            entry(reminderTime = "08:55", isAdditionalBreak = false, createdAt = "2026-09-10T08:56:00.000Z"),
+            entry(reminderTime = "08:55", isAdditionalBreak = true, createdAt = "2026-09-10T09:30:00.000Z"),
+        )
+
+        val history = toActivityHistory(entries)
+
+        assertEquals(
+            listOf(ActivityEntryType.Primary, ActivityEntryType.Additional),
+            history.map { it.type },
+        )
+    }
+
+    @Test
     fun `ISO-Datum wird ins deutsche Format TT MM JJJJ umgewandelt`() {
         assertEquals("10.09.2026", formatGermanDate("2026-09-10"))
     }

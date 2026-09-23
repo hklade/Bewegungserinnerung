@@ -31,6 +31,7 @@ data class ActivityHistoryEntry(
     val description: String,
     val note: String,
     val type: ActivityEntryType,
+    val createdAt: String,
 )
 
 /**
@@ -88,17 +89,25 @@ private fun MovementEntry.toActivityHistoryEntry() = ActivityHistoryEntry(
         isAdditionalBreak -> ActivityEntryType.Additional
         else -> ActivityEntryType.Primary
     },
+    createdAt = createdAt,
 )
 
 /**
  * Maps persisted movement entries to the activity-history display model, including `Unanswered`
  * slots as ordinary rows (they still count in the day/week statistics owned by
  * `android-day-week-evaluation`; this list only formats a display projection, it never mutates
- * the underlying rows those counts read from), ordered most-recent first.
+ * the underlying rows those counts read from), ordered most-recent slot first. `date`/`reminderTime`
+ * alone don't uniquely order entries — a primary and an additional/extra entry can share the same
+ * slot (see `android-reminder-scheduling`'s `AnsweredWithExtra`) — so within a shared slot,
+ * `createdAt` breaks ties in ascending order (the order the entries actually happened in).
  */
 fun toActivityHistory(entries: List<MovementEntry>): List<ActivityHistoryEntry> =
     entries
         .asSequence()
         .map { it.toActivityHistoryEntry() }
-        .sortedWith(compareByDescending<ActivityHistoryEntry> { it.date }.thenByDescending { it.reminderTime })
+        .sortedWith(
+            compareByDescending<ActivityHistoryEntry> { it.date }
+                .thenByDescending { it.reminderTime }
+                .thenBy { it.createdAt },
+        )
         .toList()
