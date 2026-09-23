@@ -29,6 +29,11 @@ The existing web app's recent-activity list is rendered client-side from the ser
 **Why:** This directly resolves the "known weak point" of the web app: two independent computations of the same fact could disagree. The list only ever consumes the persisted classification, never recomputes it.
 **Alternatives considered:** Excluding `Unanswered` entries from the list (superseded: product decision to show every entry, including unanswered slots, for a complete chronological record). Filter based on presence/absence of a response timestamp locally (rejected: would duplicate the exact computation this design centralizes elsewhere).
 
+### D6: Relative date label ("Heute"/"Gestern") and bold description/note require structured first-line text, not a plain string
+**Decision:** `firstLineText()` (or its Compose call site) must stop returning a single plain `String` for the row's first line, since part of that line (the description/note) needs bold styling while the date/time portion does not. Use a Compose `AnnotatedString` (or equivalent multi-`Text`/`Span` composition) built from: the relative date label ("Heute"/"Gestern", computed against the current date in `Europe/Vienna` — see `android/CLAUDE.md`'s zone-handling rule — falling back to the existing `dd.MM.yyyy` format for any other date) plus the planned time, followed by the bold description/note.
+**Why:** Keeps the existing "always pass an explicit `ZoneId`" convention consistent with the rest of the app, and avoids re-deriving date formatting elsewhere once the row needs mixed styling.
+**Alternatives considered:** Two separate `Text` composables side by side instead of one `AnnotatedString` (viable, slightly more layout code; either is acceptable as long as only the description/note is bold).
+
 ## Risks / Trade-offs
 
 - [Splitting one authoritative slot-status enum (D5) across quick-entry, history, and evaluation screens increases the cost of getting the enum's transition rules wrong, since all three consume the same computation] → Mitigation: the enum's transition rules are specified once in `android-reminder-scheduling` (the owning capability) and referenced, not re-derived, here.

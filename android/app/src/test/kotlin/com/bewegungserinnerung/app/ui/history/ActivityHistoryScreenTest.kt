@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import com.bewegungserinnerung.app.reminder.ZONE
+import java.time.ZonedDateTime
 import org.junit.Rule
 import org.junit.Test
 import org.robolectric.RobolectricTestRunner
@@ -81,5 +83,47 @@ class ActivityHistoryScreenTest {
         }
 
         composeRule.onNodeWithText("–", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Datum wird im Format TT MM JJJJ angezeigt`() {
+        composeRule.setContent {
+            ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")))
+        }
+
+        composeRule.onNodeWithText("10.09.2026", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Heutiger Eintrag zeigt Heute statt des numerischen Datums`() {
+        val now = ZonedDateTime.of(2026, 9, 10, 10, 0, 0, 0, ZONE).toInstant()
+
+        composeRule.setContent {
+            ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")), now = now)
+        }
+
+        composeRule.onNodeWithText("Heute", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Gestriger Eintrag zeigt Gestern statt des numerischen Datums`() {
+        val now = ZonedDateTime.of(2026, 9, 11, 10, 0, 0, 0, ZONE).toInstant()
+
+        composeRule.setContent {
+            ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")), now = now)
+        }
+
+        composeRule.onNodeWithText("Gestern", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Älterer Eintrag zeigt weiterhin das numerische Datum`() {
+        val now = ZonedDateTime.of(2026, 9, 20, 10, 0, 0, 0, ZONE).toInstant()
+
+        composeRule.setContent {
+            ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")), now = now)
+        }
+
+        composeRule.onNodeWithText("10.09.2026", substring = true).assertIsDisplayed()
     }
 }

@@ -2,6 +2,8 @@ package com.bewegungserinnerung.app.ui.history
 
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.reminder.UNANSWERED_ENTRY_TYPE
+import com.bewegungserinnerung.app.reminder.ZONE
+import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -104,5 +106,76 @@ class ActivityHistoryTest {
             listOf("2026-09-10" to "09:55", "2026-09-10" to "08:55", "2026-09-09" to "10:55"),
             history.map { it.date to it.reminderTime },
         )
+    }
+
+    @Test
+    fun `ISO-Datum wird ins deutsche Format TT MM JJJJ umgewandelt`() {
+        assertEquals("10.09.2026", formatGermanDate("2026-09-10"))
+    }
+
+    @Test
+    fun `Erste Zeile kombiniert deutsches Datum, Zeit und Beschreibung ohne Trailing Whitespace`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+        val history = toActivityHistory(listOf(entry(date = "2026-09-10", reminderTime = "08:55", description = "Bewegung")))
+
+        val firstLine = history.single().firstLineText(now)
+
+        assertEquals("10.09.2026 08:55 · Bewegung", firstLine.text)
+        assertEquals(firstLine.text, firstLine.text.trimEnd())
+    }
+
+    @Test
+    fun `Erste Zeile ohne Beschreibung hat keinen Trailing Whitespace`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+        val history = toActivityHistory(listOf(entry(description = "", note = "")))
+
+        val firstLine = history.single().firstLineText(now)
+
+        assertEquals("10.09.2026 08:55", firstLine.text)
+        assertEquals(firstLine.text, firstLine.text.trimEnd())
+    }
+
+    @Test
+    fun `Heutiges Datum wird als Heute angezeigt`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+
+        assertEquals("Heute", formatRelativeGermanDate("2026-09-23", now))
+    }
+
+    @Test
+    fun `Gestriges Datum wird als Gestern angezeigt`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+
+        assertEquals("Gestern", formatRelativeGermanDate("2026-09-22", now))
+    }
+
+    @Test
+    fun `Älteres Datum zeigt weiterhin das deutsche Format TT MM JJJJ`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+
+        assertEquals("21.09.2026", formatRelativeGermanDate("2026-09-21", now))
+    }
+
+    @Test
+    fun `Erste Zeile zeigt Heute statt des numerischen Datums für einen heutigen Eintrag`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+        val history = toActivityHistory(listOf(entry(date = "2026-09-23", reminderTime = "08:55", description = "Bewegung")))
+
+        val firstLine = history.single().firstLineText(now)
+
+        assertEquals("Heute 08:55 · Bewegung", firstLine.text)
+    }
+
+    @Test
+    fun `Erste Zeile rendert Beschreibung fett, Datum und Zeit nicht`() {
+        val now = ZonedDateTime.of(2026, 9, 23, 10, 0, 0, 0, ZONE).toInstant()
+        val history = toActivityHistory(listOf(entry(date = "2026-09-10", reminderTime = "08:55", description = "Bewegung")))
+
+        val firstLine = history.single().firstLineText(now)
+        val boldRanges = firstLine.spanStyles.filter { it.item.fontWeight == androidx.compose.ui.text.font.FontWeight.Bold }
+
+        assertEquals(1, boldRanges.size)
+        val boldRange = boldRanges.single()
+        assertEquals("Bewegung", firstLine.text.substring(boldRange.start, boldRange.end))
     }
 }

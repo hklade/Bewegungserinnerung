@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import java.time.Instant
 
 private const val DEFAULT_VISIBLE_COUNT = 5
 private const val EXPANDED_VISIBLE_COUNT = 20
@@ -25,6 +26,7 @@ private const val EXPANDED_VISIBLE_COUNT = 20
 fun ActivityHistoryScreen(
     entries: List<ActivityHistoryEntry>,
     modifier: Modifier = Modifier,
+    now: Instant = Instant.now(),
 ) {
     var expanded by remember { mutableStateOf(false) }
     val visibleCount = if (expanded) EXPANDED_VISIBLE_COUNT else DEFAULT_VISIBLE_COUNT
@@ -35,9 +37,9 @@ fun ActivityHistoryScreen(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        visibleEntries.forEach { entry -> ActivityHistoryRow(entry) }
+        visibleEntries.forEach { entry -> ActivityHistoryRow(entry, now) }
 
         if (canExpand) {
             TextButton(onClick = { expanded = !expanded }) {
@@ -48,7 +50,7 @@ fun ActivityHistoryScreen(
 }
 
 @Composable
-private fun ActivityHistoryRow(entry: ActivityHistoryEntry) {
+private fun ActivityHistoryRow(entry: ActivityHistoryEntry, now: Instant) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -56,11 +58,7 @@ private fun ActivityHistoryRow(entry: ActivityHistoryEntry) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(text = "${entry.date} ${entry.reminderTime}", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = entry.description.ifBlank { entry.note },
-                style = MaterialTheme.typography.bodySmall,
-            )
+            Text(text = entry.firstLineText(now), style = MaterialTheme.typography.bodyMedium)
             Text(
                 text = "Verzögerung: ${entry.delayMinutes?.let { "$it min" } ?: "–"} · " +
                     "Wert: ${entry.value} · ${entry.type.label()}",
