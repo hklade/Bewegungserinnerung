@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Clock
+import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -115,4 +116,59 @@ class QuickEntryViewModelTest {
         )
         assertEquals("Kaffee geholt", entries.single().description)
     }
+
+    @Test
+    fun `Nach Erreichen des nächsten Zeitfensters wird der Eintrag dem neuen Slot mit kleiner Verzögerung zugeordnet`() = runBlocking {
+        val nextSlotTime = slotTime.plusSeconds(3600)
+        val movingClock = MutableClock(slotTime.plusSeconds(120), zone)
+        val resolvingViewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = movingClock,
+            slotResolver = { now -> if (now >= nextSlotTime) nextSlotTime else slotTime },
+        )
+
+        movingClock.now = nextSlotTime.plusSeconds(120)
+        resolvingViewModel.save()
+
+        val entries = database.movementEntryDao().entriesForSlot(
+            date = "2026-09-10",
+            reminderTime = "09:55",
+        )
+        assertEquals(1, entries.size)
+        assertEquals(2, entries.single().delayMinutes)
+    }
+
+    @Test
+    fun `Aktualisieren des Zeitfensters übernimmt den inzwischen erreichten Slot`() {
+        val nextSlotTime = slotTime.plusSeconds(3600)
+        val movingClock = MutableClock(slotTime.plusSeconds(120), zone)
+        val resolvingViewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = movingClock,
+            slotResolver = { now -> if (now >= nextSlotTime) nextSlotTime else slotTime },
+        )
+        assertEquals(slotTime, resolvingViewModel.currentSlot.value)
+
+        movingClock.now = nextSlotTime.plusSeconds(1)
+        resolvingViewModel.refreshCurrentSlot()
+
+        assertEquals(nextSlotTime, resolvingViewModel.currentSlot.value)
+    }
+
+    @Test
+    fun `Ohne aktives Zeitfenster ist der aktuelle Slot leer`() {
+        val resolvingViewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = clock,
+            slotResolver = { null },
+        )
+
+        assertNull(resolvingViewModel.currentSlot.value)
+    }
+}
+
+private class MutableClock(var now: Instant, private val zone: ZoneId) : Clock() {
+    override fun getZone(): ZoneId = zone
+    override fun withZone(zone: ZoneId): Clock = MutableClock(now, zone)
+    override fun instant(): Instant = now
 }

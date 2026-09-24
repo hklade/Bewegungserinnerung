@@ -18,13 +18,32 @@ private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withZone(ZONE)
 private val WEEKDAY_FORMATTER = DateTimeFormatter.ofPattern("EEEE", Locale.GERMAN).withZone(ZONE)
 private val TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT
 
+/**
+ * [slotResolver] maps "now" to the currently active reminder slot (or null if none is active).
+ * It is re-evaluated on [refreshCurrentSlot] and on every [save], so an entry is always
+ * attributed to the slot that is current at the moment of saving, not to the one that was
+ * current when the screen was created.
+ */
 class QuickEntryViewModel(
     private val dao: MovementEntryDao,
     private val clock: Clock,
-    private val currentSlotTime: Instant,
+    private val slotResolver: (Instant) -> Instant?,
 ) {
+    constructor(
+        dao: MovementEntryDao,
+        clock: Clock,
+        currentSlotTime: Instant,
+    ) : this(dao = dao, clock = clock, slotResolver = { currentSlotTime })
+
     private val _uiState = MutableStateFlow(QuickEntryUiState())
     val uiState: StateFlow<QuickEntryUiState> = _uiState.asStateFlow()
+
+    private val _currentSlot = MutableStateFlow(slotResolver(clock.instant()))
+    val currentSlot: StateFlow<Instant?> = _currentSlot.asStateFlow()
+
+    fun refreshCurrentSlot() {
+        _currentSlot.value = slotResolver(clock.instant())
+    }
 
     fun selectLevel(level: ActivityLevel) {
         _uiState.value = _uiState.value.copy(selectedLevel = level, hasError = false)
@@ -36,6 +55,8 @@ class QuickEntryViewModel(
 
     suspend fun save(): SaveResult {
         val state = _uiState.value
+        refreshCurrentSlot()
+        val currentSlotTime = _currentSlot.value ?: clock.instant()
         val date = DATE_FORMATTER.format(currentSlotTime)
         val reminderTime = TIME_FORMATTER.format(currentSlotTime)
 
