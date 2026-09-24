@@ -9,7 +9,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -24,8 +29,13 @@ import com.bewegungserinnerung.app.ui.quickentry.QuickEntryScreen
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryViewModel
 import com.bewegungserinnerung.app.ui.theme.BewegungserinnerungTheme
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val SLOT_LABEL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.of("Europe/Vienna"))
 
@@ -59,12 +69,23 @@ class MainActivity : ComponentActivity() {
         }
 
         val clock = Clock.systemDefaultZone()
-        val currentSlot = currentSlotInstant(clock.instant())
         val viewModel = QuickEntryViewModel(
             dao = database.movementEntryDao(),
             clock = clock,
-            currentSlotTime = currentSlot ?: clock.instant(),
+            slotResolver = { now -> currentSlotInstant(now) },
         )
+
+        // The activity outlives slot boundaries (it stays open, or is resumed after the reminder
+        // notification), so the current slot is re-evaluated on every resume and at each full
+        // minute while resumed rather than only once in onCreate.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    viewModel.refreshCurrentSlot()
+                    delay(untilNextFullMinute(clock.instant()).toMillis())
+                }
+            }
+        }
 
         setContent {
             BewegungserinnerungTheme {
@@ -72,6 +93,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
+                    val currentSlot by viewModel.currentSlot.collectAsState()
                     QuickEntryScreen(
                         viewModel = viewModel,
                         currentSlotLabel = currentSlot?.let { SLOT_LABEL_FORMATTER.format(it) },
@@ -83,3 +105,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private fun untilNextFullMinute(now: Instant): Duration =
+    Duration.between(now, now.truncatedTo(ChronoUnit.MINUTES).plus(1, ChronoUnit.MINUTES))
