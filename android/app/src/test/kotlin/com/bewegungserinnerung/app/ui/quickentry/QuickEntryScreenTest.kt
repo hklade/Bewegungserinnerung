@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.bewegungserinnerung.app.data.AppDatabase
+import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -117,5 +118,32 @@ class QuickEntryScreenTest {
         composeRule.onAllNodesWithText("Kurzer Spaziergang", substring = true)
             .assertCountEquals(1)[0]
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun `Trinkmanager ist Teil der Schnelleingabe`() {
+        val slotTime = Instant.parse("2026-09-10T08:55:00Z")
+        val clock = Clock.fixed(slotTime.plusSeconds(60), ZoneOffset.UTC)
+        val viewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = clock,
+            currentSlotTime = slotTime,
+        )
+        val hydrationViewModel = HydrationViewModel(
+            dao = database.hydrationEntryDao(),
+            clock = clock,
+            zone = ZoneOffset.UTC,
+        )
+
+        composeRule.setContent {
+            QuickEntryScreen(
+                viewModel = viewModel,
+                currentSlotLabel = "08:55",
+                hydrationViewModel = hydrationViewModel,
+            )
+        }
+
+        composeRule.onNodeWithText("Trinkmanager").assertExists()
+        composeRule.onNodeWithText("0 ml / 2000 ml").assertExists()
     }
 }

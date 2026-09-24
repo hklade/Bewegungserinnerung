@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.data.MovementEntryDao
 import com.bewegungserinnerung.app.ui.history.ActivityHistoryScreen
+import com.bewegungserinnerung.app.ui.hydration.HydrationCard
+import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import com.bewegungserinnerung.app.ui.history.toActivityHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -30,6 +32,7 @@ fun QuickEntryScreen(
     modifier: Modifier = Modifier,
     exactAlarmPermissionGranted: Boolean = true,
     dao: MovementEntryDao? = null,
+    hydrationViewModel: HydrationViewModel? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -81,6 +84,8 @@ fun QuickEntryScreen(
         ) {
             Text("Speichern")
         }
+
+        hydrationViewModel?.let { HydrationCard(viewModel = it) }
 
         ActivityHistoryScreen(entries = toActivityHistory(entries))
     }

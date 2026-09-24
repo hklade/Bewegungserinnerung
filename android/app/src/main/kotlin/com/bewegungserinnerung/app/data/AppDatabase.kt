@@ -1,15 +1,22 @@
 package com.bewegungserinnerung.app.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
 private const val DATABASE_NAME = "bewegungserinnerung.db"
 
-@Database(entities = [MovementEntry::class], version = 1, exportSchema = true)
+@Database(
+    entities = [MovementEntry::class, HydrationEntry::class],
+    version = 2,
+    exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun movementEntryDao(): MovementEntryDao
+    abstract fun hydrationEntryDao(): HydrationEntryDao
 
     companion object {
         @Volatile
