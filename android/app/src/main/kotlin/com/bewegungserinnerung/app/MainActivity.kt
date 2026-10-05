@@ -25,6 +25,7 @@ import com.bewegungserinnerung.app.reminder.ReminderScheduler
 import com.bewegungserinnerung.app.reminder.currentSlotInstant
 import com.bewegungserinnerung.app.reminder.isExactAlarmPermissionGranted
 import com.bewegungserinnerung.app.reminder.isNotificationPermissionGranted
+import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryScreen
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryViewModel
 import com.bewegungserinnerung.app.ui.theme.BewegungserinnerungTheme
@@ -74,12 +75,15 @@ class MainActivity : ComponentActivity() {
             clock = clock,
             slotResolver = { now -> currentSlotInstant(now) },
         )
+        val hydrationViewModel = HydrationViewModel(dao = database.hydrationEntryDao(), clock = clock)
 
         // The activity outlives slot boundaries (it stays open, or is resumed after the reminder
         // notification), so the current slot is re-evaluated on every resume and at each full
-        // minute while resumed rather than only once in onCreate.
+        // minute while resumed rather than only once in onCreate. Today's hydration total is
+        // reloaded on every resume for the same reason (the day may have changed meanwhile).
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                hydrationViewModel.load()
                 while (true) {
                     viewModel.refreshCurrentSlot()
                     delay(untilNextFullMinute(clock.instant()).toMillis())
@@ -99,6 +103,7 @@ class MainActivity : ComponentActivity() {
                         currentSlotLabel = currentSlot?.let { SLOT_LABEL_FORMATTER.format(it) },
                         exactAlarmPermissionGranted = exactAlarmPermissionGranted,
                         dao = database.movementEntryDao(),
+                        hydrationViewModel = hydrationViewModel,
                     )
                 }
             }
