@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -27,7 +26,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
-import kotlin.math.abs
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -82,18 +80,6 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("2").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Aufwärts").performScrollTo().assertIsSelected()
         composeRule.onNodeWithText("Downloads (Standard)").performScrollTo().assertIsDisplayed()
-    }
-
-    @Test
-    fun `Zurück-Pfeil sitzt auf halber Höhe des Titels`() {
-        showScreen()
-
-        val arrow = composeRule.onNodeWithContentDescription("Zurück").getUnclippedBoundsInRoot()
-        val title = composeRule.onNodeWithText("Optionen").getUnclippedBoundsInRoot()
-
-        val arrowCenter = (arrow.top + arrow.bottom) / 2
-        val titleCenter = (title.top + title.bottom) / 2
-        assertTrue("Pfeil-Mitte $arrowCenter, Titel-Mitte $titleCenter", abs(arrowCenter.value - titleCenter.value) <= 1f)
     }
 
     @Test

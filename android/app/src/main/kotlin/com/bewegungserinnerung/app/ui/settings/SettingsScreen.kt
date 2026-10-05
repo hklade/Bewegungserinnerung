@@ -102,7 +102,7 @@ fun SettingsScreen(
                 onClick = onBack,
                 modifier = Modifier.semantics { contentDescription = "Zurück" },
             ) {
-                Icon(BackArrow, contentDescription = null, modifier = Modifier.size(32.dp))
+                Icon(BackArrow, contentDescription = null, modifier = Modifier.size(21.dp))
             }
             Text("Optionen", style = MaterialTheme.typography.titleLarge)
         }
