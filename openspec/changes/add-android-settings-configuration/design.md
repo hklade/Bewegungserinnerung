@@ -34,6 +34,11 @@ The existing web app's settings live in a server-side JSON config file (`config.
 **Why:** Downloads is where users expect to find exported files on Android, consistent with how the web app's export already behaves; the settings screen's picker lets the user override that default without typing a filesystem path (which has no reliable Android equivalent).
 **Alternatives considered:** App-private directory only (rejected: not discoverable without a share action); requiring a picker choice on every export rather than a configurable default (rejected: adds a step to every export for no benefit over a settings-configured default).
 
+### D13: Tone sequences are synthesized on-device, matching the web app's note plan
+**Decision:** The three selectable tone sequences ("Aufwärts", "Doppelschlag", "Weicher Gong") are defined as note plans (frequency, start offset, duration per note) and rendered to PCM at play time via the platform `AudioTrack`, mirroring how the web app synthesizes "Aufwärts" with Web Audio oscillators (784 Hz → 659 Hz → 988 Hz). The reminder notification channel itself plays no system sound, so the selected sequence (plus vibration) is the only audible signal and the tone-enabled setting fully controls it.
+**Why:** No audio assets and no new dependency; the note plans are plain data, so their shape is unit-testable without audio hardware, and "Aufwärts" stays recognizably the same tone across web and Android.
+**Alternatives considered:** Bundled audio files (rejected: binary assets to maintain for three short tones); `ToneGenerator` (rejected: only fixed DTMF/supervisory tones, cannot reproduce the web app's note plan); keeping the channel's default system sound (rejected: it would play in addition to the selected sequence and ignore the tone-enabled setting).
+
 ## Risks / Trade-offs
 
 - [A settings save that fails partway (e.g. a local storage error) could leave the UI showing unsaved values as if they were active] → Mitigation: settings changes require an explicit save action with a distinct success/error state, and a failed save leaves the previously saved settings in effect rather than a partially-applied state.

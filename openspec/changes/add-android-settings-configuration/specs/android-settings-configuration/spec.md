@@ -52,6 +52,29 @@ The system SHALL let the user enable or disable the reminder tone/vibration on t
 - **WHEN** the tone/vibration setting is enabled and the user triggers "test"
 - **THEN** the configured tone and/or vibration plays immediately, per [[android-reminder-scheduling]]'s test-tone requirement
 
+### Requirement: The reminder tone is selectable from three tone sequences
+The system SHALL let the user choose, on the settings screen, which of three tone sequences plays with a reminder: "Aufwärts" (the existing three-note tone of the web app, used as the default), "Doppelschlag" (two short, equal strikes) and "Weicher Gong" (a single soft, slowly fading tone). Each option SHALL offer a preview action that plays that sequence on demand without changing the selection. Reminder notifications SHALL play the saved selection, and the "test" action SHALL play the sequence currently selected on the settings screen.
+
+#### Scenario: Default tone sequence is "Aufwärts"
+- **WHEN** the settings screen is opened with no prior explicit save of the tone selection
+- **THEN** "Aufwärts" is shown as the selected tone sequence
+
+#### Scenario: Selected tone sequence is used after saving
+- **WHEN** the user selects a different tone sequence and saves
+- **THEN** subsequent reminder notifications play the newly selected sequence
+
+#### Scenario: Test action plays the selected tone sequence
+- **WHEN** the user selects a tone sequence and triggers "test"
+- **THEN** the selected sequence plays immediately, whether or not the selection has been saved yet
+
+#### Scenario: Previewing a tone sequence does not change the selection
+- **WHEN** the user triggers the preview action of a tone sequence that is not selected
+- **THEN** that sequence plays immediately, and the selected and saved tone sequence stay unchanged
+
+#### Scenario: No tone sequence plays when the tone is disabled
+- **WHEN** the tone/vibration setting is disabled and a reminder notification fires
+- **THEN** no tone sequence plays, regardless of which sequence is selected
+
 ### Requirement: The export location is configurable
 The system SHALL let the user configure or choose the destination for CSV export (e.g. a storage location or default share target), replacing the web app's free-text filesystem-path field with an Android-appropriate storage location selection.
 

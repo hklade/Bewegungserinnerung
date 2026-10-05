@@ -5,6 +5,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.bewegungserinnerung.app.data.AppDatabase
 import com.bewegungserinnerung.app.data.MovementEntryDao
+import com.bewegungserinnerung.app.data.SettingsDao
+import com.bewegungserinnerung.app.data.currentSettings
 import java.time.Instant
 
 /**
@@ -16,8 +18,8 @@ import java.time.Instant
  * WorkManager's default `WorkerFactory` instantiates this via reflection on the exact
  * `(Context, WorkerParameters)` constructor, so the DAO can't be a constructor parameter the
  * way it is for [QuickEntryViewModel][com.bewegungserinnerung.app.ui.quickentry.QuickEntryViewModel].
- * [movementEntryDao] is `internal open` instead, purely so a test can override it with an
- * in-memory DAO — production code always uses the default (the shared [AppDatabase] singleton).
+ * [movementEntryDao]/[settingsDao] are `internal open` instead, purely so a test can override
+ * them with in-memory DAOs — production code always uses the default (the shared [AppDatabase] singleton).
  */
 open class ReminderBackfillWorker(
     context: Context,
@@ -27,17 +29,22 @@ open class ReminderBackfillWorker(
     internal open fun movementEntryDao(): MovementEntryDao =
         AppDatabase.getInstance(applicationContext).movementEntryDao()
 
+    internal open fun settingsDao(): SettingsDao =
+        AppDatabase.getInstance(applicationContext).settingsDao()
+
     override suspend fun doWork(): Result {
+        val settings = settingsDao().currentSettings()
+
         runBackfill(
             dao = movementEntryDao(),
             now = Instant.now(),
-            remindersEnabled = ReminderDefaults.REMINDERS_ENABLED,
-            weekdaysOnly = ReminderDefaults.WEEKDAYS_ONLY,
-            startTime = ReminderDefaults.START_TIME,
-            endTime = ReminderDefaults.END_TIME,
+            remindersEnabled = settings.remindersEnabled,
+            weekdaysOnly = settings.weekdaysOnly,
+            startTime = settings.startTime,
+            endTime = settings.endTime,
         )
 
-        ReminderScheduler.scheduleNextAlarm(applicationContext)
+        ReminderScheduler.scheduleNextAlarm(applicationContext, settings)
 
         return Result.success()
     }

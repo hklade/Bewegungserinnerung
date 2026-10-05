@@ -77,6 +77,18 @@ class HydrationViewModelTest {
     }
 
     @Test
+    fun `Ein in den Einstellungen geändertes Tagesziel gilt sofort`() = runBlocking {
+        val viewModel = viewModel()
+        viewModel.load()
+        viewModel.increment()
+
+        viewModel.updateGoal(1500)
+
+        assertEquals(1500, viewModel.uiState.value.goalMl)
+        assertEquals(250, viewModel.uiState.value.amountMl)
+    }
+
+    @Test
     fun `Minus 250 ml verringert die Tagesmenge und speichert sie`() = runBlocking {
         val viewModel = viewModel()
         viewModel.load()

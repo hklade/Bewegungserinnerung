@@ -9,14 +9,15 @@ import androidx.room.RoomDatabase
 private const val DATABASE_NAME = "bewegungserinnerung.db"
 
 @Database(
-    entities = [MovementEntry::class, HydrationEntry::class],
-    version = 2,
+    entities = [MovementEntry::class, HydrationEntry::class, AppSettings::class],
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun movementEntryDao(): MovementEntryDao
     abstract fun hydrationEntryDao(): HydrationEntryDao
+    abstract fun settingsDao(): SettingsDao
 
     companion object {
         @Volatile

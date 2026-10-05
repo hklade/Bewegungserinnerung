@@ -20,7 +20,9 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         val slotTimeEpochMilli = intent.getLongExtra(EXTRA_SLOT_TIME_EPOCH_MILLI, -1L)
         val slotTime = if (slotTimeEpochMilli >= 0) Instant.ofEpochMilli(slotTimeEpochMilli) else Instant.now()
 
-        ReminderNotifier.showReminderNotification(context, ReminderDefaults.TONE_ENABLED, slotTime)
+        val tone = intent.toneChoice()
+
+        ReminderNotifier.showReminderNotification(context, tone.enabled, tone.sequence, slotTime)
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             REARM_WORK_NAME,

@@ -1,16 +1,17 @@
 ## 1. Data layer (Room)
 
-- [ ] 1.1 Define the Room entity/DAO for the single settings row (reminder window, weekdays-only, hydration goal, tone enabled, export location, hide-missed-reminders flag), seeded with defaults on first run (hide-missed-reminders defaulting to `false`), and verify a unit test confirms defaults are returned before any explicit save
+- [x] 1.1 Define the Room entity/DAO for the single settings row (reminder window, weekdays-only, hydration goal, tone enabled, export location, hide-missed-reminders flag), seeded with defaults on first run (hide-missed-reminders defaulting to `false`), and verify a unit test confirms defaults are returned before any explicit save
 
 ## 2. Settings screen
 
 - [ ] 2.1 Build the settings screen reachable via one navigation action from quick-entry, and verify manually it is not shown on cold start
-- [ ] 2.2 Implement reminder settings (enabled, start time, end time, weekdays-only) with explicit save and immediate effect on scheduling, and verify unit/integration tests for: toggle takes effect without restart, window change reschedules, weekdays-only change takes effect going forward — depends on the reminder-scheduling module from `add-android-reminder-scheduling` (task 2.1/2.3 there)
-- [ ] 2.3 Implement the hydration goal input with validation/fallback-to-default, and verify a unit test covers valid input and invalid-input-falls-back-to-2L
-- [ ] 2.4 Implement the tone/vibration toggle and its "test" action wiring to the module built in `add-android-reminder-scheduling` (task 2.5 there), and verify the test action is disabled when tone is off
+- [x] 2.2 Implement reminder settings (enabled, start time, end time, weekdays-only) with explicit save and immediate effect on scheduling, and verify unit/integration tests for: toggle takes effect without restart, window change reschedules, weekdays-only change takes effect going forward — depends on the reminder-scheduling module from `add-android-reminder-scheduling` (task 2.1/2.3 there)
+- [x] 2.3 Implement the hydration goal input with validation/fallback-to-default, and verify a unit test covers valid input and invalid-input-falls-back-to-2L
+- [x] 2.4 Implement the tone/vibration toggle and its "test" action wiring to the module built in `add-android-reminder-scheduling` (task 2.5 there), and verify the test action is disabled when tone is off
+- [x] 2.4a Implement the three selectable tone sequences ("Aufwärts" default, "Doppelschlag", "Weicher Gong") as synthesized note plans (design D13) with a preview action per option, play the saved selection with reminder notifications and the "test" action, and verify unit tests for: default selection, note-plan shape per sequence, saved selection used by notification/test, no sequence when tone is off
 - [ ] 2.5 Implement the export-location picker (Android-native storage/document picker, replacing the web app's free-text path field), and verify manually — this becomes the default destination for the export flow once `add-android-csv-import-export` (task 1.2 there) exists
-- [ ] 2.6 Implement the "hide missed reminders" toggle (default off), and verify a unit test confirms the default is off and that enabling it takes effect without an app restart — consumed by the activity history list from `add-android-activity-history`
-- [ ] 2.7 Implement explicit save/confirmation/error states for the settings screen (no autosave-on-change), and verify a unit/integration test confirms navigating away without saving leaves prior settings in effect
+- [x] 2.6 Implement the "hide missed reminders" toggle (default off), and verify a unit test confirms the default is off and that enabling it takes effect without an app restart — consumed by the activity history list from `add-android-activity-history`
+- [x] 2.7 Implement explicit save/confirmation/error states for the settings screen (no autosave-on-change), and verify a unit/integration test confirms navigating away without saving leaves prior settings in effect
 
 ## 3. Cross-cutting verification
 

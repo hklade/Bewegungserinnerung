@@ -100,11 +100,16 @@ private fun MovementEntry.toActivityHistoryEntry() = ActivityHistoryEntry(
  * alone don't uniquely order entries — a primary and an additional/extra entry can share the same
  * slot (see `android-reminder-scheduling`'s `AnsweredWithExtra`) — so within a shared slot,
  * `createdAt` breaks ties in ascending order (the order the entries actually happened in).
+ * [hideMissedReminders] (a user setting) drops `Unanswered` rows from this display projection only.
  */
-fun toActivityHistory(entries: List<MovementEntry>): List<ActivityHistoryEntry> =
+fun toActivityHistory(
+    entries: List<MovementEntry>,
+    hideMissedReminders: Boolean = false,
+): List<ActivityHistoryEntry> =
     entries
         .asSequence()
         .map { it.toActivityHistoryEntry() }
+        .filterNot { hideMissedReminders && it.type == ActivityEntryType.Unanswered }
         .sortedWith(
             compareByDescending<ActivityHistoryEntry> { it.date }
                 .thenByDescending { it.reminderTime }
