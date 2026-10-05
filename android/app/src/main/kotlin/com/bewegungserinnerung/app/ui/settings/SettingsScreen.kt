@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -32,13 +34,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.bewegungserinnerung.app.reminder.ToneSequence
 import com.bewegungserinnerung.app.reminder.parseTimeToMinutes
@@ -97,7 +102,7 @@ fun SettingsScreen(
                 onClick = onBack,
                 modifier = Modifier.semantics { contentDescription = "Zurück" },
             ) {
-                Text("←", fontSize = 32.sp)
+                Icon(BackArrow, contentDescription = null, modifier = Modifier.size(32.dp))
             }
             Text("Optionen", style = MaterialTheme.typography.titleLarge)
         }
@@ -218,6 +223,32 @@ fun SettingsScreen(
         }
     }
 }
+
+/**
+ * Material's "arrow back" shape, drawn as a vector rather than the "←" text glyph: a glyph sits
+ * wherever its font places it within the line box (low, next to the title), while a vector is
+ * symmetric in its box and so lines up with the middle of the title. No icon library needed.
+ */
+private val BackArrow: ImageVector = ImageVector.Builder(
+    name = "BackArrow",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(fill = SolidColor(Color.Black)) {
+        moveTo(20f, 11f)
+        horizontalLineTo(7.83f)
+        lineTo(13.42f, 5.41f)
+        lineTo(12f, 4f)
+        lineTo(4f, 12f)
+        lineTo(12f, 20f)
+        lineTo(13.41f, 18.59f)
+        lineTo(7.83f, 13f)
+        horizontalLineTo(20f)
+        close()
+    }
+}.build()
 
 /** No chosen folder means export uses the public Downloads directory (D10). */
 private fun exportLocationLabel(uri: String?): String =
