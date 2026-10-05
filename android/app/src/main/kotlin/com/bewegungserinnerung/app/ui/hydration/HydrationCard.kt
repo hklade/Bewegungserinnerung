@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,7 +53,7 @@ fun HydrationCard(viewModel: HydrationViewModel, modifier: Modifier = Modifier) 
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilledTonalButton(
+                Button(
                     onClick = { scope.launch { viewModel.decrement() } },
                     enabled = state.canDecrement,
                     modifier = Modifier.semantics { contentDescription = "250 ml entfernen" },
