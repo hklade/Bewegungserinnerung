@@ -22,7 +22,6 @@ import androidx.work.WorkManager
 import com.bewegungserinnerung.app.data.AppDatabase
 import com.bewegungserinnerung.app.data.AppSettings
 import com.bewegungserinnerung.app.data.observeSettings
-import com.bewegungserinnerung.app.reminder.ChimePlayer
 import com.bewegungserinnerung.app.reminder.ReminderAlarmReceiver
 import com.bewegungserinnerung.app.reminder.ReminderBackfillWorker
 import com.bewegungserinnerung.app.reminder.ReminderNotifier
@@ -144,7 +143,6 @@ class MainActivity : ComponentActivity() {
                                 viewModel = settingsViewModel,
                                 onBack = back,
                                 onTestTone = { sequence -> ReminderNotifier.playTestTone(applicationContext, sequence) },
-                                onPreviewTone = { sequence -> ChimePlayer.play(applicationContext, sequence) },
                             )
                         },
                     )

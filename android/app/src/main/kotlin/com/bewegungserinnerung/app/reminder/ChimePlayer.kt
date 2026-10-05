@@ -39,16 +39,42 @@ object ChimePlayer {
                 .build()
         }.getOrNull() ?: return
 
-        // A tone that can't play (no audio output, track failed to initialize) must never break
-        // the reminder notification it accompanies — skip the sound instead of throwing.
-        if (track.state != AudioTrack.STATE_INITIALIZED) {
-            track.release()
-            return
-        }
-        track.write(samples, 0, samples.size)
-        track.play()
+        if (!startStaticPlayback(AudioTrackAdapter(track), samples)) return
 
         val durationMs = samples.size * 1000L / SAMPLE_RATE
         Handler(Looper.getMainLooper()).postDelayed({ track.release() }, durationMs + RELEASE_GRACE_MS)
     }
+}
+
+/** The slice of [AudioTrack] that [startStaticPlayback] needs, so its ordering is unit-testable. */
+internal interface PcmTrack {
+    val state: Int
+    fun write(samples: ShortArray)
+    fun play()
+    fun release()
+}
+
+private class AudioTrackAdapter(private val track: AudioTrack) : PcmTrack {
+    override val state: Int get() = track.state
+    override fun write(samples: ShortArray) {
+        track.write(samples, 0, samples.size)
+    }
+    override fun play() = track.play()
+    override fun release() = track.release()
+}
+
+/**
+ * Writes [samples] into a `MODE_STATIC` track and starts it. Such a track reports
+ * `STATE_NO_STATIC_DATA` until its data is written, so readiness can only be checked *after*
+ * writing. A track that still isn't ready (no audio output) is released instead of played, so a
+ * missing sound never breaks the reminder notification it accompanies.
+ */
+internal fun startStaticPlayback(track: PcmTrack, samples: ShortArray): Boolean {
+    track.write(samples)
+    if (track.state != AudioTrack.STATE_INITIALIZED) {
+        track.release()
+        return false
+    }
+    track.play()
+    return true
 }

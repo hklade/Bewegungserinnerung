@@ -30,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 class SettingsScreenTest {
@@ -39,7 +40,7 @@ class SettingsScreenTest {
 
     private lateinit var database: AppDatabase
     private val testTones = mutableListOf<ToneSequence>()
-    private val previews = mutableListOf<ToneSequence>()
+    private var backCount = 0
 
     @Before
     fun setUp() {
@@ -61,9 +62,8 @@ class SettingsScreenTest {
         composeRule.setContent {
             SettingsScreen(
                 viewModel = viewModel,
-                onBack = {},
+                onBack = { backCount++ },
                 onTestTone = { testTones += it },
-                onPreviewTone = { previews += it },
             )
         }
     }
@@ -73,6 +73,8 @@ class SettingsScreenTest {
         showScreen()
 
         composeRule.onNodeWithText("Stündliche Erinnerung").performScrollTo().assertIsOn()
+        composeRule.onNodeWithText("Zeitfenster").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Akustische Erinnerung").performScrollTo().assertIsOn()
         composeRule.onNodeWithText("07:55").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("16:55").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Nur Werktage").performScrollTo().assertIsOn()
@@ -89,45 +91,56 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `Test-Aktion ist bei ausgeschaltetem Ton deaktiviert`() {
+    fun `Es gibt keinen eigenen Ton-testen-Button mehr`() {
         showScreen()
-        composeRule.onNodeWithText("Ton testen").performScrollTo().assertIsEnabled()
 
-        composeRule.onNodeWithText("Erinnerungston").performScrollTo().performClick()
-
-        composeRule.onNodeWithText("Ton testen").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText("Ton testen").assertDoesNotExist()
     }
 
     @Test
-    fun `Test-Aktion spielt die ausgewählte Tonfolge`() {
-        showScreen()
-
-        composeRule.onNodeWithText("Doppelschlag").performScrollTo().performClick()
-        composeRule.onNodeWithText("Ton testen").performScrollTo().performClick()
-
-        assertEquals(listOf(ToneSequence.Doppelschlag), testTones)
-    }
-
-    @Test
-    fun `Anhören spielt die Tonfolge, ohne die Auswahl zu ändern`() {
+    fun `Abspiel-Pfeil spielt die Tonfolge, ohne die Auswahl zu ändern`() {
         showScreen()
 
         composeRule.onNodeWithContentDescription("Weicher Gong anhören").performScrollTo().performClick()
 
-        assertEquals(listOf(ToneSequence.WeicherGong), previews)
+        assertEquals(listOf(ToneSequence.WeicherGong), testTones)
         composeRule.onNodeWithText("Aufwärts").performScrollTo().assertIsSelected()
         composeRule.onNodeWithText("Weicher Gong").performScrollTo().assertIsNotSelected()
     }
 
     @Test
-    fun `Speichern übernimmt die Änderungen und zeigt eine Bestätigung`() {
+    fun `Jede Tonfolge hat einen eigenen Abspiel-Pfeil`() {
+        showScreen()
+
+        for (sequence in ToneSequence.entries) {
+            composeRule.onNodeWithContentDescription("${sequence.label} anhören").performScrollTo().performClick()
+        }
+
+        assertEquals(ToneSequence.entries.toList(), testTones)
+    }
+
+    @Test
+    fun `Abspiel-Pfeile sind bei ausgeschalteter akustischer Erinnerung deaktiviert`() {
+        showScreen()
+        composeRule.onNodeWithContentDescription("Doppelschlag anhören").performScrollTo().assertIsEnabled()
+
+        composeRule.onNodeWithText("Akustische Erinnerung").performScrollTo().performClick()
+
+        for (sequence in ToneSequence.entries) {
+            composeRule.onNodeWithContentDescription("${sequence.label} anhören").performScrollTo().assertIsNotEnabled()
+        }
+    }
+
+    @Test
+    fun `Speichern übernimmt die Änderungen, bestätigt kurz und kehrt zur Schnelleingabe zurück`() {
         showScreen()
 
         composeRule.onNodeWithText("Verpasste Erinnerungen ausblenden").performScrollTo().performClick()
         composeRule.onNodeWithText("Speichern").performScrollTo().performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Einstellungen gespeichert.").performScrollTo().assertIsDisplayed()
+        assertEquals("Einstellungen gespeichert.", ShadowToast.getTextOfLatestToast())
+        assertEquals(1, backCount)
         assertTrue(runBlocking { database.settingsDao().currentSettings() }.hideMissedReminders)
     }
 
@@ -149,5 +162,6 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Speichern fehlgeschlagen. Die bisherigen Einstellungen bleiben aktiv.")
             .performScrollTo()
             .assertIsDisplayed()
+        assertEquals("Bei einem Fehler bleiben die Optionen offen", 0, backCount)
     }
 }

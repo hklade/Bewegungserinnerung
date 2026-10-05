@@ -2,6 +2,7 @@ package com.bewegungserinnerung.app.ui.settings
 
 import android.app.TimePickerDialog
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.bewegungserinnerung.app.reminder.ToneSequence
 import com.bewegungserinnerung.app.reminder.parseTimeToMinutes
@@ -44,7 +46,8 @@ import kotlinx.coroutines.launch
 
 /**
  * The "Optionen" screen. Every control edits [SettingsViewModel]'s draft only; nothing takes
- * effect until "Speichern" succeeds. [onTestTone]/[onPreviewTone] play a tone sequence without
+ * effect until "Speichern" succeeds, which confirms briefly and returns via [onBack]. The play
+ * arrow next to each tone sequence is the test action: [onTestTone] plays that sequence without
  * touching any setting.
  */
 @Composable
@@ -52,7 +55,6 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
     onTestTone: (ToneSequence) -> Unit,
-    onPreviewTone: (ToneSequence) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -95,7 +97,7 @@ fun SettingsScreen(
                 onClick = onBack,
                 modifier = Modifier.semantics { contentDescription = "Zurück" },
             ) {
-                Text("←")
+                Text("←", fontSize = 32.sp)
             }
             Text("Optionen", style = MaterialTheme.typography.titleLarge)
         }
@@ -108,7 +110,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("Erinnerungsfenster", modifier = Modifier.weight(1f))
+                Text("Zeitfenster", modifier = Modifier.weight(1f))
                 OutlinedButton(onClick = { pickTime(draft.startTime) { t -> viewModel.edit { it.copy(startTime = t) } } }) {
                     Text(draft.startTime)
                 }
@@ -135,7 +137,7 @@ fun SettingsScreen(
         }
 
         SettingsCard("Ton") {
-            SwitchRow("Erinnerungston", draft.toneEnabled) { enabled ->
+            SwitchRow("Akustische Erinnerung", draft.toneEnabled) { enabled ->
                 viewModel.edit { it.copy(toneEnabled = enabled) }
             }
             ToneSequence.entries.forEach { sequence ->
@@ -154,18 +156,13 @@ fun SettingsScreen(
                         Text(sequence.label, modifier = Modifier.padding(start = 8.dp))
                     }
                     IconButton(
-                        onClick = { onPreviewTone(sequence) },
+                        onClick = { onTestTone(sequence) },
+                        enabled = draft.toneEnabled,
                         modifier = Modifier.semantics { contentDescription = "${sequence.label} anhören" },
                     ) {
                         Text("▶")
                     }
                 }
-            }
-            OutlinedButton(
-                onClick = { onTestTone(draft.toneSequence) },
-                enabled = draft.toneEnabled,
-            ) {
-                Text("Ton testen")
             }
         }
 
@@ -195,17 +192,25 @@ fun SettingsScreen(
             }
         }
 
-        when (state.saveStatus) {
-            SaveStatus.Saved -> Text("Einstellungen gespeichert.", color = MaterialTheme.colorScheme.primary)
-            SaveStatus.Failed -> Text(
+        if (state.saveStatus == SaveStatus.Failed) {
+            Text(
                 "Speichern fehlgeschlagen. Die bisherigen Einstellungen bleiben aktiv.",
                 color = MaterialTheme.colorScheme.error,
             )
-            SaveStatus.Idle -> Unit
         }
 
         Button(
-            onClick = { scope.launch { viewModel.save() } },
+            onClick = {
+                scope.launch {
+                    viewModel.save()
+                    if (viewModel.uiState.value.saveStatus == SaveStatus.Saved) {
+                        // A toast outlives the screen, so the confirmation stays visible after
+                        // returning to quick-entry.
+                        Toast.makeText(context, "Einstellungen gespeichert.", Toast.LENGTH_SHORT).show()
+                        onBack()
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Speichern")
