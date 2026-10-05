@@ -42,11 +42,11 @@ The system SHALL let the user configure the daily hydration goal, in liters, on 
 - **THEN** the saved hydration goal falls back to the default of 2 liters rather than saving an invalid value
 
 ### Requirement: Notification tone/vibration is configurable with a test action
-The system SHALL let the user enable or disable the reminder tone/vibration ("Akustische Erinnerung") on the settings screen, and SHALL provide a "test" action — a play arrow next to each tone sequence, with no separate test button — that plays the tone/vibration on demand, disabled when the tone setting is off.
+The system SHALL let the user enable or disable the reminder tone/vibration ("Akustische Erinnerung") on the settings screen, and SHALL provide a "test" action — a play arrow next to each tone sequence, with no separate test button — that plays the tone/vibration on demand, also while the tone setting is off (so sequences can be tried out before turning it on).
 
-#### Scenario: Test action is unavailable when tone is disabled
-- **WHEN** the tone/vibration setting is disabled
-- **THEN** every play arrow is shown as disabled and cannot be triggered
+#### Scenario: Test action stays available when tone is disabled
+- **WHEN** the tone/vibration setting is disabled and the user triggers a play arrow
+- **THEN** that tone sequence plays immediately, while reminder notifications stay silent
 
 #### Scenario: Test action plays the tone when enabled
 - **WHEN** the tone/vibration setting is enabled and the user triggers "test"

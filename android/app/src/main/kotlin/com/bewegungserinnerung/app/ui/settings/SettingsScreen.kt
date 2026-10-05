@@ -156,8 +156,9 @@ fun SettingsScreen(
                         Text(sequence.label, modifier = Modifier.padding(start = 8.dp))
                     }
                     IconButton(
+                        // Stays enabled with the tone off, so sequences can be tried out before
+                        // turning the acoustic reminder on.
                         onClick = { onTestTone(sequence) },
-                        enabled = draft.toneEnabled,
                         modifier = Modifier.semantics { contentDescription = "${sequence.label} anhören" },
                     ) {
                         Text("▶")

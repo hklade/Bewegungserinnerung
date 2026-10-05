@@ -2,7 +2,6 @@ package com.bewegungserinnerung.app.ui.settings
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -120,15 +119,18 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `Abspiel-Pfeile sind bei ausgeschalteter akustischer Erinnerung deaktiviert`() {
+    fun `Tonfolgen lassen sich auch bei ausgeschalteter akustischer Erinnerung anhören`() {
         showScreen()
-        composeRule.onNodeWithContentDescription("Doppelschlag anhören").performScrollTo().assertIsEnabled()
 
         composeRule.onNodeWithText("Akustische Erinnerung").performScrollTo().performClick()
+        composeRule.onNodeWithText("Akustische Erinnerung").performScrollTo().assertIsOff()
 
         for (sequence in ToneSequence.entries) {
-            composeRule.onNodeWithContentDescription("${sequence.label} anhören").performScrollTo().assertIsNotEnabled()
+            composeRule.onNodeWithContentDescription("${sequence.label} anhören").performScrollTo()
+                .assertIsEnabled()
+                .performClick()
         }
+        assertEquals(ToneSequence.entries.toList(), testTones)
     }
 
     @Test
