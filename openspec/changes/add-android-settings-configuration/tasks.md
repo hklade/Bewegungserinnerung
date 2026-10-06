@@ -11,7 +11,7 @@
 - [x] 2.4a Implement the three selectable tone sequences ("Aufwärts" default, "Doppelschlag", "Weicher Gong") as synthesized note plans (design D13) with a play arrow per option that serves as the "test" action (no separate test button), play the saved selection with reminder notifications and the "test" action, and verify unit tests for: default selection, note-plan shape per sequence, saved selection used by notification/test, no sequence when tone is off
 - [ ] 2.5 Implement the export-location picker (Android-native storage/document picker, replacing the web app's free-text path field), and verify manually — this becomes the default destination for the export flow once `add-android-csv-import-export` (task 1.2 there) exists
 - [x] 2.6 Implement the "hide missed reminders" toggle (default off), and verify a unit test confirms the default is off and that enabling it takes effect without an app restart — consumed by the activity history list from `add-android-activity-history`
-- [x] 2.7 Implement explicit save/confirmation/error states for the settings screen (no autosave-on-change), and verify a unit/integration test confirms navigating away without saving leaves prior settings in effect
+- [x] 2.7 Implement explicit save (returning to quick-entry on success) and error states for the settings screen (no autosave-on-change), and verify a unit/integration test confirms navigating away without saving leaves prior settings in effect
 
 ## 3. Cross-cutting verification
 

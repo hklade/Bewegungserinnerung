@@ -95,15 +95,15 @@ The system SHALL let the user configure, on the settings screen, whether missed 
 - **THEN** the activity history list defined in [[android-activity-history]] no longer displays `Unanswered` entries, without requiring an app restart
 
 ### Requirement: Settings changes are explicitly saved and confirmed
-The system SHALL require an explicit save action to persist settings changes (not save on every keystroke/toggle), and SHALL show the user a clear confirmation when settings have been saved successfully, or an error state if saving fails.
+The system SHALL require an explicit save action to persist settings changes (not save on every keystroke/toggle), SHALL return to the quick-entry screen when settings have been saved successfully (this return is the confirmation; no separate message is shown), and SHALL show an error state if saving fails.
 
 #### Scenario: Unsaved changes are not applied
 - **WHEN** the user changes a settings value but navigates away without saving
 - **THEN** the previously saved settings remain in effect, not the unsaved changes
 
-#### Scenario: Successful save is confirmed and returns to quick-entry
+#### Scenario: Successful save returns to quick-entry
 - **WHEN** the user triggers the save action and it succeeds
-- **THEN** the system shows a short success confirmation and returns to the quick-entry screen
+- **THEN** the system returns to the quick-entry screen, without a separate success message
 
 #### Scenario: Failed save is shown as an error
 - **WHEN** the user triggers the save action and it fails (e.g. a local storage error)

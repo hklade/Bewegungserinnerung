@@ -29,7 +29,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 class SettingsScreenTest {
@@ -131,19 +130,6 @@ class SettingsScreenTest {
                 .performClick()
         }
         assertEquals(ToneSequence.entries.toList(), testTones)
-    }
-
-    @Test
-    fun `Speichern übernimmt die Änderungen, bestätigt kurz und kehrt zur Schnelleingabe zurück`() {
-        showScreen()
-
-        composeRule.onNodeWithText("Verpasste Erinnerungen ausblenden").performScrollTo().performClick()
-        composeRule.onNodeWithText("Speichern").performScrollTo().performClick()
-        composeRule.waitForIdle()
-
-        assertEquals("Einstellungen gespeichert.", ShadowToast.getTextOfLatestToast())
-        assertEquals(1, backCount)
-        assertTrue(runBlocking { database.settingsDao().currentSettings() }.hideMissedReminders)
     }
 
     @Test

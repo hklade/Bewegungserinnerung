@@ -2,7 +2,6 @@ package com.bewegungserinnerung.app.ui.settings
 
 import android.app.TimePickerDialog
 import android.content.Intent
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +50,7 @@ import kotlinx.coroutines.launch
 
 /**
  * The "Optionen" screen. Every control edits [SettingsViewModel]'s draft only; nothing takes
- * effect until "Speichern" succeeds, which confirms briefly and returns via [onBack]. The play
+ * effect until "Speichern" succeeds, which returns via [onBack]. The play
  * arrow next to each tone sequence is the test action: [onTestTone] plays that sequence without
  * touching any setting.
  */
@@ -210,9 +209,7 @@ fun SettingsScreen(
                 scope.launch {
                     viewModel.save()
                     if (viewModel.uiState.value.saveStatus == SaveStatus.Saved) {
-                        // A toast outlives the screen, so the confirmation stays visible after
-                        // returning to quick-entry.
-                        Toast.makeText(context, "Einstellungen gespeichert.", Toast.LENGTH_SHORT).show()
+                        // Returning to quick-entry is the confirmation; no separate message.
                         onBack()
                     }
                 }

@@ -16,7 +16,7 @@ Consumed by: `add-android-reminder-scheduling` (reminder window/weekdays-only/to
 - The reminder tone is selectable from three tone sequences ("Aufwärts" default, "Doppelschlag", "Weicher Gong"), each with its own play arrow as the test action.
 - The export location is configured via an Android-native storage/document picker, replacing the web app's free-text filesystem-path field.
 - Missed reminders can be hidden from the activity history list via a "hide missed reminders" toggle, defaulting to off (missed reminders shown).
-- All settings changes require an explicit save action (no autosave-on-change) and show a clear success confirmation or error state; navigating away without saving leaves prior settings in effect.
+- All settings changes require an explicit save action (no autosave-on-change) and return to quick-entry on success or show an error state; navigating away without saving leaves prior settings in effect.
 
 ## Capabilities
 

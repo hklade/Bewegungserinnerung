@@ -41,7 +41,7 @@ The existing web app's settings live in a server-side JSON config file (`config.
 
 ## Risks / Trade-offs
 
-- [A settings save that fails partway (e.g. a local storage error) could leave the UI showing unsaved values as if they were active] → Mitigation: settings changes require an explicit save action with a distinct success/error state, and a failed save leaves the previously saved settings in effect rather than a partially-applied state.
+- [A settings save that fails partway (e.g. a local storage error) could leave the UI showing unsaved values as if they were active] → Mitigation: settings changes require an explicit save action (success returns to quick-entry, failure shows a distinct error state), and a failed save leaves the previously saved settings in effect rather than a partially-applied state.
 
 ## Open Questions
 

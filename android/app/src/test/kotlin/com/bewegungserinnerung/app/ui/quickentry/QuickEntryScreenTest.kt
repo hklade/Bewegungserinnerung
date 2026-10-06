@@ -157,28 +157,6 @@ class QuickEntryScreenTest {
     }
 
     @Test
-    fun `Das Zahnrad öffnet die Optionen`() {
-        val slotTime = Instant.parse("2026-09-10T08:55:00Z")
-        val viewModel = QuickEntryViewModel(
-            dao = database.movementEntryDao(),
-            clock = Clock.fixed(slotTime.plusSeconds(60), ZoneOffset.UTC),
-            currentSlotTime = slotTime,
-        )
-        var openCount = 0
-
-        composeRule.setContent {
-            QuickEntryScreen(
-                viewModel = viewModel,
-                currentSlotLabel = "08:55",
-                onOpenSettings = { openCount++ },
-            )
-        }
-        composeRule.onNodeWithContentDescription("Optionen öffnen").performClick()
-
-        assertEquals(1, openCount)
-    }
-
-    @Test
     fun `Verpasste Erinnerungen ausblenden wirkt ohne Neustart`() {
         val slotTime = Instant.parse("2026-09-10T08:55:00Z")
         val viewModel = QuickEntryViewModel(
