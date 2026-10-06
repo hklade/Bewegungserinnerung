@@ -1,9 +1,8 @@
 package com.bewegungserinnerung.app.reminder
 
 /**
- * Built-in reminder configuration, used until `add-android-settings-configuration`'s settings
- * row exists. Every consumer of these values (scheduling, backfill, countdown) reads them from
- * here so that wiring in real settings later only means changing this one place.
+ * Built-in reminder configuration: the defaults of the settings row ([AppSettings][com.bewegungserinnerung.app.data.AppSettings])
+ * before the user first saves. Consumers read the settings row, never these constants directly.
  */
 object ReminderDefaults {
     const val REMINDERS_ENABLED = true
@@ -11,4 +10,5 @@ object ReminderDefaults {
     const val START_TIME = "07:55"
     const val END_TIME = "16:55"
     const val TONE_ENABLED = true
+    val TONE_SEQUENCE = ToneSequence.Aufwaerts
 }

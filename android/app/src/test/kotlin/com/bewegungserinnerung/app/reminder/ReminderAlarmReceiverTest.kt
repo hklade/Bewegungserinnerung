@@ -54,4 +54,10 @@ class ReminderAlarmReceiverTest {
 
         assertTrue(text.contains("08:55"))
     }
+
+    @Test
+    fun `Alarm ohne mitgegebene Ton-Einstellung nutzt die Standardeinstellung`() {
+        // Alarms scheduled before the tone setting existed carry no tone extras.
+        assertEquals(ToneChoice(enabled = true, sequence = ToneSequence.Aufwaerts), Intent().toneChoice())
+    }
 }

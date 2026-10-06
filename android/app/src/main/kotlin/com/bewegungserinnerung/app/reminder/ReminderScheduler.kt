@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.work.ExistingPeriodicWorkPolicy
+import com.bewegungserinnerung.app.data.AppSettings
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.time.Duration
@@ -27,19 +28,20 @@ object ReminderScheduler {
     const val PERIODIC_BACKFILL_WORK_NAME = "reminder-periodic-backfill"
 
     /**
-     * Computes the next eligible reminder slot from now and schedules an exact alarm for it,
-     * replacing any previously scheduled alarm. Does nothing (and cancels any pending alarm) if
-     * reminders are disabled or no eligible slot exists.
+     * Computes the next eligible reminder slot from now under [settings] and schedules an exact
+     * alarm for it, replacing any previously scheduled alarm — so calling this right after the
+     * settings are saved drops an alarm that no longer fits the new window. Does nothing (and
+     * cancels any pending alarm) if reminders are disabled or no eligible slot exists.
      */
-    fun scheduleNextAlarm(context: Context, now: Instant = Instant.now()) {
+    fun scheduleNextAlarm(context: Context, settings: AppSettings, now: Instant = Instant.now()) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val countdown = nextReminderCountdown(
             now = now,
-            remindersEnabled = ReminderDefaults.REMINDERS_ENABLED,
-            weekdaysOnly = ReminderDefaults.WEEKDAYS_ONLY,
-            startTime = ReminderDefaults.START_TIME,
-            endTime = ReminderDefaults.END_TIME,
+            remindersEnabled = settings.remindersEnabled,
+            weekdaysOnly = settings.weekdaysOnly,
+            startTime = settings.startTime,
+            endTime = settings.endTime,
         )
 
         alarmManager.cancel(reminderPendingIntent(context, slotTime = null))
@@ -48,7 +50,11 @@ object ReminderScheduler {
 
         // The slot time travels with the alarm (not read via Instant.now() when it fires) so the
         // notification shows the intended slot even if an inexact fallback alarm fires late.
-        val pendingIntent = reminderPendingIntent(context, slotTime = countdown.nextSlot)
+        val pendingIntent = reminderPendingIntent(
+            context,
+            slotTime = countdown.nextSlot,
+            tone = ToneChoice(enabled = settings.toneEnabled, sequence = settings.toneSequence),
+        )
 
         if (alarmManager.canScheduleExactAlarms()) {
             alarmManager.setExactAndAllowWhileIdle(
@@ -86,10 +92,13 @@ object ReminderScheduler {
         )
     }
 
-    private fun reminderPendingIntent(context: Context, slotTime: Instant?): PendingIntent {
+    private fun reminderPendingIntent(context: Context, slotTime: Instant?, tone: ToneChoice? = null): PendingIntent {
         val intent = Intent(context, ReminderAlarmReceiver::class.java)
         if (slotTime != null) {
             intent.putExtra(ReminderAlarmReceiver.EXTRA_SLOT_TIME_EPOCH_MILLI, slotTime.toEpochMilli())
+        }
+        if (tone != null) {
+            intent.putToneChoice(tone)
         }
         return PendingIntent.getBroadcast(
             context,

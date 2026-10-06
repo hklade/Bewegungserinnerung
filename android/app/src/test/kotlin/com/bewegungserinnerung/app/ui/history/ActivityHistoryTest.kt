@@ -49,6 +49,18 @@ class ActivityHistoryTest {
     }
 
     @Test
+    fun `Mit ausgeblendeten verpassten Erinnerungen fehlen unbeantwortete Zeitfenster in der Liste`() {
+        val entries = listOf(
+            entry(reminderTime = "08:55", entryType = "planned_break_response"),
+            entry(reminderTime = "09:55", entryType = UNANSWERED_ENTRY_TYPE, responseTime = null, delayMinutes = null),
+        )
+
+        val history = toActivityHistory(entries, hideMissedReminders = true)
+
+        assertEquals(listOf("08:55"), history.map { it.reminderTime })
+    }
+
+    @Test
     fun `Unbeantwortete Einträge werden als Unanswered klassifiziert`() {
         val history = toActivityHistory(
             listOf(entry(entryType = UNANSWERED_ENTRY_TYPE, responseTime = null, delayMinutes = null)),

@@ -42,15 +42,34 @@ The system SHALL let the user configure the daily hydration goal, in liters, on 
 - **THEN** the saved hydration goal falls back to the default of 2 liters rather than saving an invalid value
 
 ### Requirement: Notification tone/vibration is configurable with a test action
-The system SHALL let the user enable or disable the reminder tone/vibration on the settings screen, and SHALL provide a "test" action that plays the current tone/vibration configuration on demand, disabled when the tone setting is off.
+The system SHALL let the user enable or disable the reminder tone/vibration ("Akustische Erinnerung") on the settings screen, and SHALL provide a "test" action — a play arrow next to each tone sequence, with no separate test button — that plays the tone/vibration on demand, also while the tone setting is off (so sequences can be tried out before turning it on).
 
-#### Scenario: Test action is unavailable when tone is disabled
-- **WHEN** the tone/vibration setting is disabled
-- **THEN** the "test" action is shown as disabled and cannot be triggered
+#### Scenario: Test action stays available when tone is disabled
+- **WHEN** the tone/vibration setting is disabled and the user triggers a play arrow
+- **THEN** that tone sequence plays immediately, while reminder notifications stay silent
 
 #### Scenario: Test action plays the tone when enabled
 - **WHEN** the tone/vibration setting is enabled and the user triggers "test"
 - **THEN** the configured tone and/or vibration plays immediately, per [[android-reminder-scheduling]]'s test-tone requirement
+
+### Requirement: The reminder tone is selectable from three tone sequences
+The system SHALL let the user choose, on the settings screen, which of three tone sequences plays with a reminder: "Aufwärts" (the existing three-note tone of the web app, used as the default), "Doppelschlag" (two short, equal strikes) and "Weicher Gong" (a single soft, slowly fading tone). Each option SHALL offer its own play arrow (the "test" action) that plays that sequence on demand without changing the selection. Reminder notifications SHALL play the saved selection.
+
+#### Scenario: Default tone sequence is "Aufwärts"
+- **WHEN** the settings screen is opened with no prior explicit save of the tone selection
+- **THEN** "Aufwärts" is shown as the selected tone sequence
+
+#### Scenario: Selected tone sequence is used after saving
+- **WHEN** the user selects a different tone sequence and saves
+- **THEN** subsequent reminder notifications play the newly selected sequence
+
+#### Scenario: Playing a tone sequence does not change the selection
+- **WHEN** the user triggers the play arrow of a tone sequence that is not selected
+- **THEN** that sequence plays immediately, and the selected and saved tone sequence stay unchanged
+
+#### Scenario: No tone sequence plays when the tone is disabled
+- **WHEN** the tone/vibration setting is disabled and a reminder notification fires
+- **THEN** no tone sequence plays, regardless of which sequence is selected
 
 ### Requirement: The export location is configurable
 The system SHALL let the user configure or choose the destination for CSV export (e.g. a storage location or default share target), replacing the web app's free-text filesystem-path field with an Android-appropriate storage location selection.
@@ -76,16 +95,16 @@ The system SHALL let the user configure, on the settings screen, whether missed 
 - **THEN** the activity history list defined in [[android-activity-history]] no longer displays `Unanswered` entries, without requiring an app restart
 
 ### Requirement: Settings changes are explicitly saved and confirmed
-The system SHALL require an explicit save action to persist settings changes (not save on every keystroke/toggle), and SHALL show the user a clear confirmation when settings have been saved successfully, or an error state if saving fails.
+The system SHALL require an explicit save action to persist settings changes (not save on every keystroke/toggle), SHALL return to the quick-entry screen when settings have been saved successfully (this return is the confirmation; no separate message is shown), and SHALL show an error state if saving fails.
 
 #### Scenario: Unsaved changes are not applied
 - **WHEN** the user changes a settings value but navigates away without saving
 - **THEN** the previously saved settings remain in effect, not the unsaved changes
 
-#### Scenario: Successful save is confirmed
+#### Scenario: Successful save returns to quick-entry
 - **WHEN** the user triggers the save action and it succeeds
-- **THEN** the system shows a clear success confirmation to the user
+- **THEN** the system returns to the quick-entry screen, without a separate success message
 
 #### Scenario: Failed save is shown as an error
 - **WHEN** the user triggers the save action and it fails (e.g. a local storage error)
-- **THEN** the system shows an error state and the previously saved settings remain in effect
+- **THEN** the system shows an error state, stays on the settings screen, and the previously saved settings remain in effect

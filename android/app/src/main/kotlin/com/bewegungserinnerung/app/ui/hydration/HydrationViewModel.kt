@@ -1,5 +1,6 @@
 package com.bewegungserinnerung.app.ui.hydration
 
+import com.bewegungserinnerung.app.data.DEFAULT_HYDRATION_GOAL_ML
 import com.bewegungserinnerung.app.data.HydrationEntry
 import com.bewegungserinnerung.app.data.HydrationEntryDao
 import com.bewegungserinnerung.app.reminder.ZONE
@@ -12,8 +13,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-/** Used until `add-android-settings-configuration` provides a configured daily goal. */
-const val DEFAULT_HYDRATION_GOAL_ML = 2000
 const val HYDRATION_STEP_ML = 250
 
 class HydrationViewModel(
@@ -36,6 +35,11 @@ class HydrationViewModel(
         persistedAmountMl = dao.amountForDate(date) ?: 0
         loadedDate = date
         _uiState.value = _uiState.value.copy(amountMl = persistedAmountMl)
+    }
+
+    /** Applies a goal saved in settings without reloading the day's amount. */
+    fun updateGoal(goalMl: Int) {
+        _uiState.value = _uiState.value.copy(goalMl = goalMl)
     }
 
     suspend fun increment() {

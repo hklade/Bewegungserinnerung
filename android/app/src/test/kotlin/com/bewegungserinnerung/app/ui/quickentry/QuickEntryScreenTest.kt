@@ -3,13 +3,22 @@ package com.bewegungserinnerung.app.ui.quickentry
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.bewegungserinnerung.app.data.AppDatabase
+import com.bewegungserinnerung.app.data.MovementEntry
+import com.bewegungserinnerung.app.reminder.UNANSWERED_ENTRY_TYPE
 import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import java.time.Clock
 import java.time.Instant
@@ -145,5 +154,52 @@ class QuickEntryScreenTest {
 
         composeRule.onNodeWithText("Trinkmanager").assertExists()
         composeRule.onNodeWithText("0 ml / 2000 ml").assertExists()
+    }
+
+    @Test
+    fun `Verpasste Erinnerungen ausblenden wirkt ohne Neustart`() {
+        val slotTime = Instant.parse("2026-09-10T08:55:00Z")
+        val viewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = Clock.fixed(slotTime.plusSeconds(60), ZoneOffset.UTC),
+            currentSlotTime = slotTime,
+        )
+        runBlocking {
+            database.movementEntryDao().insert(
+                MovementEntry(
+                    date = "2026-09-10",
+                    weekday = "Donnerstag",
+                    reminderTime = "07:55",
+                    responseTime = null,
+                    delayMinutes = null,
+                    value = 0,
+                    description = "Nicht beantwortet",
+                    durationMinutes = null,
+                    isAdditionalBreak = false,
+                    entryType = UNANSWERED_ENTRY_TYPE,
+                    note = "",
+                    createdAt = "2026-09-10T07:00:00Z",
+                ),
+            )
+        }
+        var hideMissed by mutableStateOf(false)
+
+        composeRule.setContent {
+            QuickEntryScreen(
+                viewModel = viewModel,
+                currentSlotLabel = "08:55",
+                dao = database.movementEntryDao(),
+                hideMissedReminders = hideMissed,
+            )
+        }
+        // Room delivers the observed entries asynchronously, outside Compose's idling.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("activity-history-row").fetchSemanticsNodes().size == 1
+        }
+
+        hideMissed = true
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag("activity-history-row").assertCountEquals(0)
     }
 }

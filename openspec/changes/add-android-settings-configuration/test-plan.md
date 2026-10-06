@@ -19,6 +19,7 @@ Maps every requirement in the `android-settings-configuration` capability spec t
 | Settings are reachable from a dedicated screen, not the default screen | 2 | Compose UI test: settings not shown on cold start, one navigation action reaches it | |
 | The reminder schedule is configurable | 3 | Instrumented test: toggle/window/weekdays-only changes take effect on the real alarm-scheduling path without app restart | Touches WorkManager/AlarmManager re-scheduling, not a pure function |
 | The daily hydration goal is configurable in liters | 1 | Unit test: valid input saved and applied; invalid input falls back to 2 L default | |
-| Notification tone/vibration is configurable with a test action | 2 | Compose UI test: "test" action disabled when tone is off | |
+| Notification tone/vibration is configurable with a test action | 2 | Compose UI test: play arrows (the "test" action) stay available when tone is off | |
+| The reminder tone is selectable from three tone sequences | 1 + 2 | Unit test: default "Aufwärts", note plans per sequence, saved selection used; Compose UI test: preview does not change the selection | Audible output itself is verified manually (3.1) |
 | The export location is configurable | 5 | Manual verification of the Android-native storage/document picker flow | Picker UX is not meaningfully assertable by an automated test |
-| Settings changes are explicitly saved and confirmed | 1 | Unit/integration test: unsaved changes don't apply; save shows success; failed save shows error and preserves prior settings | |
+| Settings changes are explicitly saved and confirmed | 1 | Unit/integration test: unsaved changes don't apply; successful save returns to quick-entry; failed save shows error and preserves prior settings | |
