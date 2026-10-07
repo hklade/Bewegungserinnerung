@@ -6,8 +6,8 @@
 
 ## 2. Wiring
 
-- [ ] 2.1 Show the activity history list on the main screen, sourced from `MovementEntryDao.observeAll()` mapped via `toActivityHistory`, and verify a Compose UI test confirms a newly saved entry appears in the visible list without restarting the app
+- [x] 2.1 Show the activity history list on the main screen, sourced from `MovementEntryDao.observeAll()` mapped via `toActivityHistory`, and verify a Compose UI test confirms a newly saved entry appears in the visible list without restarting the app
 
 ## 3. Cross-cutting verification
 
-- [ ] 3.1 Run a full manual pass of the `android-activity-history` capability spec against a physical or emulated device, checking every scenario listed in the spec file
+- [x] 3.1 Run a full manual pass of the `android-activity-history` capability spec against a physical or emulated device, checking every scenario listed in the spec file
