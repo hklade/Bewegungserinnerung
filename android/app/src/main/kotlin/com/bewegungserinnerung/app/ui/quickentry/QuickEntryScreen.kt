@@ -24,8 +24,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.data.MovementEntryDao
-import com.bewegungserinnerung.app.reminder.ReminderDefaults
-import com.bewegungserinnerung.app.reminder.buildReminderSlots
 import com.bewegungserinnerung.app.ui.evaluation.ActivityEvaluationCard
 import com.bewegungserinnerung.app.ui.history.ActivityHistoryScreen
 import com.bewegungserinnerung.app.ui.hydration.HydrationCard
@@ -44,8 +42,8 @@ fun QuickEntryScreen(
     dao: MovementEntryDao? = null,
     hydrationViewModel: HydrationViewModel? = null,
     hideMissedReminders: Boolean = false,
-    reminderSlots: List<String> = buildReminderSlots(ReminderDefaults.START_TIME, ReminderDefaults.END_TIME),
     onOpenSettings: (() -> Unit)? = null,
+    onOpenHeatmap: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -112,7 +110,7 @@ fun QuickEntryScreen(
 
         hydrationViewModel?.let { HydrationCard(viewModel = it) }
 
-        ActivityEvaluationCard(entries = entries, slots = reminderSlots)
+        ActivityEvaluationCard(entries = entries, onOpenHeatmap = onOpenHeatmap)
 
         ActivityHistoryScreen(entries = toActivityHistory(entries, hideMissedReminders))
     }

@@ -1,6 +1,8 @@
 package com.bewegungserinnerung.app.ui.quickentry
 
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -21,7 +23,8 @@ import com.bewegungserinnerung.app.data.AppDatabase
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.reminder.UNANSWERED_ENTRY_TYPE
 import com.bewegungserinnerung.app.reminder.ZONE
-import com.bewegungserinnerung.app.ui.evaluation.HEATMAP_CELL_TAG
+import com.bewegungserinnerung.app.ui.evaluation.HOUR_BAR_TAG
+import com.bewegungserinnerung.app.ui.evaluation.STAT_ANSWERED_TAG
 import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import java.time.Clock
 import java.time.Instant
@@ -162,7 +165,7 @@ class QuickEntryScreenTest {
     }
 
     @Test
-    fun `Aktivitätsauswertung zeigt die gespeicherten Einträge mit den konfigurierten Zeitfenstern`() {
+    fun `Aktivitätsauswertung zeigt die gespeicherten Einträge von heute`() {
         val slotTime = Instant.parse("2026-09-10T08:55:00Z")
         val viewModel = QuickEntryViewModel(
             dao = database.movementEntryDao(),
@@ -193,15 +196,14 @@ class QuickEntryScreenTest {
                 viewModel = viewModel,
                 currentSlotLabel = "08:55",
                 dao = database.movementEntryDao(),
-                reminderSlots = listOf("11:11"),
             )
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(HEATMAP_CELL_TAG).fetchSemanticsNodes().size == 1
+            composeRule.onAllNodesWithTag(HOUR_BAR_TAG).fetchSemanticsNodes().size == 1
         }
 
-        composeRule.onNodeWithText("Aktivitätsauswertung").assertExists()
-        composeRule.onNodeWithText("Geplant: 1").assertExists()
+        composeRule.onNodeWithText("AKTIVITÄTSAUSWERTUNG").assertExists()
+        composeRule.onNodeWithTag(STAT_ANSWERED_TAG).assertTextEquals("1", "BEANTWORTET")
     }
 
     @Test

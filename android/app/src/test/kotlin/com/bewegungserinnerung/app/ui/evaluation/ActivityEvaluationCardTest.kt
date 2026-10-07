@@ -6,6 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,6 +16,7 @@ import androidx.compose.ui.test.performScrollTo
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.reminder.UNANSWERED_ENTRY_TYPE
 import java.time.LocalDate
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,7 +29,6 @@ class ActivityEvaluationCardTest {
     val composeRule = createComposeRule()
 
     private val today = LocalDate.parse("2026-09-10")
-    private val slots = listOf("07:55", "08:55", "09:55")
 
     private fun entry(
         date: String = today.toString(),
@@ -51,9 +52,11 @@ class ActivityEvaluationCardTest {
         createdAt = "2026-09-10T07:00:00.000Z",
     )
 
+    private var heatmapOpened = false
+
     private fun show(entries: List<MovementEntry>) = composeRule.setContent {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            ActivityEvaluationCard(entries = entries, slots = slots, today = today)
+            ActivityEvaluationCard(entries = entries, today = today, onOpenHeatmap = { heatmapOpened = true })
         }
     }
 
@@ -70,8 +73,6 @@ class ActivityEvaluationCardTest {
 
         composeRule.onNodeWithText("Keine Einträge für diesen Tag").assertIsDisplayed()
         composeRule.onAllNodesWithTag(HOUR_BAR_TAG).assertCountEquals(0)
-        composeRule.onAllNodesWithTag(HEATMAP_DAY_TAG).assertCountEquals(0)
-        composeRule.onAllNodesWithTag(HEATMAP_EMPTY_CELL_TAG).assertCountEquals(0)
     }
 
     @Test
@@ -85,9 +86,9 @@ class ActivityEvaluationCardTest {
             ),
         )
 
-        composeRule.onNodeWithText("Geplant: 2").assertIsDisplayed()
-        composeRule.onNodeWithText("Zusätzlich: 1").assertIsDisplayed()
-        composeRule.onNodeWithText("Nicht beantwortet: 1").assertIsDisplayed()
+        composeRule.onNodeWithTag(STAT_ANSWERED_TAG).assertTextEquals("2", "BEANTWORTET")
+        composeRule.onNodeWithTag(STAT_EXTRA_TAG).assertTextEquals("1", "EXTRA")
+        composeRule.onNodeWithTag(STAT_MISSED_TAG).assertTextEquals("1", "VERPASST")
         composeRule.onNodeWithText("Ø Verzögerung: 8,7 min").assertIsDisplayed()
     }
 
@@ -104,26 +105,11 @@ class ActivityEvaluationCardTest {
     }
 
     @Test
-    fun `Heatmap hat eine Spalte pro aktivem Tag`() {
-        show(listOf(entry(date = "2026-09-08"), entry(date = "2026-09-10")))
+    fun `Button Letzte aktive Tage öffnet die Wochenübersicht`() {
+        show(emptyList())
 
-        composeRule.onAllNodesWithTag(HEATMAP_DAY_TAG).assertCountEquals(2)
-    }
+        composeRule.onNodeWithText("Letzte aktive Tage").performClick()
 
-    @Test
-    fun `Leere Heatmap-Zellen sind von Zellen mit Daten unterscheidbar`() {
-        show(listOf(entry(reminderTime = "08:55")))
-
-        composeRule.onAllNodesWithTag(HEATMAP_CELL_TAG).assertCountEquals(1)
-        composeRule.onAllNodesWithTag(HEATMAP_EMPTY_CELL_TAG).assertCountEquals(2)
-    }
-
-    @Test
-    fun `Antippen einer Heatmap-Zelle zeigt die Anzahl der Einträge`() {
-        show(listOf(entry(reminderTime = "08:55"), entry(reminderTime = "08:55", isAdditionalBreak = true)))
-
-        composeRule.onNodeWithTag(HEATMAP_CELL_TAG).performScrollTo().performClick()
-
-        composeRule.onNodeWithText("2 Einträge", substring = true).performScrollTo().assertIsDisplayed()
+        assertTrue(heatmapOpened)
     }
 }
