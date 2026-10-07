@@ -26,6 +26,7 @@ import com.bewegungserinnerung.app.reminder.ReminderAlarmReceiver
 import com.bewegungserinnerung.app.reminder.ReminderBackfillWorker
 import com.bewegungserinnerung.app.reminder.ReminderNotifier
 import com.bewegungserinnerung.app.reminder.ReminderScheduler
+import com.bewegungserinnerung.app.reminder.buildReminderSlots
 import com.bewegungserinnerung.app.reminder.currentSlotInstant
 import com.bewegungserinnerung.app.reminder.isExactAlarmPermissionGranted
 import com.bewegungserinnerung.app.reminder.isNotificationPermissionGranted
@@ -132,6 +133,7 @@ class MainActivity : ComponentActivity() {
                                 dao = database.movementEntryDao(),
                                 hydrationViewModel = hydrationViewModel,
                                 hideMissedReminders = settings.hideMissedReminders,
+                                reminderSlots = buildReminderSlots(settings.startTime, settings.endTime),
                                 onOpenSettings = openSettings,
                             )
                         },

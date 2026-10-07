@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +24,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.data.MovementEntryDao
+import com.bewegungserinnerung.app.reminder.ReminderDefaults
+import com.bewegungserinnerung.app.reminder.buildReminderSlots
+import com.bewegungserinnerung.app.ui.evaluation.ActivityEvaluationCard
 import com.bewegungserinnerung.app.ui.history.ActivityHistoryScreen
 import com.bewegungserinnerung.app.ui.hydration.HydrationCard
 import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
@@ -39,6 +44,7 @@ fun QuickEntryScreen(
     dao: MovementEntryDao? = null,
     hydrationViewModel: HydrationViewModel? = null,
     hideMissedReminders: Boolean = false,
+    reminderSlots: List<String> = buildReminderSlots(ReminderDefaults.START_TIME, ReminderDefaults.END_TIME),
     onOpenSettings: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -50,6 +56,7 @@ fun QuickEntryScreen(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -104,6 +111,8 @@ fun QuickEntryScreen(
         }
 
         hydrationViewModel?.let { HydrationCard(viewModel = it) }
+
+        ActivityEvaluationCard(entries = entries, slots = reminderSlots)
 
         ActivityHistoryScreen(entries = toActivityHistory(entries, hideMissedReminders))
     }

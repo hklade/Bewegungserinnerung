@@ -1,5 +1,10 @@
 package com.bewegungserinnerung.app.ui.history
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -20,6 +25,11 @@ class ActivityHistoryScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    /** The list no longer scrolls itself; its host screen does (see QuickEntryScreen). */
+    private fun setScrollableContent(content: @Composable () -> Unit) = composeRule.setContent {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) { content() }
+    }
+
     private fun entry(reminderTime: String) = ActivityHistoryEntry(
         date = "2026-09-10",
         reminderTime = reminderTime,
@@ -35,7 +45,7 @@ class ActivityHistoryScreenTest {
 
     @Test
     fun `Standardansicht zeigt maximal die 5 neuesten Einträge`() {
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = entries(8))
         }
 
@@ -45,7 +55,7 @@ class ActivityHistoryScreenTest {
 
     @Test
     fun `Mehr anzeigen erweitert die Liste bis zur oberen Grenze`() {
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = entries(8))
         }
 
@@ -57,7 +67,7 @@ class ActivityHistoryScreenTest {
 
     @Test
     fun `Weniger anzeigen reduziert wieder auf 5 Einträge`() {
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = entries(8))
         }
 
@@ -70,7 +80,7 @@ class ActivityHistoryScreenTest {
 
     @Test
     fun `Weniger als 5 Einträge zeigen keine Erweitern-Aktion`() {
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = entries(3))
         }
 
@@ -80,7 +90,7 @@ class ActivityHistoryScreenTest {
 
     @Test
     fun `Fehlende Verzögerung zeigt einen expliziten Platzhalter`() {
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55").copy(delayMinutes = null)))
         }
 
@@ -89,7 +99,7 @@ class ActivityHistoryScreenTest {
 
     @Test
     fun `Datum wird im Format TT MM JJJJ angezeigt`() {
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")))
         }
 
@@ -100,7 +110,7 @@ class ActivityHistoryScreenTest {
     fun `Heutiger Eintrag zeigt Heute statt des numerischen Datums`() {
         val now = ZonedDateTime.of(2026, 9, 10, 10, 0, 0, 0, ZONE).toInstant()
 
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")), now = now)
         }
 
@@ -111,7 +121,7 @@ class ActivityHistoryScreenTest {
     fun `Gestriger Eintrag zeigt Gestern statt des numerischen Datums`() {
         val now = ZonedDateTime.of(2026, 9, 11, 10, 0, 0, 0, ZONE).toInstant()
 
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")), now = now)
         }
 
@@ -122,7 +132,7 @@ class ActivityHistoryScreenTest {
     fun `Älterer Eintrag zeigt weiterhin das numerische Datum`() {
         val now = ZonedDateTime.of(2026, 9, 20, 10, 0, 0, 0, ZONE).toInstant()
 
-        composeRule.setContent {
+        setScrollableContent {
             ActivityHistoryScreen(entries = listOf(entry(reminderTime = "08:55")), now = now)
         }
 

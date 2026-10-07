@@ -13,15 +13,19 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.bewegungserinnerung.app.data.AppDatabase
 import com.bewegungserinnerung.app.data.MovementEntry
 import com.bewegungserinnerung.app.reminder.UNANSWERED_ENTRY_TYPE
+import com.bewegungserinnerung.app.reminder.ZONE
+import com.bewegungserinnerung.app.ui.evaluation.HEATMAP_CELL_TAG
 import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 import org.junit.After
 import org.junit.Before
@@ -126,6 +130,7 @@ class QuickEntryScreenTest {
 
         composeRule.onAllNodesWithText("Kurzer Spaziergang", substring = true)
             .assertCountEquals(1)[0]
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -154,6 +159,49 @@ class QuickEntryScreenTest {
 
         composeRule.onNodeWithText("Trinkmanager").assertExists()
         composeRule.onNodeWithText("0 ml / 2000 ml").assertExists()
+    }
+
+    @Test
+    fun `Aktivitätsauswertung zeigt die gespeicherten Einträge mit den konfigurierten Zeitfenstern`() {
+        val slotTime = Instant.parse("2026-09-10T08:55:00Z")
+        val viewModel = QuickEntryViewModel(
+            dao = database.movementEntryDao(),
+            clock = Clock.fixed(slotTime.plusSeconds(60), ZoneOffset.UTC),
+            currentSlotTime = slotTime,
+        )
+        runBlocking {
+            database.movementEntryDao().insert(
+                MovementEntry(
+                    date = LocalDate.now(ZONE).toString(),
+                    weekday = "Donnerstag",
+                    reminderTime = "11:11",
+                    responseTime = "11:15",
+                    delayMinutes = 4,
+                    value = 3,
+                    description = "Bewegung",
+                    durationMinutes = null,
+                    isAdditionalBreak = false,
+                    entryType = "planned_break_response",
+                    note = "",
+                    createdAt = "2026-09-10T07:00:00Z",
+                ),
+            )
+        }
+
+        composeRule.setContent {
+            QuickEntryScreen(
+                viewModel = viewModel,
+                currentSlotLabel = "08:55",
+                dao = database.movementEntryDao(),
+                reminderSlots = listOf("11:11"),
+            )
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(HEATMAP_CELL_TAG).fetchSemanticsNodes().size == 1
+        }
+
+        composeRule.onNodeWithText("Aktivitätsauswertung").assertExists()
+        composeRule.onNodeWithText("Geplant: 1").assertExists()
     }
 
     @Test
