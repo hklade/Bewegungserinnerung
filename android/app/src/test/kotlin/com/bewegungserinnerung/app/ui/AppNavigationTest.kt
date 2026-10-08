@@ -1,5 +1,6 @@
 package com.bewegungserinnerung.app.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,11 +34,17 @@ class AppNavigationTest {
     private fun showApp() {
         composeRule.setContent {
             AppNavigation(
-                quickEntry = { openSettings ->
-                    Button(onClick = openSettings) { Text("Schnelleingabe-Inhalt") }
+                quickEntry = { openSettings, openHeatmap ->
+                    Column {
+                        Button(onClick = openSettings) { Text("Schnelleingabe-Inhalt") }
+                        Button(onClick = openHeatmap) { Text("Wochenübersicht öffnen") }
+                    }
                 },
                 settings = { back ->
                     Button(onClick = back) { Text("Optionen-Inhalt") }
+                },
+                heatmap = { back ->
+                    Button(onClick = back) { Text("Wochenübersicht-Inhalt") }
                 },
             )
         }
@@ -63,6 +70,17 @@ class AppNavigationTest {
     }
 
     @Test
+    fun `Eine Aktion öffnet die Wochenübersicht, Zurück führt zur Schnelleingabe`() {
+        showApp()
+
+        composeRule.onNodeWithText("Wochenübersicht öffnen").performClick()
+        composeRule.onNodeWithText("Wochenübersicht-Inhalt").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Wochenübersicht-Inhalt").performClick()
+        composeRule.onNodeWithText("Schnelleingabe-Inhalt").assertIsDisplayed()
+    }
+
+    @Test
     fun `Nach dem Speichern der Optionen ist wieder die Schnelleingabe zu sehen`() {
         val database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
@@ -79,7 +97,7 @@ class AppNavigationTest {
 
             composeRule.setContent {
                 AppNavigation(
-                    quickEntry = { openSettings ->
+                    quickEntry = { openSettings, _ ->
                         QuickEntryScreen(
                             viewModel = quickEntryViewModel,
                             currentSlotLabel = "08:55",
@@ -89,6 +107,7 @@ class AppNavigationTest {
                     settings = { back ->
                         SettingsScreen(viewModel = settingsViewModel, onBack = back, onTestTone = {})
                     },
+                    heatmap = { },
                 )
             }
 

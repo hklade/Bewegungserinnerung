@@ -6,7 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -26,10 +29,12 @@ import com.bewegungserinnerung.app.reminder.ReminderAlarmReceiver
 import com.bewegungserinnerung.app.reminder.ReminderBackfillWorker
 import com.bewegungserinnerung.app.reminder.ReminderNotifier
 import com.bewegungserinnerung.app.reminder.ReminderScheduler
+import com.bewegungserinnerung.app.reminder.buildReminderSlots
 import com.bewegungserinnerung.app.reminder.currentSlotInstant
 import com.bewegungserinnerung.app.reminder.isExactAlarmPermissionGranted
 import com.bewegungserinnerung.app.reminder.isNotificationPermissionGranted
 import com.bewegungserinnerung.app.ui.AppNavigation
+import com.bewegungserinnerung.app.ui.evaluation.WeekHeatmapScreen
 import com.bewegungserinnerung.app.ui.hydration.HydrationViewModel
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryScreen
 import com.bewegungserinnerung.app.ui.quickentry.QuickEntryViewModel
@@ -122,7 +127,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     AppNavigation(
-                        quickEntry = { openSettings ->
+                        quickEntry = { openSettings, openHeatmap ->
                             val currentSlot by viewModel.currentSlot.collectAsState()
                             val settings by activeSettings.collectAsState()
                             QuickEntryScreen(
@@ -133,6 +138,7 @@ class MainActivity : ComponentActivity() {
                                 hydrationViewModel = hydrationViewModel,
                                 hideMissedReminders = settings.hideMissedReminders,
                                 onOpenSettings = openSettings,
+                                onOpenHeatmap = openHeatmap,
                             )
                         },
                         settings = { back ->
@@ -144,6 +150,17 @@ class MainActivity : ComponentActivity() {
                                 onBack = back,
                                 onTestTone = { sequence -> ReminderNotifier.playTestTone(applicationContext, sequence) },
                             )
+                        },
+                        heatmap = { back ->
+                            val settings by activeSettings.collectAsState()
+                            val entries by database.movementEntryDao().observeAll().collectAsState(initial = emptyList())
+                            Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                                WeekHeatmapScreen(
+                                    entries = entries,
+                                    slots = buildReminderSlots(settings.startTime, settings.endTime),
+                                    onBack = back,
+                                )
+                            }
                         },
                     )
                 }
