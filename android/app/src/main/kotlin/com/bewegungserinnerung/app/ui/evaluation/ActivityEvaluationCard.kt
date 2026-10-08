@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,7 +37,6 @@ import com.bewegungserinnerung.app.reminder.ZONE
 import com.bewegungserinnerung.app.ui.history.formatRelativeGermanDate
 import java.time.Instant
 import java.time.LocalDate
-import java.util.Locale
 
 const val DAY_PICKER_TAG = "evaluation-day-picker"
 const val DAY_OPTION_TAG = "evaluation-day-option"
@@ -80,14 +80,22 @@ fun ActivityEvaluationCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Aktivitätsauswertung".uppercase(),
+                    "Aktivitätsauswertung",
+                    modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = TITLE_LETTER_SPACING,
                 )
+                if (onOpenHeatmap != null) {
+                    TextButton(
+                        onClick = onOpenHeatmap,
+                        modifier = Modifier.semantics { contentDescription = "Letzte aktive Tage" },
+                    ) {
+                        Text("📅", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
                 DayPicker(days = days, selected = day, now = now, onSelect = { selectedDay = it })
             }
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -95,19 +103,7 @@ fun ActivityEvaluationCard(
                 Stat(STAT_EXTRA_TAG, stats.additionalCount, "Extra", MaterialTheme.colorScheme.onSurface)
                 Stat(STAT_MISSED_TAG, stats.unansweredCount, "Verpasst", MaterialTheme.colorScheme.error)
             }
-            val delay = stats.averageDelayMinutes?.let { String.format(Locale.GERMAN, "%.1f min", it) } ?: "–"
-            Text(
-                "Ø Verzögerung: $delay",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-            )
             HourlyChart(hourlyActivity(entries, day))
-            if (onOpenHeatmap != null) {
-                TextButton(onClick = onOpenHeatmap, modifier = Modifier.align(Alignment.End)) {
-                    Text("Letzte aktive Tage")
-                }
-            }
         }
     }
 }
@@ -150,7 +146,7 @@ private fun RowScope.Stat(tag: String, count: Int, label: String, color: Color) 
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
-        Text(label.uppercase(), style = MaterialTheme.typography.labelSmall)
+        Text(label, style = MaterialTheme.typography.labelSmall)
     }
 }
 

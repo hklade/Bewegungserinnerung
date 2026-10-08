@@ -202,8 +202,8 @@ class QuickEntryScreenTest {
             composeRule.onAllNodesWithTag(HOUR_BAR_TAG).fetchSemanticsNodes().size == 1
         }
 
-        composeRule.onNodeWithText("AKTIVITÄTSAUSWERTUNG").assertExists()
-        composeRule.onNodeWithTag(STAT_ANSWERED_TAG).assertTextEquals("1", "BEANTWORTET")
+        composeRule.onNodeWithText("Aktivitätsauswertung").assertExists()
+        composeRule.onNodeWithTag(STAT_ANSWERED_TAG).assertTextEquals("1", "Beantwortet")
     }
 
     @Test

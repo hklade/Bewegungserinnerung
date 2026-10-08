@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -76,7 +77,7 @@ class ActivityEvaluationCardTest {
     }
 
     @Test
-    fun `Statistik zeigt Anzahlen und durchschnittliche Verzögerung des gewählten Tages`() {
+    fun `Statistik zeigt die Anzahlen des gewählten Tages`() {
         show(
             listOf(
                 entry(reminderTime = "07:55", delayMinutes = 4),
@@ -86,10 +87,10 @@ class ActivityEvaluationCardTest {
             ),
         )
 
-        composeRule.onNodeWithTag(STAT_ANSWERED_TAG).assertTextEquals("2", "BEANTWORTET")
-        composeRule.onNodeWithTag(STAT_EXTRA_TAG).assertTextEquals("1", "EXTRA")
-        composeRule.onNodeWithTag(STAT_MISSED_TAG).assertTextEquals("1", "VERPASST")
-        composeRule.onNodeWithText("Ø Verzögerung: 8,7 min").assertIsDisplayed()
+        composeRule.onNodeWithTag(STAT_ANSWERED_TAG).assertTextEquals("2", "Beantwortet")
+        composeRule.onNodeWithTag(STAT_EXTRA_TAG).assertTextEquals("1", "Extra")
+        composeRule.onNodeWithTag(STAT_MISSED_TAG).assertTextEquals("1", "Verpasst")
+        composeRule.onNodeWithText("Verzögerung", substring = true).assertDoesNotExist()
     }
 
     @Test
@@ -108,7 +109,7 @@ class ActivityEvaluationCardTest {
     fun `Button Letzte aktive Tage öffnet die Wochenübersicht`() {
         show(emptyList())
 
-        composeRule.onNodeWithText("Letzte aktive Tage").performClick()
+        composeRule.onNodeWithContentDescription("Letzte aktive Tage").performClick()
 
         assertTrue(heatmapOpened)
     }

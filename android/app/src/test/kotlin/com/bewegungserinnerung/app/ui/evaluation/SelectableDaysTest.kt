@@ -45,7 +45,7 @@ class SelectableDaysTest {
     }
 
     @Test
-    fun `Höchstens 13 frühere aktive Tage werden angeboten`() {
+    fun `Angeboten werden nur die letzten 14 Kalendertage`() {
         val entries = (1L..20L).map { entry(today.minusDays(it).toString()) }
 
         val days = selectableDays(entries, today)
@@ -53,5 +53,12 @@ class SelectableDaysTest {
         assertEquals(14, days.size)
         assertEquals(today, days.first())
         assertEquals(today.minusDays(13), days.last())
+    }
+
+    @Test
+    fun `Ein aktiver Tag außerhalb der letzten 14 Kalendertage wird nicht angeboten`() {
+        val entries = listOf(entry(today.minusDays(5).toString()), entry(today.minusDays(20).toString()))
+
+        assertEquals(listOf(today, today.minusDays(5)), selectableDays(entries, today))
     }
 }
