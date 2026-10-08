@@ -47,17 +47,17 @@
 ## 7. Auswertung (month evaluation)
 
 - [ ] 7.1 Write `MonthEvaluationTest` for `monthOverview`: counts only the given month, Ø delay half-up over answered entries only, "–"/`null` with only unanswered slots
-- [ ] 7.2 Write tests for `weekdayHourGrid`: Di/09:00 with 3,3,4 → level 3; only zeros → empty; unanswered slots ignored; row range from data (07–16), fallback to reminder-window hours for an empty month
+- [ ] 7.2 Adapt the existing `weekHeatmap` tests in `ActivityAggregationTest` to `weekdayHourHeatmap`: Di/09:00 with 3,3,4 → level 3, count 3; only zeros → empty; unanswered slots ignored; only entries of the given month; row range from data (07–16), fallback to reminder-window hours for an empty month
 - [ ] 7.3 Write tests for `weekTrend`: month starting mid-week includes that KW with in-month entries only; 3.6 → level-4 colour and label "3,6"; week without entries → `average == null`; ISO week numbers at a year boundary (e.g. Dec 2026 / Jan 2027)
-- [ ] 7.4 Implement `ui/evaluation/MonthEvaluation.kt` (D9 aggregation)
-- [ ] 7.5 Write `MonthEvaluationScreenTest`: header row order (back, ‹, title, ›); opens on current month with German title; ‹ goes to previous month and › back again, updating title and sections; › disabled on current month; empty month state; Wochentrend has no trend sentence; back action uses the shared `BackButton` and calls `onBack`
-- [ ] 7.6 Implement `MonthEvaluationScreen` (header per D9, Monatsüberblick, Tage im Überblick grid, Wochentrend bars with value)
+- [ ] 7.4 Implement `monthOverview`/`weekTrend` in `ui/evaluation/MonthEvaluation.kt` and adapt `weekHeatmap()` → `weekdayHourHeatmap()` in `ActivityAggregation.kt` (D9)
+- [ ] 7.5 Rename `WeekHeatmapScreenTest` → `MonthEvaluationScreenTest` and adapt/extend it: header row order (back, ‹, title, ›); section order Monatsüberblick → Tage im Überblick → Wochentrend; opens on current month with German title; ‹ goes to previous month and › back again, updating title and sections; › disabled on current month; empty month state; heatmap shows weekday columns and "HH:00" rows with level colours; tapping a filled cell shows count and Ø value; Wochentrend has no trend sentence; back action uses the shared `BackButton` and calls `onBack`
+- [ ] 7.6 Rename `WeekHeatmapScreen` → `MonthEvaluationScreen` and extend it per D9/D10 (header, Monatsüberblick on top, existing heatmap moved below it as "Tage im Überblick", Wochentrend bars with value)
 
 ## 8. Navigation and cleanup
 
 - [ ] 8.1 Update `AppNavigationTest` for the `auswertung` route and the renamed slot
 - [ ] 8.2 Implement D10: route/slot rename, `MainActivity` wiring to `MonthEvaluationScreen`, card button "Auswertung öffnen"
-- [ ] 8.3 Delete `WeekHeatmapScreen.kt`, `weekHeatmap()`/`WeekHeatmap`/`HeatmapCell` and `WeekHeatmapScreenTest.kt`; fix any remaining references
+- [ ] 8.3 Fix any remaining references to the old names (`WeekHeatmapScreen`, `weekHeatmap`, "Letzte aktive Tage")
 
 ## 9. Verification
 

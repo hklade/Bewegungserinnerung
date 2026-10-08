@@ -1,11 +1,15 @@
 ## Purpose
 
-Gives the user a month-level view of their logged activity — totals, typical activity per weekday and hour, and the trend across calendar weeks — so longer-term patterns are visible beyond a single day.
+Gives the user a month-level view of their logged activity — month totals, the heatmap of typical activity per weekday and hour, and the average per calendar week — so longer-term patterns are visible beyond a single day.
 
 ## ADDED Requirements
 
 ### Requirement: The month evaluation is a separate screen with month navigation
-The system SHALL provide an "Auswertung" screen, reachable with one action from the quick-entry screen's activity evaluation card, that shows one calendar month at a time. The screen SHALL open on the current month (Europe/Vienna). Its header SHALL be a single row containing, from left to right: the back action, a "previous month" arrow (‹), the month title in German (e.g. "September 2026") centred between the arrows, and a "next month" arrow (›). The arrows SHALL step one calendar month back or forward. Stepping past the current month SHALL NOT be possible.
+The system SHALL provide an "Auswertung" screen — the former "Letzte aktive Tage" heatmap screen, extended — reachable with one action from the quick-entry screen's activity evaluation card, that shows one calendar month at a time. Below the header it SHALL show, from top to bottom: the "Monatsüberblick", the heatmap "Tage im Überblick" (moved down below the Monatsüberblick and adapted as specified in [[android-day-week-evaluation]]), and the "Wochentrend". The screen SHALL open on the current month (Europe/Vienna). Its header SHALL be a single row containing, from left to right: the back action, a "previous month" arrow (‹), the month title in German (e.g. "September 2026") centred between the arrows, and a "next month" arrow (›). The arrows SHALL step one calendar month back or forward. Stepping past the current month SHALL NOT be possible.
+
+#### Scenario: Sections appear in order
+- **WHEN** the Auswertung screen is displayed
+- **THEN** the sections appear top to bottom as Monatsüberblick, Tage im Überblick, Wochentrend
 
 #### Scenario: Header shows back action, arrows and month title in one row
 - **WHEN** the Auswertung screen is displayed
@@ -29,7 +33,7 @@ The system SHALL provide an "Auswertung" screen, reachable with one action from 
 
 #### Scenario: Month without entries
 - **WHEN** the shown month has no movement entries at all
-- **THEN** the Monatsüberblick shows zero counts and "–" for the delay, the Tage im Überblick grid shows only empty cells, and the Wochentrend shows no bars
+- **THEN** the Monatsüberblick shows zero counts and "–" for the delay, the Tage im Überblick heatmap shows only empty cells, and the Wochentrend shows no bars
 
 ### Requirement: The back button matches the Optionen screen
 The Auswertung screen SHALL show a back action at the top-left with the same icon, size and position as the back action on the Optionen screen, and it SHALL return to the quick-entry screen.
@@ -56,25 +60,6 @@ The system SHALL show a "Monatsüberblick" section with four values for the show
 #### Scenario: No answered entries
 - **WHEN** the month has only unanswered slots
 - **THEN** "Ø Min. Delay" shows "–"
-
-### Requirement: Tage im Überblick shows average activity by weekday and hour
-The system SHALL show a "Tage im Überblick" grid for the shown month with one column per weekday, headed by the German abbreviation (Mo, Di, Mi, Do, Fr, Sa, So), and one row per full hour, labelled "HH:00" (e.g. "07:00", "08:00"). The rows SHALL span from the earliest to the latest hour that has a logged entry in the shown month; when the month has none, the rows SHALL span the configured reminder window's hours. Each cell SHALL represent the average activity value of all logged (non-unanswered) entries in the shown month whose date falls on that weekday and whose slot time falls in that hour. A cell SHALL be filled with the colour of the activity level nearest to that average; a cell with no logged entries, or whose average is 0, SHALL be left empty.
-
-#### Scenario: Cell colour reflects the average level
-- **WHEN** the month's Tuesday 09:00–09:59 entries have values 3, 3 and 4
-- **THEN** the Di / 09:00 cell is filled with the colour of level 3 (average 3.33, nearest level 3)
-
-#### Scenario: Only zero values leave the cell empty
-- **WHEN** all of the month's Monday 14:00 entries have value 0
-- **THEN** the Mo / 14:00 cell is left empty, looking the same as a cell with no entries
-
-#### Scenario: Unanswered slots do not influence a cell
-- **WHEN** a weekday/hour combination has one logged entry with value 2 and several unanswered slots
-- **THEN** the cell shows the colour of level 2
-
-#### Scenario: Hours outside the data range are not shown
-- **WHEN** the month's logged entries fall between 07:00 and 16:59 only
-- **THEN** the grid rows are 07:00 through 16:00, with no rows before or after
 
 ### Requirement: Wochentrend shows the average activity per calendar week
 The system SHALL show a "Wochentrend" section with one entry per ISO-8601 calendar week that contains at least one day of the shown month, in chronological order, each labelled "KW <number>". Each entry SHALL show the average activity value of the logged (non-unanswered) entries of that week that fall inside the shown month, as a bar whose height is proportional to the average (0–4) and whose colour is the colour of the activity level nearest to the average, together with the average as a number with one decimal (German formatting, e.g. "2,4"). A week without logged entries in the shown month SHALL show its label but no bar and no number. The section SHALL NOT contain any textual trend statement or comparison with other months.

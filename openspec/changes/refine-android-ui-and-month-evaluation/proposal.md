@@ -1,6 +1,6 @@
 ## Why
 
-The Android app's screens have grown functionally complete but visually inconsistent with the agreed mockup (see the "Schnelleingabe · Optionen · Monatsauswertung" mockup artifact): activity levels are plain chips with no colour coding, the history shows the planned slot time instead of when the user actually logged, the Optionen screen needs scrolling, and the "Letzte aktive Tage" heatmap is a 7-day snapshot that answers "how was this month?" poorly. This change aligns the screens with the mockup and replaces the heatmap with a month evaluation.
+The Android app's screens have grown functionally complete but visually inconsistent with the agreed mockup (see the "Schnelleingabe · Optionen · Monatsauswertung" mockup artifact): activity levels are plain chips with no colour coding, the history shows the planned slot time instead of when the user actually logged, the Optionen screen needs scrolling, and the "Letzte aktive Tage" heatmap is a 7-day snapshot that answers "how was this month?" poorly. This change aligns the screens with the mockup and extends the heatmap screen into a month evaluation, with the heatmap moved below a new month overview.
 
 ## Dependencies
 
@@ -32,28 +32,28 @@ Affects: `add-android-csv-import-export` (still open) — it currently consumes 
 - Body text uses the size the card headings use today; card headings become 2 sp larger.
 - The on/off switches are made smaller (about 80 %).
 
-**Auswertung (replaces "Letzte aktive Tage")**
-- **BREAKING (evaluation):** the 7-day × slot heatmap screen is replaced by a month evaluation screen. Its header row holds the back button and the month switcher "‹ September 2026 ›" (as in the mockup); below it are three sections:
-  - **Monatsüberblick:** Beantwortet, Extra, Verpasst, Ø Min. Delay for the month.
-  - **Tage im Überblick:** a grid with weekday abbreviations as columns and full hours (07:00, 08:00, …) as rows; each cell shows the month's average activity level for that weekday/hour in the level colour; cells with no data or an average of 0 stay empty.
+**Auswertung (the "Letzte aktive Tage" heatmap screen, extended)**
+- The heatmap screen becomes the "Auswertung" month screen. Its header row holds the back button and the month switcher "‹ September 2026 ›" (as in the mockup); below it are three sections:
+  - **Monatsüberblick** (new, on top): Beantwortet, Extra, Verpasst, Ø Min. Delay for the month.
+  - **Tage im Überblick** — the existing heatmap, moved down below the Monatsüberblick and adapted: it covers the shown month instead of the last 7 active days, weekday abbreviations as columns and full hours (07:00, 08:00, …) as rows, each cell in the level colour of the average; cells with no data or an average of 0 stay empty; cells stay tappable for count and average.
   - **Wochentrend:** one entry per calendar week ("KW 37") touching the month, showing that week's average activity level as a bar in the level colour plus the value (e.g. "2,4"). No textual trend statement — a real trend analysis may follow as a separate feature.
 - The back button has the same size and position as on the Optionen screen.
 
 ## Capabilities
 
 ### New Capabilities
-- `android-month-evaluation`: Month evaluation screen — header with month navigation (‹ month ›), Monatsüberblick statistics, weekday × hour "Tage im Überblick" grid, and "Wochentrend" per calendar week.
+- `android-month-evaluation`: Month evaluation screen (the extended heatmap screen) — header with month navigation (‹ month ›), section order, Monatsüberblick statistics and "Wochentrend" per calendar week. The heatmap itself stays specified in `android-day-week-evaluation`.
 
 ### Modified Capabilities
 - `android-quick-entry`: activity-level options become mockup-style cards with colour-coded number badges; the note field is single-line; the one-screen requirement now also covers the Trinkmanager and Aktivitätsauswertung cards (history may scroll).
 - `android-activity-history`: rows show the actual logged time, the bold activity text is level-coloured, and rows are sorted by actual time descending.
 - `android-hydration-tracking`: the progress display is a taller, segmented bar (one segment per 250 ml).
 - `android-settings-configuration`: export-location setting removed; hydration goal on one row without a supporting line; Optionen fits on one screen with adjusted typography and smaller switches.
-- `android-day-week-evaluation`: the hourly chart is left-aligned; Ø Min. Delay is displayed; the 7-day heatmap requirement is removed in favour of `android-month-evaluation`.
+- `android-day-week-evaluation`: the hourly chart is left-aligned; Ø Min. Delay is displayed; the heatmap requirement is renamed to "Tage im Überblick" and adapted (moved below the Monatsüberblick, month instead of 7 days, weekday × hour, level colours, empty for no data or 0).
 
 ## Impact
 
-- **Android UI code** (`android/app/src/main/kotlin/.../ui/`): `quickentry/` (level selector, note field), `history/` (row text, sort), `evaluation/` (day card, heatmap screen replaced by month screen + aggregation), `hydration/HydrationCard`, `settings/SettingsScreen`, `AppNavigation`/`MainActivity` wiring.
+- **Android UI code** (`android/app/src/main/kotlin/.../ui/`): `quickentry/` (level selector, note field), `history/` (row text, sort), `evaluation/` (day card, heatmap screen extended into the month screen, heatmap aggregation adapted), `hydration/HydrationCard`, `settings/SettingsScreen`, `AppNavigation`/`MainActivity` wiring.
 - **Shared UI helpers:** the level colour palette and the Optionen back button are extracted so quick entry, history, evaluation and both secondary screens use the same ones.
 - **Data:** no schema change and no Room migration. The `export_location_uri` column stays in the settings table but is no longer read or written by the UI.
 - **Open change `add-android-csv-import-export`:** its "configured destination" behaviour no longer has a setting to read; it must be updated to use the system save dialog / Downloads before it is implemented.
